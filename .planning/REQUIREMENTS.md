@@ -14,9 +14,9 @@
 - [ ] **GAME-05**: Player can talk to NPCs through a dialogue system (data-driven JSON dialogue)
 - [ ] **GAME-06**: At least one core mechanic per level rewards patience/timing in the spirit of value investing (e.g., waiting for the right buy moment beats grinding)
 - [ ] **GAME-07**: Music and SFX have separate persistent toggles; audio unlocks correctly on iOS after first user gesture
-- [ ] **GAME-08**: Game shows a branded loading progress bar and loads fast on 4G (initial bundle lean, level assets lazy-loaded, textures ≤2048px)
+- [x] **GAME-08**: Game shows a branded loading progress bar and loads fast on 4G (initial bundle lean, level assets lazy-loaded, textures ≤2048px)
 - [ ] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
-- [ ] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
+- [x] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
 
 ### Save & Progress
 
@@ -39,7 +39,7 @@
 ### Legal & Compliance
 
 - [ ] **LEGL-01**: Impressum and privacy policy pages are live and linked (footer + settings) before any public URL is shared
-- [ ] **LEGL-02**: All persons/companies use parody names only ("Barren Wuffett" etc.) — no real names, photos, likenesses, or logos
+- [x] **LEGL-02**: All persons/companies use parody names only ("Barren Wuffett" etc.) — no real names, photos, likenesses, or logos
 - [ ] **LEGL-03**: Every Journal entry passes a content checklist: visible financial disclaimer, no specific buy/sell recommendation (BaFin test)
 - [ ] **LEGL-04**: Data collection is minimal: email, level progress, score, consent timestamp — nothing else; every marketing email has an unsubscribe link
 
@@ -48,8 +48,8 @@
 - [ ] **INFR-01**: Game is deployed on Cloudflare Pages (free tier) and playable via public URL
 - [ ] **INFR-02**: Supabase handles email capture and cloud save; custom SMTP (Brevo) configured before any user-facing email flows
 - [ ] **INFR-03**: Cookieless analytics tracks the funnel (level completions, gate conversion, share clicks) without a consent banner
-- [ ] **INFR-04**: Levels are defined as data manifests (ContentRegistry) — adding a level or future pack means adding data files, not engine code
-- [ ] **INFR-05**: All player-facing text lives in an i18n-ready structure (English content, German addable without refactor)
+- [x] **INFR-04**: Levels are defined as data manifests (ContentRegistry) — adding a level or future pack means adding data files, not engine code
+- [x] **INFR-05**: All player-facing text lives in an i18n-ready structure (English content, German addable without refactor)
 
 ## v2 Requirements (Deferred)
 
@@ -94,9 +94,9 @@
 | GAME-05 | Phase 2 | Pending |
 | GAME-06 | Phase 2 | Pending |
 | GAME-07 | Phase 1 | Pending |
-| GAME-08 | Phase 1 | Pending |
+| GAME-08 | Phase 1 | Complete |
 | GAME-09 | Phase 2 | Pending |
-| GAME-10 | Phase 1 | Pending |
+| GAME-10 | Phase 1 | Complete |
 | SAVE-01 | Phase 2 | Pending |
 | SAVE-02 | Phase 2 | Pending |
 | FUNL-01 | Phase 3 | Pending |
@@ -107,14 +107,14 @@
 | VIRL-01 | Phase 2 | Pending |
 | VIRL-02 | Phase 2 | Pending |
 | LEGL-01 | Phase 1 | Pending |
-| LEGL-02 | Phase 1 | Pending |
+| LEGL-02 | Phase 1 | Complete |
 | LEGL-03 | Phase 3 | Pending |
 | LEGL-04 | Phase 3 | Pending |
 | INFR-01 | Phase 1 | Pending |
 | INFR-02 | Phase 3 | Pending |
 | INFR-03 | Phase 3 | Pending |
-| INFR-04 | Phase 1 | Pending |
-| INFR-05 | Phase 1 | Pending |
+| INFR-04 | Phase 1 | Complete |
+| INFR-05 | Phase 1 | Complete |
 
 ---
 *Last updated: 2026-06-11 after roadmap creation*

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Roadmap created — all 28 v1 requirements mapped to 4 phases
-last_updated: "2026-06-11T18:34:49.134Z"
-last_activity: 2026-06-11 — Roadmap created, ready to plan Phase 1
+stopped_at: Completed 01-01-PLAN.md — walking skeleton with 27 files, 14/14 tests green
+last_updated: "2026-06-11T18:53:22.286Z"
+last_activity: 2026-06-11 -- Phase 01 execution started
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-11)
 
 **Core value:** A fun, shareable game that makes players want to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
-**Current focus:** Phase 1 — Foundation & Legal Shell
+**Current focus:** Phase 01 — Foundation & Legal Shell
 
 ## Current Position
 
-Phase: 1 of 4 (Foundation & Legal Shell)
-Plan: 0 of TBD in current phase
+Phase: 01 (Foundation & Legal Shell) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-06-11 — Roadmap created, ready to plan Phase 1
+Last activity: 2026-06-11 -- Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01-foundation-legal-shell P01-01 | 11min | 3 tasks | 27 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - Init: Supabase anonymous sessions must NOT be created at game boot — delay all backend auth to explicit player opt-in (Phase 3)
 - Init: Brevo custom SMTP must replace Supabase default SMTP before any user-facing email flows (Phase 3 blocker)
 - Init: Phase 2 acceptance criterion includes "audio works on real iPhone SE" — if iOS audio fails, Phase 3 does not start
+- [Phase ?]: Removed Phaser ESM alias from Vite config — Phaser 4.1.0 exports field auto-resolves; manual alias created path conflict
+- [Phase ?]: All service/scene modules created atomically in Task 1 due to circular import requirements — build requires scenes+services+locales to all exist simultaneously
+- [Phase ?]: phaser4-rex-plugins VirtualJoystick import smoke-tested in prod build (Pitfall 4) — Phase 2 InputBus wiring unblocked
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-11
-Stopped at: Roadmap created — all 28 v1 requirements mapped to 4 phases
+Last session: 2026-06-11T18:53:22.270Z
+Stopped at: Completed 01-01-PLAN.md — walking skeleton with 27 files, 14/14 tests green
 Resume file: None
