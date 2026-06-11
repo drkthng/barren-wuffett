@@ -318,7 +318,7 @@ However, the following minimums apply to Phase 1:
 |-------|------|------------|--------|-------|
 | Game logo / title art | `public/assets/images/logo.png` | max 320x160px | PNG-8 (pixel art, indexed palette) | Placeholder acceptable for Phase 1 — parody name "BARREN WUFFETT" only, no Buffett likeness |
 | Favicon | `public/favicon.png` | 192x192px | PNG | Pixel-art "BW" monogram; also serves as PWA icon stub |
-| PWA icon (large) | `public/icon-512.png` | 512x512px | PNG | Placeholder for Phase 1; required by vite-plugin-pwa manifest |
+| PWA icon (large) | `public/icon-512.png` | 512x512px | PNG | Placeholder for Phase 1 (created in plan 01-01 Task 1); required by vite-plugin-pwa manifest large-icon entry |
 
 Texture hard cap: 2048x2048px per texture (GAME-08). No single sprite sheet exceeds this.
 All textures are pixel-art style: 16x16 or 32x32 base tile unit, no anti-aliasing.
@@ -360,11 +360,12 @@ is deferred to a future phase.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS (one non-blocking FLAG: Press Start 2P 8px-grid sizing noted, not a blocker)
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-06-11
+</content>

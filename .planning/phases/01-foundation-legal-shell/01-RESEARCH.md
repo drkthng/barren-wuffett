@@ -579,7 +579,7 @@ scale: {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Phaser 4 vs Phaser 4.1.0 on npm**
    - What we know: `npm view phaser version` returns `4.1.0`; template pins `phaser@4.0.0`
