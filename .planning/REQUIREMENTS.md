@@ -85,11 +85,36 @@
 
 ## Traceability
 
-(Filled by roadmap creation — maps each requirement to a phase)
-
-| Requirement | Phase |
-|-------------|-------|
-| (pending roadmap) | |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| GAME-01 | Phase 2 | Pending |
+| GAME-02 | Phase 4 | Pending |
+| GAME-03 | Phase 4 | Pending |
+| GAME-04 | Phase 4 | Pending |
+| GAME-05 | Phase 2 | Pending |
+| GAME-06 | Phase 2 | Pending |
+| GAME-07 | Phase 1 | Pending |
+| GAME-08 | Phase 1 | Pending |
+| GAME-09 | Phase 2 | Pending |
+| GAME-10 | Phase 1 | Pending |
+| SAVE-01 | Phase 2 | Pending |
+| SAVE-02 | Phase 2 | Pending |
+| FUNL-01 | Phase 3 | Pending |
+| FUNL-02 | Phase 3 | Pending |
+| FUNL-03 | Phase 3 | Pending |
+| FUNL-04 | Phase 3 | Pending |
+| FUNL-05 | Phase 3 | Pending |
+| VIRL-01 | Phase 2 | Pending |
+| VIRL-02 | Phase 2 | Pending |
+| LEGL-01 | Phase 1 | Pending |
+| LEGL-02 | Phase 1 | Pending |
+| LEGL-03 | Phase 3 | Pending |
+| LEGL-04 | Phase 3 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 3 | Pending |
+| INFR-03 | Phase 3 | Pending |
+| INFR-04 | Phase 1 | Pending |
+| INFR-05 | Phase 1 | Pending |
 
 ---
-*Last updated: 2026-06-11 after requirements definition*
+*Last updated: 2026-06-11 after roadmap creation*
