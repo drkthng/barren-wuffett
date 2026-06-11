@@ -30,7 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. No real names, photos, or company logos appear anywhere in user-facing text or assets — only parody names ("Barren Wuffett," "Mr. Market," etc.)
   4. The game renders correctly in portrait mode on a real mobile phone with no zoom breakage, and audio toggle state persists across sessions
   5. All player-facing strings live in an i18n-ready structure (English content, German-addable without code changes)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Walking Skeleton: Phaser 4 + Vite + TypeScript scaffold, portrait pixel-art config, i18n + ContentRegistry seam, Boot/Preloader/MainMenu, Wave 0 tests
+- [ ] 01-02-PLAN.md — Settings scene with persistent Music/SFX toggles (localStorage), static Impressum + Datenschutz pages, two-tap legal links + crawler DOM anchors
+- [ ] 01-03-PLAN.md — Security headers, Cloudflare Pages deploy (public URL), Geltungssatz human-action gate before public sharing
+
 
 ### Phase 2: Level 1 — Offline Playable
 **Goal**: Level 1 is fully playable start-to-finish on a real iPhone with no account, no backend, and no internet connection — local save persists across refresh
@@ -78,7 +83,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Legal Shell | 0/TBD | Not started | - |
+| 1. Foundation & Legal Shell | 0/3 | Not started | - |
 | 2. Level 1 — Offline Playable | 0/TBD | Not started | - |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
