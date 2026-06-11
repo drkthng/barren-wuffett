@@ -52,9 +52,9 @@ HTTPS is enforced automatically by Cloudflare Pages — no explicit redirect rul
 
 ## Deployment
 
-<!-- DEPLOY_URL_PLACEHOLDER — update with the live Cloudflare Pages URL after first deploy -->
+**Live URL:** https://barren-wuffett.pages.dev
 
-Once deployed, record the `*.pages.dev` URL here and in `.deploy-url` at the repo root.
+The URL is also recorded machine-readably in `.deploy-url` at the repo root.
 
 ---
 
