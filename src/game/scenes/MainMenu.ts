@@ -97,13 +97,7 @@ export class MainMenu extends Scene {
         // TAP TO START handler — iOS audio unlock gate (RESEARCH Pattern 2)
         this.input.once('pointerdown', () => {
             this.sound.unlock();
-
-            // plan 02: Settings scene + legal footer links
-            // Guard: only transition to Settings if registered (not registered in plan 01-01)
-            if (this.scene.get('Settings')) {
-                this.scene.start('Settings');
-            }
-            // else no-op until plan 02 adds SettingsScene
+            this.scene.start('Settings');
         });
     }
 

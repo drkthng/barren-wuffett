@@ -2,6 +2,7 @@ import { AUTO, Game, Scale } from 'phaser';
 import { Boot } from './scenes/Boot';
 import { Preloader } from './scenes/Preloader';
 import { MainMenu } from './scenes/MainMenu';
+import { Settings } from './scenes/Settings';
 
 const config: Phaser.Types.Core.GameConfig = {
     type: AUTO,
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
     audio: {
         disableWebAudio: false,
     },
-    scene: [Boot, Preloader, MainMenu],
+    scene: [Boot, Preloader, MainMenu, Settings],
 };
 
 export const StartGame = (parent: string) => new Game({ ...config, parent });
