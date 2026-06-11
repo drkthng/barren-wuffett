@@ -1,0 +1,15 @@
+{
+  "game.title": "BARREN WUFFETT",
+  "game.subtitle": "THE VALUE INVESTING ADVENTURE",
+  "menu.tapToStart": "TAP TO START",
+  "loading.progress": "LOADING...",
+  "loading.error": "LOAD ERROR — PLEASE REFRESH",
+  "audio.music": "MUSIC",
+  "audio.sfx": "SOUND FX",
+  "audio.on": "ON",
+  "audio.off": "OFF",
+  "legal.impressum": "IMPRESSUM",
+  "legal.datenschutz": "PRIVACY POLICY",
+  "settings.title": "SETTINGS",
+  "meta.version": "v0.1.0"
+}
