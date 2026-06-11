@@ -13,7 +13,7 @@
 - [ ] **GAME-04**: Each level contains at least one mini-game accent from another genre (platformer, point & click, light resource management), implemented as an isolated scene with clean handoff
 - [ ] **GAME-05**: Player can talk to NPCs through a dialogue system (data-driven JSON dialogue)
 - [ ] **GAME-06**: At least one core mechanic per level rewards patience/timing in the spirit of value investing (e.g., waiting for the right buy moment beats grinding)
-- [ ] **GAME-07**: Music and SFX have separate persistent toggles; audio unlocks correctly on iOS after first user gesture
+- [x] **GAME-07**: Music and SFX have separate persistent toggles; audio unlocks correctly on iOS after first user gesture
 - [x] **GAME-08**: Game shows a branded loading progress bar and loads fast on 4G (initial bundle lean, level assets lazy-loaded, textures ≤2048px)
 - [ ] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
 - [x] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
@@ -38,7 +38,7 @@
 
 ### Legal & Compliance
 
-- [ ] **LEGL-01**: Impressum and privacy policy pages are live and linked (footer + settings) before any public URL is shared
+- [x] **LEGL-01**: Impressum and privacy policy pages are live and linked (footer + settings) before any public URL is shared
 - [x] **LEGL-02**: All persons/companies use parody names only ("Barren Wuffett" etc.) — no real names, photos, likenesses, or logos
 - [ ] **LEGL-03**: Every Journal entry passes a content checklist: visible financial disclaimer, no specific buy/sell recommendation (BaFin test)
 - [ ] **LEGL-04**: Data collection is minimal: email, level progress, score, consent timestamp — nothing else; every marketing email has an unsubscribe link
@@ -93,7 +93,7 @@
 | GAME-04 | Phase 4 | Pending |
 | GAME-05 | Phase 2 | Pending |
 | GAME-06 | Phase 2 | Pending |
-| GAME-07 | Phase 1 | Pending |
+| GAME-07 | Phase 1 | Complete |
 | GAME-08 | Phase 1 | Complete |
 | GAME-09 | Phase 2 | Pending |
 | GAME-10 | Phase 1 | Complete |
@@ -106,7 +106,7 @@
 | FUNL-05 | Phase 3 | Pending |
 | VIRL-01 | Phase 2 | Pending |
 | VIRL-02 | Phase 2 | Pending |
-| LEGL-01 | Phase 1 | Pending |
+| LEGL-01 | Phase 1 | Complete |
 | LEGL-02 | Phase 1 | Complete |
 | LEGL-03 | Phase 3 | Pending |
 | LEGL-04 | Phase 3 | Pending |
