@@ -60,7 +60,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Gewerbe-Versicherung für Finanz-Content-Tätigkeit recherchieren (legal) — vor öffentlichem Launch klären; pragmatischer Teilersatz für Medienanwalt-Check
+- Impressum per Verweis auf compoundingknowledge.com lösen (legal) — bei Phase-1-Planung (LEGL-01) berücksichtigen; Geltungssatz auf der Website nötig, eigene Datenschutzerklärung fürs Spiel bleibt Pflicht
 
 ### Blockers/Concerns
 
