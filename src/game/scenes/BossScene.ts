@@ -19,6 +19,7 @@
 import { Scene } from 'phaser';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { t } from '../../services/i18n';
+import { prepareShareCard } from '../../services/ShareService';
 
 const TOTAL_DECLINES   = 3;   // declines needed to fill patience meter + trigger panic
 const PANIC_DURATION_S = 3;   // seconds for the panic-phase timer
@@ -361,6 +362,20 @@ export class BossScene extends Scene {
 
         // patienceBonus = number of declines completed (max TOTAL_DECLINES)
         const patienceBonus = this.declinesCount;
+
+        // PRE-GENERATE the share card Blob NOW (RESEARCH Pitfall 4).
+        // The Blob must be cached before the SHARE WISDOM button appears so that
+        // the tap handler can call navigator.share() in the user-gesture call stack
+        // with no preceding await — iOS requires share() be called synchronously in
+        // the gesture call stack (no async gap between tap and share()).
+        // We pass the wisdom quote string from the dialogue data.
+        const wisdomQuote = typeof this.dialogueData['boss_01_wisdom_quote'] === 'string'
+            ? (this.dialogueData['boss_01_wisdom_quote'] as string)
+            : '';
+        // Fire-and-forget: prepareShareCard caches the Blob internally in ShareService.
+        // No await here — the 1s delayedCall gives enough time for the async cache to fill
+        // before the SHARE WISDOM button is tapped (the level-complete screen takes ~2s to appear).
+        void prepareShareCard(this.game, wisdomQuote);
 
         this.time.delayedCall(1000, () => {
             GameEvents.emit(Events.BOSS_DEFEATED, { patienceBonus });

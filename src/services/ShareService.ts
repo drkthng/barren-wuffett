@@ -28,16 +28,9 @@ import { renderShareCard, canvasToBlob } from '../ui/ShareCard';
 // Phaser.Game type reference — Phaser is NOT imported at module level so this
 // module stays importable in vitest node/jsdom environment without a real Phaser.
 // The type is used only in function signatures (erased at runtime).
-// Phaser's SnapshotCallback signature is (img: HTMLImageElement | Color) so we use
-// a union here; the implementation always filters for HTMLImageElement at runtime.
-type PhaserGame = {
-    renderer: {
-        snapshot: (
-            callback: (img: HTMLImageElement | { r: number; g: number; b: number; a: number }) => void,
-            type?: string
-        ) => void;
-    };
-};
+// We use a minimal structural type that is assignment-compatible with Phaser.Game:
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PhaserGame = { renderer: { snapshot: (callback: (img: any) => void, type?: string) => void } };
 
 // ── Module-level Blob cache (survives the time between boss defeat and share tap) ──
 let _cachedBlob: Blob | null = null;
