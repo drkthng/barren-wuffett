@@ -150,6 +150,16 @@ export class OverworldScene extends Scene {
             const npc = new NPC(this, def.x, def.y, def.texture, def.npcId, def.dialogueKey);
             this.npcs.push(npc);
 
+            // Touch interact: tap the NPC (zone covers sprite + TALK prompt;
+            // Zone is unaffected by placeholder-texture scaling). Only fires
+            // when the player is in range — same rule as Space/Enter.
+            const tapZone = this.add.zone(def.x, def.y - 20, 64, 96)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true });
+            tapZone.on('pointerdown', () => {
+                if (this.currentNpcInRange === npc) this.handleInteract();
+            });
+
             // TALK prompt (hidden until in range)
             const prompt = this.add.text(def.x, def.y - 40, t('hud.talkPrompt'), {
                 fontSize: '8px',
