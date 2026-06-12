@@ -29,7 +29,7 @@ export class Settings extends Scene {
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5);
 
-        const musicToggle = this.createToggle(cx + 80, 200, AudioService.getMusicEnabled(), (newState) => {
+        this.createToggle(cx + 80, 200, AudioService.getMusicEnabled(), (newState) => {
             AudioService.setMusicEnabled(newState);
             // Apply mute state to Phaser Sound Manager
             this.sound.setMute(!newState);

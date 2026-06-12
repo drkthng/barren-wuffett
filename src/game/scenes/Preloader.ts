@@ -9,7 +9,7 @@ export class Preloader extends Scene {
     }
 
     preload(): void {
-        const { width, height } = this.scale;
+        const { width } = this.scale;
         const cx = width / 2;
 
         // Title
