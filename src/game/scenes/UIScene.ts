@@ -27,13 +27,15 @@ type UIState = 'HUD' | 'DIALOGUE' | 'PAUSE' | 'LEVEL_COMPLETE';
 // Dialogue JSON (bundled; no runtime fetch)
 // Using dynamic import so the module is not imported at the top level
 // (which would prevent tests from mocking it).
+// WR-03 fix: removed non-standard `assert: { type: 'json' }` syntax for
+// consistency (Vite treats it as a hint only; BossScene imports without it).
 let dialogueCache: Record<string, DialogueLine[] | string> | null = null;
 
 async function loadDialogue(): Promise<Record<string, DialogueLine[] | string>> {
     if (dialogueCache) return dialogueCache;
-    const mod = await import('../../data/dialogue/en/level-01.json', {
-        assert: { type: 'json' }
-    }) as { default: Record<string, DialogueLine[] | string> };
+    const mod = await import('../../data/dialogue/en/level-01.json') as {
+        default: Record<string, DialogueLine[] | string>
+    };
     dialogueCache = mod.default;
     return dialogueCache;
 }
@@ -44,6 +46,11 @@ export class UIScene extends Scene {
     private pauseOverlay!: Phaser.GameObjects.Container;
     private pauseBackdrop!: Phaser.GameObjects.Rectangle;
     private uiState: UIState = 'HUD';
+
+    // Stored as a class field so shutdown() can pass it to .off() precisely (CR-03 fix)
+    private onPatienceBonus = (amount: number): void => {
+        this.hud.flashPatienceBonus(amount);
+    };
 
     constructor() {
         super('UIScene');
@@ -65,19 +72,27 @@ export class UIScene extends Scene {
         GameEvents.on(Events.PAUSE_REQUESTED, this.onPauseRequested, this);
         GameEvents.on(Events.RESUME_REQUESTED, this.onResumeRequested, this);
         GameEvents.on(Events.BOSS_DEFEATED, this.onBossDefeated, this);
-        GameEvents.on(Events.PATIENCE_BONUS, (amount: number) => {
-            this.hud.flashPatienceBonus(amount);
-        }, this);
+        // CR-03 fix: use stored handler reference so shutdown() can remove precisely
+        GameEvents.on(Events.PATIENCE_BONUS, this.onPatienceBonus, this);
     }
 
     // ── Event handlers ─────────────────────────────────────────────────────
 
+    // WR-02 fix: wrap async handler in try/catch; emit DIALOGUE_COMPLETE as
+    // fallback so the game is never stuck in DIALOGUE state on load failure
     private onDialogueStart = async (data: { npcId: string; dialogueKey: string }): Promise<void> => {
-        this.setState('DIALOGUE');
-        const allDialogue = await loadDialogue();
-        const lines = allDialogue[data.dialogueKey];
-        if (Array.isArray(lines)) {
-            this.dialogueBox.show(data.npcId, lines as DialogueLine[]);
+        try {
+            this.setState('DIALOGUE');
+            const allDialogue = await loadDialogue();
+            const lines = allDialogue[data.dialogueKey];
+            if (Array.isArray(lines)) {
+                this.dialogueBox.show(data.npcId, lines as DialogueLine[]);
+            } else {
+                // Key not found — close immediately so game is not stuck
+                GameEvents.emit(Events.DIALOGUE_COMPLETE, { npcId: data.npcId });
+            }
+        } catch {
+            this.setState('HUD');
         }
     };
 
@@ -189,8 +204,11 @@ export class UIScene extends Scene {
             Phaser.Geom.Rectangle.Contains
         );
         confirmText.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            // Split YES/NO by horizontal position (left half = YES, right half = NO)
-            if (pointer.x < 240) {
+            // WR-06 fix: use scale.width/2 (runtime canvas center) instead of
+            // hardcoded 240px — pointer.x is raw canvas pixels, which differs
+            // from 240 when Scale.FIT shrinks the canvas on small phones.
+            const canvasCenterX = this.scale.width / 2;
+            if (pointer.x < canvasCenterX) {
                 // YES — quit to main menu
                 this.scene.stop('OverworldScene');
                 this.scene.stop('UIScene');
@@ -324,12 +342,17 @@ export class UIScene extends Scene {
         continueBtn.on('pointerdown', () => {
             continueBtn.setAlpha(0.7);
             this.time.delayedCall(100, () => {
-                // Stop all gameplay scenes and return to MainMenu
+                // Stop all gameplay scenes and return to MainMenu.
+                // CR-04 fix: also stop UIScene itself before starting MainMenu.
+                // Without this, UIScene stays alive as a zombie overlay, keeping
+                // all its GameEvents.on subscriptions active. A second game start
+                // would then launch a second UIScene and double-register listeners.
                 ['OverworldScene', 'BossScene', 'PaperThrowScene'].forEach(key => {
                     if (this.scene.get(key)?.scene.isActive() || this.scene.get(key)?.scene.isPaused()) {
                         this.scene.stop(key);
                     }
                 });
+                this.scene.stop('UIScene'); // stop self — prevents zombie overlay
                 this.scene.start('MainMenu');
             });
         });
@@ -376,12 +399,15 @@ export class UIScene extends Scene {
     }
 
     shutdown(): void {
-        GameEvents.off(Events.DIALOGUE_START);
-        GameEvents.off(Events.DIALOGUE_COMPLETE);
-        GameEvents.off(Events.PAUSE_REQUESTED);
-        GameEvents.off(Events.RESUME_REQUESTED);
-        GameEvents.off(Events.BOSS_DEFEATED);
-        GameEvents.off(Events.PATIENCE_BONUS);
+        // CR-03 fix: always pass fn+context so we only remove this scene's
+        // listeners, not every listener for these events on the shared bus.
+        GameEvents.off(Events.DIALOGUE_START,    this.onDialogueStart,    this);
+        GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
+        GameEvents.off(Events.PAUSE_REQUESTED,   this.onPauseRequested,   this);
+        GameEvents.off(Events.RESUME_REQUESTED,  this.onResumeRequested,  this);
+        GameEvents.off(Events.BOSS_DEFEATED,     this.onBossDefeated,     this);
+        GameEvents.off(Events.PATIENCE_BONUS,    this.onPatienceBonus,    this);
+        // WR-07 fix: destroy DialogueBox before Phaser tears down the input plugin
         this.dialogueBox.destroy();
     }
 }
