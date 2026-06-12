@@ -1,0 +1,17 @@
+{
+  "npc_grandpa": [
+    { "portrait": "npc_grandpa", "text": "PATIENCE, BARREN. THE RIGHT PRICE ALWAYS COMES TO THOSE WHO WAIT." }
+  ],
+  "npc_store_clerk": [
+    { "portrait": "npc_store_clerk", "text": "THAT MR. MARKET FELLOW KEEPS CHANGING HIS PRICES. CAN'T TRUST HIM." }
+  ],
+  "npc_rival": [
+    { "portrait": "npc_rival", "text": "HEY! THAT'S MY ROUTE!" },
+    { "portrait": "npc_rival", "text": "MR. MARKET SAYS YOUR PRICES ARE TOO LOW." }
+  ],
+  "boss_greed_01": [{ "portrait": "boss_mr_market", "text": "I'LL BUY YOUR ROUTE FOR 50 COINS!" }],
+  "boss_greed_02": [{ "portrait": "boss_mr_market", "text": "75 COINS. FINAL OFFER. SURELY YOU'LL TAKE IT!" }],
+  "boss_greed_03": [{ "portrait": "boss_mr_market", "text": "100 COINS! YOU'RE MAKING A MISTAKE!" }],
+  "boss_panic_01": [{ "portrait": "boss_mr_market", "text": "NOBODY WANTS PAPERS! I'LL SELL YOU BACK FOR 20 COINS!" }],
+  "boss_01_wisdom_quote": "THE STOCK MARKET IS A DEVICE FOR TRANSFERRING MONEY FROM THE IMPATIENT TO THE PATIENT."
+}

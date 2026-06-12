@@ -21,4 +21,5 @@ const registry: LevelManifest[] = []; // populated in Phase 2+
 export const ContentRegistry = {
     getLevel: (id: string): LevelManifest | undefined => registry.find(l => l.id === id),
     getAllLevels: (): LevelManifest[] => registry,
+    register: (manifest: LevelManifest): void => { registry.push(manifest); },
 };
