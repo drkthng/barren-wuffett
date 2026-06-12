@@ -7,21 +7,21 @@
 
 ### Core Gameplay
 
-- [ ] **GAME-01**: Player can move the character through a top-down pixel-art overworld with a virtual joystick/D-pad on touch devices and keyboard on desktop (input via unified InputBus)
+- [x] **GAME-01**: Player can move the character through a top-down pixel-art overworld with a virtual joystick/D-pad on touch devices and keyboard on desktop (input via unified InputBus)
 - [ ] **GAME-02**: Player can complete 3 levels covering Buffett's childhood/youth (paper route, pinball/Coke hustle, first stock investment), each with distinct length and difficulty
 - [ ] **GAME-03**: Each level ends with a boss fight (Mr. Market archetype with era-specific behavior, e.g., greed phase / panic phase)
 - [ ] **GAME-04**: Each level contains at least one mini-game accent from another genre (platformer, point & click, light resource management), implemented as an isolated scene with clean handoff
-- [ ] **GAME-05**: Player can talk to NPCs through a dialogue system (data-driven JSON dialogue)
-- [ ] **GAME-06**: At least one core mechanic per level rewards patience/timing in the spirit of value investing (e.g., waiting for the right buy moment beats grinding)
+- [x] **GAME-05**: Player can talk to NPCs through a dialogue system (data-driven JSON dialogue)
+- [x] **GAME-06**: At least one core mechanic per level rewards patience/timing in the spirit of value investing (e.g., waiting for the right buy moment beats grinding)
 - [x] **GAME-07**: Music and SFX have separate persistent toggles; audio unlocks correctly on iOS after first user gesture
 - [x] **GAME-08**: Game shows a branded loading progress bar and loads fast on 4G (initial bundle lean, level assets lazy-loaded, textures ≤2048px)
-- [ ] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
+- [x] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
 - [x] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
 
 ### Save & Progress
 
-- [ ] **SAVE-01**: Player progress persists locally (IndexedDB) across refresh and return visits — no account needed to play
-- [ ] **SAVE-02**: Game is fully playable offline-anonymous; backend is never required for core gameplay
+- [x] **SAVE-01**: Player progress persists locally (IndexedDB) across refresh and return visits — no account needed to play
+- [x] **SAVE-02**: Game is fully playable offline-anonymous; backend is never required for core gameplay
 
 ### Funnel & Email
 
@@ -33,8 +33,8 @@
 
 ### Virality
 
-- [ ] **VIRL-01**: After each boss defeat, player can share a Canvas-rendered card (1200×630, quote-based and spoiler-free, no raw highscores) with one tap
-- [ ] **VIRL-02**: Game URL renders rich previews on social/messaging platforms (og:image, og:title, og:description)
+- [x] **VIRL-01**: After each boss defeat, player can share a Canvas-rendered card (1200×630, quote-based and spoiler-free, no raw highscores) with one tap
+- [x] **VIRL-02**: Game URL renders rich previews on social/messaging platforms (og:image, og:title, og:description)
 
 ### Legal & Compliance
 
@@ -87,25 +87,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GAME-01 | Phase 2 | Pending |
+| GAME-01 | Phase 2 | Complete |
 | GAME-02 | Phase 4 | Pending |
 | GAME-03 | Phase 4 | Pending |
 | GAME-04 | Phase 4 | Pending |
-| GAME-05 | Phase 2 | Pending |
-| GAME-06 | Phase 2 | Pending |
+| GAME-05 | Phase 2 | Complete |
+| GAME-06 | Phase 2 | Complete |
 | GAME-07 | Phase 1 | Complete |
 | GAME-08 | Phase 1 | Complete |
-| GAME-09 | Phase 2 | Pending |
+| GAME-09 | Phase 2 | Complete |
 | GAME-10 | Phase 1 | Complete |
-| SAVE-01 | Phase 2 | Pending |
-| SAVE-02 | Phase 2 | Pending |
+| SAVE-01 | Phase 2 | Complete |
+| SAVE-02 | Phase 2 | Complete |
 | FUNL-01 | Phase 3 | Pending |
 | FUNL-02 | Phase 3 | Pending |
 | FUNL-03 | Phase 3 | Pending |
 | FUNL-04 | Phase 3 | Pending |
 | FUNL-05 | Phase 3 | Pending |
-| VIRL-01 | Phase 2 | Pending |
-| VIRL-02 | Phase 2 | Pending |
+| VIRL-01 | Phase 2 | Complete |
+| VIRL-02 | Phase 2 | Complete |
 | LEGL-01 | Phase 1 | Complete |
 | LEGL-02 | Phase 1 | Complete |
 | LEGL-03 | Phase 3 | Pending |

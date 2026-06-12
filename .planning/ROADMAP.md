@@ -14,7 +14,7 @@ Four phases deliver the complete Barren Wuffett MVP: a legally-safe scaffold fir
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in
-- [ ] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required
+- [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
 - [ ] **Phase 3: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal content, and cookieless analytics — end-to-end tested before launch
 - [ ] **Phase 4: Levels 2-3 + Launch** - Remaining levels using ContentRegistry/manifest pattern, PWA hardening, and public launch
 
@@ -74,7 +74,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 02-03-PLAN.md — Share + viral slice: ShareService + ShareCard (1200×630 one-tap Web Share), Level Complete screen, og:image/og:title/og:description meta + static og-image.png
+- [x] 02-03-PLAN.md — Share + viral slice: ShareService + ShareCard (1200×630 one-tap Web Share), Level Complete screen, og:image/og:title/og:description meta + static og-image.png
 
 ### Phase 3: Funnel & Backend
 
@@ -115,6 +115,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
-| 2. Level 1 — Offline Playable | 2/3 | In Progress|  |
+| 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
