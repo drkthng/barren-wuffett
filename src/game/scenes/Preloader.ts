@@ -73,8 +73,11 @@ export class Preloader extends Scene {
         this.load.image('ui_pause',        'assets/images/ui_pause.png');
         this.load.image('barren_victory',  'assets/images/barren_victory.png');
         this.load.image('bw_monogram',     'assets/images/bw_monogram.png');
+        // WR-01 fix: load tileset at 32×32 to match OverworldScene's tileWidth/tileHeight:32.
+        // The previous 16×16 frame size caused Phaser to use the wrong tile frame offsets
+        // when rendering the 32px-grid tilemap (tiles drawn at wrong positions / wrong tiles).
         this.load.spritesheet('omaha_tiles', 'assets/tilesets/omaha_tiles.png', {
-            frameWidth: 16, frameHeight: 16,
+            frameWidth: 32, frameHeight: 32,
         });
     }
 
