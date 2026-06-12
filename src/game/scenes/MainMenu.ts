@@ -104,6 +104,27 @@ export class MainMenu extends Scene {
         );
         tapText.once('pointerdown', () => {
             this.sound.unlock();
+            this.scene.start('OverworldScene');
+        });
+
+        // SETTINGS affordance — small link below TAP TO START
+        // (reachable from main menu AND from the pause menu per GAME-09)
+        const settingsLink = this.add.text(cx, 480, t('settings.title'), {
+            fontSize: '8px',
+            color: '#e8e8e8',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        settingsLink.setInteractive(
+            new Phaser.Geom.Rectangle(
+                -Math.max(settingsLink.width, 80) / 2,
+                -22,
+                Math.max(settingsLink.width, 80),
+                44
+            ),
+            Phaser.Geom.Rectangle.Contains
+        );
+        settingsLink.on('pointerdown', () => {
             this.scene.start('Settings');
         });
     }

@@ -60,6 +60,22 @@ export class Preloader extends Scene {
 
         // Load game assets
         this.load.image('logo', 'assets/images/logo.png');
+
+        // Phase 2 assets — placeholder PNGs created in public/assets/images/
+        this.load.image('player',          'assets/images/player.png');
+        this.load.image('npc_grandpa',     'assets/images/npc_grandpa.png');
+        this.load.image('npc_store_clerk', 'assets/images/npc_store_clerk.png');
+        this.load.image('npc_rival',       'assets/images/npc_rival.png');
+        this.load.image('boss_mr_market',  'assets/images/boss_mr_market.png');
+        this.load.image('dog',             'assets/images/dog.png');
+        this.load.image('coin',            'assets/images/coin.png');
+        this.load.image('ui_save',         'assets/images/ui_save.png');
+        this.load.image('ui_pause',        'assets/images/ui_pause.png');
+        this.load.image('barren_victory',  'assets/images/barren_victory.png');
+        this.load.image('bw_monogram',     'assets/images/bw_monogram.png');
+        this.load.spritesheet('omaha_tiles', 'assets/tilesets/omaha_tiles.png', {
+            frameWidth: 16, frameHeight: 16,
+        });
     }
 
     create(): void {
