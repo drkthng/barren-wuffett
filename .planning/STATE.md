@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-03-PLAN.md — Tasks 1-2 done (deploy live); Task 3 (Geltungssatz) deferred by user 2026-06-12
-last_updated: "2026-06-12T00:00:00.000Z"
+status: completed
+stopped_at: Completed 01-03-PLAN.md (Tasks 1-2); Task 3 (Geltungssatz) deferred by user — resume when user says "geltungssatz-confirmed
+last_updated: "2026-06-12T05:58:11.262Z"
 last_activity: 2026-06-12 -- Phase 01 plan 3 closed with Geltungssatz deferred by user
 progress:
   total_phases: 4
