@@ -34,7 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The game renders correctly in portrait mode on a real mobile phone with no zoom breakage, and audio toggle state persists across sessions
   5. All player-facing strings live in an i18n-ready structure (English content, German-addable without code changes)
 
-**Plans**: 3 plansPlans:
+**Plans**: 3 plans
+Plans:
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Walking Skeleton: Phaser 4 + Vite + TypeScript scaffold, portrait pixel-art config, i18n + ContentRegistry seam, Boot/Preloader/MainMenu, Wave 0 tests
@@ -61,8 +62,19 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. After defeating the Level 1 boss, player can share a spoiler-free Canvas-rendered card in one tap; the game's URL renders a rich preview (og:image, og:title, og:description) on messaging apps and social platforms
   5. Audio (music + SFX) works correctly on a real iPhone after first user gesture, and all visual assets load fast on 4G with a branded progress bar visible during load
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Playable overworld slice: GameEvents bus, wired InputBus (joystick+keyboard), versioned SaveService (IndexedDB), level-01 data + dialogue, Player/NPC, OverworldScene + UIScene (HUD, dialogue, pause), dog-patrol patience mechanic, Wave 0 tests
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 02-02-PLAN.md — Mini-game + boss slice: TriggerSystem, PaperThrowScene timing mini-game, Mr. Market two-phase boss fight (DECLINE builds patience / BUY LOW! wins)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 02-03-PLAN.md — Share + viral slice: ShareService + ShareCard (1200×630 one-tap Web Share), Level Complete screen, og:image/og:title/og:description meta + static og-image.png
 
 ### Phase 3: Funnel & Backend
 
@@ -103,6 +115,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
-| 2. Level 1 — Offline Playable | 0/TBD | Not started | - |
+| 2. Level 1 — Offline Playable | 0/3 | Planned | - |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |

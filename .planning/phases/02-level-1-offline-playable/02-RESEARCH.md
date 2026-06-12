@@ -649,27 +649,27 @@ Disclaimer (mandatory per PITFALLS.md Pitfall 8): "This is personal opinion and 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Tileset art: free asset pack vs AI-generated**
-   - What we know: Kenney top-down packs (RPG Urban, Tiny Dungeon) provide CC0 16×16/32×32 tiles. PixelLab AI generates custom sprites.
-   - What's unclear: Are there Kenney packs that fit a 1940s small-town USA aesthetic without looking anachronistic (no sci-fi elements, no fantasy tiles)?
-   - Recommendation: Start with Kenney's RPG assets as placeholder (gray, industrial tiles map plausibly to 1940s streets), then commission 3-5 custom PixelLab sprites for Barren and Mr. Market. Revisit art polish after gameplay is validated.
+All four open questions are resolved by planning decisions in the Phase 2 plans (02-01, 02-03). Resolutions recorded below.
 
-2. **idb-keyval createStore API in v6**
-   - What we know: The GitHub README references `createStore()` but the exact API for v6 may differ from older blog posts.
-   - What's unclear: Is `createStore(dbName, storeName)` the exact signature in v6?
-   - Recommendation: Verify against the npm package's bundled index.js or README in the installed package before writing SaveService. [ASSUMED: the API signature above — verify at implementation time]
+1. **Tileset art: free asset pack vs AI-generated** — RESOLVED (plan 02-01 Task 2)
+   - Decision: MVP ships **solid-color / simple pixel placeholder PNGs** for every asset in the UI-SPEC Asset Specifications table (same approach as the Phase 1 logo.png placeholder), so gameplay can be validated before art investment. The game must boot with no missing-texture errors; art polish (Kenney CC0 base + 3-5 custom PixelLab sprites for Barren/Mr. Market) is a post-validation iteration, not a Phase 2 blocker.
+   - Rationale: De-risks gameplay first; placeholder pattern is already proven in Phase 1.
 
-3. **iOS 15.1+ file share via Web Share API — exact version floor**
-   - What we know: iOS 15 shipped Web Share API Level 2 file support. iOS Safari 12.1 shipped Level 1.
-   - What's unclear: The exact minimum iOS version for `navigator.canShare({ files: [...] })` returning true reliably.
-   - Recommendation: Use `navigator.canShare(data)` check before every share attempt. If it returns false (older iOS, desktop browsers), fall back to anchor download. Do not assume file sharing works.
+2. **idb-keyval createStore API in v6** — RESOLVED (plan 02-01 Task 1)
+   - Decision: The executor **verifies the `createStore(dbName, storeName)` signature against the installed package'''s bundled types/README before writing SaveService** (RESEARCH Assumption A9), and adapts + notes any deviation in the SUMMARY. The plan does not hard-assume the signature.
+   - Rationale: Cheap verify-at-implementation removes the only API-shape risk; the named store `createStore('''bw-saves''', '''saves''')` is the intended namespace.
 
-4. **Phaser 4 BitmapText vs Text for dialogue**
-   - What we know: Press Start 2P is a fixed-width bitmap font; both Text and BitmapText can render it.
-   - What's unclear: Does Phaser 4 BitmapText support setWordWrapWidth() or equivalent?
-   - Recommendation: Use `this.add.text()` for dialogue (reliable word wrap via `wordWrap` style option); use `this.add.bitmapText()` only for HUD elements where word wrap is never needed.
+3. **iOS 15.1+ file share via Web Share API — exact version floor** — RESOLVED (plan 02-03 Task 1)
+   - Decision: **Always call `navigator.canShare({files:[...]})` before every share attempt; on false, fall back to anchor[download].** The exact iOS floor is irrelevant because the runtime guard handles every case (old iOS, desktop, unsupported). Enforced by acceptance grep (`canShare` + download fallback present).
+   - Rationale: Feature-detection beats version-detection; the fallback chain is the contract.
+
+4. **Phaser 4 BitmapText vs Text for dialogue** — RESOLVED (plans 02-01, 02-03)
+   - Decision: **Use `this.add.text()` with `wordWrap: { width, useAdvancedWrap: true }` for all dialogue / quote / wrapped copy** (DialogueBox, Level Complete quote); reserve BitmapText for non-wrapped HUD only. Specified in DialogueBox and Level Complete tasks (Pitfall 7).
+   - Rationale: Phaser `Text` word-wrap is reliable for Press Start 2P; avoids BitmapText wrap-API uncertainty entirely.
+
+**Outstanding revisable default (not a blocker):** Dialogue body font size defaults to 8px (UI-SPEC A6); the 16px fallback is pre-defined as the Heading role and is taken only if the on-device readability check (plan 02-01 Task 3) fails — no new token needed.
 
 ---
 
