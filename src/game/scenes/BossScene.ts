@@ -79,6 +79,24 @@ export class BossScene extends Scene {
         super('BossScene');
     }
 
+    /**
+     * Phaser reuses scene instances across stop/launch cycles — reset all
+     * mutable fight state here so re-entering the boss starts a fresh fight
+     * (same bug class as PaperThrowScene's countdown soft-lock).
+     */
+    init(): void {
+        this.phase            = 'intro';
+        this.declinesCount    = 0;
+        this.greedOfferIndex  = 0;
+        this.hintShown        = false;
+        this.panicCountdown   = PANIC_DURATION_S;
+        this.hintTimer        = null;
+        this.panicTimer       = null;
+        this.stateTicks       = [];
+        this.patienceSegments = [];
+        this.displayObjects   = [];
+    }
+
     create(): void {
         const cx = this.scale.width  / 2;  // 240
 

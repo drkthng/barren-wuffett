@@ -63,6 +63,29 @@ export class PaperThrowScene extends Scene {
         super('PaperThrowScene');
     }
 
+    /**
+     * Phaser reuses scene instances across stop/launch cycles — class-field
+     * initializers run only at construction. Without this reset, a second
+     * play-through starts with phase='done' from the previous run, the
+     * CR-05 guard blocks beginGame() and the countdown soft-locks at "1"
+     * (RESEARCH Pattern 3: reset ALL mutable state in init(), not create()).
+     */
+    init(): void {
+        this.deliveries           = 0;
+        this.perfectCount         = 0;
+        this.timeLeft             = GAME_DURATION_MS / 1000;
+        this.houseTargets         = [];
+        this.currentNeighborIndex = -1;
+        this.neighborVisible      = false;
+        this.neighborAppearAt     = 0;
+        this.tapBlinkTimer        = null;
+        this.countdownTimer       = null;
+        this.gameTimer            = null;
+        this.neighborTimer        = null;
+        this.neighborHideTimer    = null;
+        this.phase                = 'instructions';
+    }
+
     create(): void {
         const cx = this.scale.width  / 2;  // 240
 

@@ -45,6 +45,9 @@ export class TriggerSystem {
     /** Set of zone names already consumed (launched) during this visit. */
     private consumed = new Set<string>();
 
+    /** Zones waiting for the player to step OUT before they re-arm. */
+    private pendingExit = new Set<string>();
+
     /**
      * Check whether the player overlaps any trigger zone that has not yet
      * been consumed this visit.
@@ -54,6 +57,21 @@ export class TriggerSystem {
      * @returns The first matching TriggerHit, or null if no overlap.
      */
     checkZones(playerX: number, playerY: number): TriggerHit | null {
+        // Re-arm pending zones only once the player has left them — releasing
+        // while the player still stands inside instantly re-launches the scene.
+        for (const zone of this.pendingExit) {
+            const def = LEVEL_01_ZONES[zone];
+            if (!def) { this.pendingExit.delete(zone); continue; }
+            const { rect } = def;
+            const inside =
+                playerX >= rect.x && playerX <= rect.x + rect.w &&
+                playerY >= rect.y && playerY <= rect.y + rect.h;
+            if (!inside) {
+                this.pendingExit.delete(zone);
+                this.consumed.delete(zone);
+            }
+        }
+
         for (const [zone, def] of Object.entries(LEVEL_01_ZONES)) {
             if (this.consumed.has(zone)) continue;
             const { rect } = def;
@@ -80,8 +98,10 @@ export class TriggerSystem {
     /**
      * Release a consumed zone so the player can re-enter it after returning
      * from the sub-scene (e.g., replay mini-game). Call after overworld wakes.
+     * The zone only re-arms once the player has stepped OUT of it (checked
+     * in checkZones) — immediate release would re-launch on the next frame.
      */
     release(zone: string): void {
-        this.consumed.delete(zone);
+        this.pendingExit.add(zone);
     }
 }
