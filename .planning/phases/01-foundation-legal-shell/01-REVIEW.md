@@ -36,7 +36,23 @@ findings:
   warning: 6
   info: 4
   total: 14
-status: issues_found
+status: fixed
+fixed_at: 2026-06-12T07:10:00Z
+fixes:
+  CR-01: {fixed: yes, commit: 3885c57}
+  CR-02: {fixed: yes, commit: 48418ea}
+  CR-03: {fixed: yes, commit: a7362d9}
+  CR-04: {fixed: yes, commit: 593886c}
+  WR-01: {fixed: yes, commit: 4478312}
+  WR-02: {fixed: yes, commit: f12843f}
+  WR-03: {fixed: yes, commit: 3885c57}
+  WR-04: {fixed: yes, commit: 48418ea}
+  WR-05: {fixed: yes, commit: 3885c57}
+  WR-06: {fixed: yes, commit: 201d4de}
+  IN-01: {fixed: yes, commit: 33a19ca}
+  IN-02: {fixed: yes, commit: 053e0b1}
+  IN-03: {fixed: yes, commit: 7a266db}
+  IN-04: {fixed: yes, commit: a238d34}
 ---
 
 # Phase 1: Code Review Report
@@ -57,6 +73,8 @@ Phase 1 implements the foundation and legal shell: Phaser 4 scene scaffold (Boot
 ## Critical Issues
 
 ### CR-01: "Tap Anywhere" handler fires before legal-link pointerdown — legal navigation can be silently swallowed
+
+**Status:** fixed — commit `3885c57`
 
 **File:** `src/game/scenes/MainMenu.ts:98`
 
@@ -88,6 +106,8 @@ Alternatively, add a guard in the scene-level handler: check that the pointer is
 
 ### CR-02: No Content-Security-Policy header — XSS and data-injection surface is fully open
 
+**Status:** fixed — commit `48418ea`
+
 **File:** `public/_headers:1`
 
 **Issue:** `public/_headers` only sets `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`. There is no `Content-Security-Policy` header. For Phase 1 the CSP could be very tight because the app is a static canvas game with no inline scripts, no external XHR, and no eval usage. Without a CSP, any injected script (e.g., via a future DOM-manipulation bug, a compromised CDN resource, or a Cloudflare-level injection) runs with full origin authority. This matters especially because the Datenschutz page notes future Supabase and Brevo integrations — adding those in Phase 3 without a pre-existing CSP forces a retroactive header audit under time pressure.
@@ -108,6 +128,8 @@ Notes:
 ---
 
 ### CR-03: `localStorage` access in `AudioService` throws in Safari Private Browsing and storage-restricted contexts — crashes Boot scene
+
+**Status:** fixed — commit `a7362d9`
 
 **File:** `src/services/AudioService.ts:16-19`
 
@@ -138,6 +160,8 @@ export const AudioService = {
 ---
 
 ### CR-04: Audio persistence tests share module state across `describe` blocks — false-positive isolation
+
+**Status:** fixed — commit `593886c`
 
 **File:** `tests/audio-persistence.test.ts:41-127`
 
@@ -176,6 +200,8 @@ Additionally add an `afterEach(() => vi.resetModules())` to prevent cross-suite 
 
 ### WR-01: Boot.ts applies music mute via `this.sound.mute` but Settings uses `this.sound.setMute()` — API inconsistency that may not persist across scene transitions
 
+**Status:** fixed — commit `4478312`
+
 **File:** `src/game/scenes/Boot.ts:15` and `src/game/scenes/Settings.ts:31`
 
 **Issue:** `Boot.ts` sets `this.sound.mute = true` (direct property assignment) while `Settings.ts` calls `this.sound.setMute(!newState)`. In Phaser 4, `SoundManager.mute` is a property setter that invokes the same internal path as `setMute()`, so both are technically equivalent today. However, when `Settings.ts` scene is started and returns to `MainMenu`, the Sound Manager is shared globally; if Phaser 4 internally recreates or resets `mute` state on scene lifecycle hooks (documented as a known Phaser 3 pitfall), the Boot mute-setting is lost. Additionally, the mute state set in Boot is never re-read when re-entering Settings — `createToggle` reads `AudioService.getMusicEnabled()` for the *visual* initial state, and `this.sound.setMute(!newState)` for the *audio* initial state. If a user lands in Settings for the second time, the toggle visual will be correct (from localStorage) but the Phaser mute state depends on what happened in the previous scene, not on `localStorage`. These can diverge.
@@ -197,6 +223,8 @@ this.sound.setMute(!AudioService.getMusicEnabled());
 ---
 
 ### WR-02: Preloader always transitions to MainMenu even on load error — error state is displayed but game advances
+
+**Status:** fixed — commit `f12843f`
 
 **File:** `src/game/scenes/Preloader.ts:53-64`
 
@@ -229,6 +257,8 @@ create(): void {
 
 ### WR-03: Legal-link hit zones in MainMenu use `impressumText.width` before the text object is rendered — width is 0 at construction time
 
+**Status:** fixed — commit `3885c57`
+
 **File:** `src/game/scenes/MainMenu.ts:62-70` and `src/game/scenes/MainMenu.ts:78-86`
 
 **Issue:** `impressumText` and `datenschutzText` are created with `.setInteractive({ useHandCursor: true })` on lines 59 and 76, then immediately overridden with a custom `Rectangle` interactive zone on lines 62-70 and 78-86. The `Rectangle` is constructed using `-impressumText.width / 2` and `impressumText.width`. However, `this.add.text()` with a web font ('Press Start 2P') will have `width = 0` synchronously at `create()` time until the font loads — the font is loaded via CSS (Google Fonts) not as a Phaser-loaded bitmap font, so the WebFontLoader callback has not yet fired. The hit zone will therefore be `Rectangle(0, -22, 0, 44)` — a zero-width zone that is impossible to tap. The Settings scene handles this correctly with `Math.max(impressumText.width, 44)` but still has the same font-load-timing exposure.
@@ -253,6 +283,8 @@ impressumText.setInteractive(
 
 ### WR-04: `_headers` file has no trailing newline — Cloudflare Pages may silently drop the last header
 
+**Status:** fixed — commit `48418ea`
+
 **File:** `public/_headers:4`
 
 **Issue:** The raw bytes of `public/_headers` end with `strict-origin-when-cross-origin\r\n` — the file is 116 bytes and the final header is on line 4 with no blank line after. Cloudflare Pages' `_headers` parser documents that header rules must be terminated by a blank line before the next route rule, but more critically, some versions of the Cloudflare Pages builder have been observed to skip the last line of a `_headers` file when it lacks a trailing newline. In this file that last line is `Referrer-Policy: strict-origin-when-cross-origin`. If it is dropped silently, referrer-policy protection is absent in production with no local indication.
@@ -272,6 +304,8 @@ impressumText.setInteractive(
 
 ### WR-05: VirtualJoystick smoke-test import leaks a production dead-code bundle into every build
 
+**Status:** fixed — commit `3885c57`
+
 **File:** `src/game/scenes/MainMenu.ts:6-8`
 
 **Issue:** `phaser4-rex-plugins/plugins/virtualjoystick.js` is imported in `MainMenu.ts` solely as a bundler path-resolution check. The comment says "Do NOT instantiate — Phase 2 wires the actual joystick." However, Vite/Rollup *will* include this module in the production bundle because it is a static import (not a dynamic `import()`). This adds the full VirtualJoystick plugin weight to the Phase 1 production bundle unnecessarily. More importantly, this also means the `_rexCheck` assignment (line 8) exists in production JavaScript — a dead code path that a minifier may or may not elide depending on whether it detects the side-effect.
@@ -287,6 +321,8 @@ impressumText.setInteractive(
 ---
 
 ### WR-06: `datenschutz.html` back-link text is hardcoded English — i18n violation on a German legal page
+
+**Status:** fixed — commit `201d4de`
 
 **File:** `public/datenschutz.html:104`
 **File:** `public/impressum.html:35`
@@ -310,6 +346,8 @@ However the spec says the copy is `← BACK TO GAME` but the legal pages are ent
 ## Info
 
 ### IN-01: `public/locales/de/common.json` is a bare `{}` — parody-naming test passes trivially for the German locale
+
+**Status:** fixed — commit `33a19ca`
 
 **File:** `public/locales/de/common.json:1`
 **File:** `tests/parody-naming.test.ts:32-43`
@@ -339,6 +377,8 @@ it('de/common.json contains no forbidden real names in its values', async () => 
 
 ### IN-02: `tsconfig.json` disables `noUnusedLocals` and `noUnusedParameters` — suppresses compiler enforcement of the i18n key contract
 
+**Status:** fixed — commit `053e0b1`
+
 **File:** `tsconfig.json:14-15`
 
 **Issue:** `"noUnusedLocals": false` and `"noUnusedParameters": false` are explicitly set to off. This means the `_rexCheck` dead-code variable in `MainMenu.ts` (see WR-05) and any future unused imports/parameters will pass `tsc --noEmit` silently. Given the phase constraint that all player-facing strings must go through `t(key)`, enabling `noUnusedLocals` would catch cases where a developer imports `t` and accidentally uses a literal string instead.
@@ -353,6 +393,8 @@ it('de/common.json contains no forbidden real names in its values', async () => 
 ---
 
 ### IN-03: `manifest.webmanifest` and `vite/config.prod.mjs` duplicate the PWA manifest — risk of divergence
+
+**Status:** fixed — commit `7a266db`
 
 **File:** `public/manifest.webmanifest`
 **File:** `vite/config.prod.mjs:28-46`
@@ -374,6 +416,8 @@ Alternatively, move the authoritative manifest into the plugin config and delete
 ---
 
 ### IN-04: `Settings.ts:88` has a hardcoded `'← BACK'` string — i18n violation
+
+**Status:** fixed — commit `a238d34`
 
 **File:** `src/game/scenes/Settings.ts:88`
 
