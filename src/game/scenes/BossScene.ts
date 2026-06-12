@@ -20,6 +20,10 @@ import { Scene } from 'phaser';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { t } from '../../services/i18n';
 import { prepareShareCard } from '../../services/ShareService';
+// Static import eliminates the async create() data race (CR-02 fix):
+// Phaser does not await async create(); if we used a dynamic import()
+// here, update() could fire before dialogueData was populated.
+import dialogueDataRaw from '../../data/dialogue/en/level-01.json';
 
 const TOTAL_DECLINES   = 3;   // declines needed to fill patience meter + trigger panic
 const PANIC_DURATION_S = 3;   // seconds for the panic-phase timer
@@ -75,16 +79,11 @@ export class BossScene extends Scene {
         super('BossScene');
     }
 
-    async create(): Promise<void> {
+    create(): void {
         const cx = this.scale.width  / 2;  // 240
 
-        // ── Load boss dialogue data ─────────────────────────────────────────
-        try {
-            const mod = await import('../../data/dialogue/en/level-01.json');
-            this.dialogueData = mod.default as Record<string, unknown>;
-        } catch {
-            this.dialogueData = {};
-        }
+        // ── Load boss dialogue data (statically imported — CR-02 fix) ──────
+        this.dialogueData = dialogueDataRaw as Record<string, unknown>;
 
         // ── Full-canvas phase tint (depth 0, behind all sprites) ──────────
         this.tintRect = this.add.rectangle(0, 0, 480, 854, 0xff4444)
@@ -327,10 +326,12 @@ export class BossScene extends Scene {
         this.acceptButton.setVisible(true).setInteractive({ useHandCursor: true });
         this.acceptLabel.setVisible(true);
 
-        // Start 3s countdown
+        // Start 3s countdown.
+        // CR-06 fix: Phaser repeat:N fires N+1 times (first trigger + N repeats).
+        // Using repeat:PANIC_DURATION_S-1 fires exactly PANIC_DURATION_S times.
         this.panicTimer = this.time.addEvent({
             delay: 1000,
-            repeat: PANIC_DURATION_S,
+            repeat: PANIC_DURATION_S - 1,
             callback: () => {
                 this.panicCountdown -= 1;
                 this.timerText.setText(t('boss.timer').replace('{n}', String(Math.max(0, this.panicCountdown))));
