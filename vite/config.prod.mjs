@@ -25,25 +25,11 @@ export default defineConfig({
     plugins: [
         VitePWA({
             registerType: 'autoUpdate',
-            manifest: {
-                name: 'Barren Wuffett',
-                short_name: 'BarrenW',
-                display: 'standalone',
-                background_color: '#1a1a2e',
-                theme_color: '#1a1a2e',
-                icons: [
-                    {
-                        src: '/favicon.png',
-                        sizes: '192x192',
-                        type: 'image/png'
-                    },
-                    {
-                        src: '/icon-512.png',
-                        sizes: '512x512',
-                        type: 'image/png'
-                    }
-                ]
-            }
+            // Use public/manifest.webmanifest as the single source of truth.
+            // Setting manifest: false prevents vite-plugin-pwa from generating a
+            // competing manifest that would shadow the static file and lose
+            // orientation: "portrait" and start_url fields.
+            manifest: false,
             // workbox globPatterns deferred to Phase 4 — Phase 1 uses manifest stub only
         })
     ]
