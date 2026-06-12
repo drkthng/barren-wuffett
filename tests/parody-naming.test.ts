@@ -40,6 +40,16 @@ describe('parody-naming compliance (LEGL-02)', () => {
                 expect(lower, `Forbidden name "${forbidden}" found in de locale value: "${value}"`).not.toContain(forbidden);
             }
         }
+
+        // Phase 1: de/common.json is intentionally empty ({}) so values is [].
+        // When German strings are added, the loop above will fire automatically.
+        // Guard: assert that at minimum the en locale (which shares the same
+        // FORBIDDEN check above) is non-empty so the combined test always exercises
+        // at least one real value check.
+        // (de values length assertion is intentionally deferred to Phase 2)
+        const enMod = await import('../public/locales/en/common.json', { assert: { type: 'json' } });
+        const enValues = Object.values(enMod.default as Record<string, string>);
+        expect(enValues.length, 'en/common.json must have at least one value to keep parody checks meaningful').toBeGreaterThan(0);
     });
 
     it('no forbidden names appear in either locale (combined check)', async () => {
