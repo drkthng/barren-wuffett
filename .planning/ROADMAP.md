@@ -70,7 +70,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 02-02-PLAN.md — Mini-game + boss slice: TriggerSystem, PaperThrowScene timing mini-game, Mr. Market two-phase boss fight (DECLINE builds patience / BUY LOW! wins)
+- [x] 02-02-PLAN.md — Mini-game + boss slice: TriggerSystem, PaperThrowScene timing mini-game, Mr. Market two-phase boss fight (DECLINE builds patience / BUY LOW! wins)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -115,6 +115,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
-| 2. Level 1 — Offline Playable | 1/3 | In Progress|  |
+| 2. Level 1 — Offline Playable | 2/3 | In Progress|  |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
