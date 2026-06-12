@@ -1,11 +1,5 @@
 import { Scene } from 'phaser';
 import { t } from '../../services/i18n';
-// Rex VirtualJoystick import path smoke test (RESEARCH Pitfall 4)
-// Confirms the import path resolves in a production build before Phase 2 depends on it.
-// Do NOT instantiate — Phase 2 wires the actual joystick.
-import VirtualJoystick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _rexCheck: typeof VirtualJoystick = VirtualJoystick; // bundler must resolve this
 
 export class MainMenu extends Scene {
     private blinkTimer: Phaser.Time.TimerEvent | null = null;
@@ -15,7 +9,7 @@ export class MainMenu extends Scene {
     }
 
     create(): void {
-        const { width, height } = this.scale;
+        const { width } = this.scale;
         const cx = width / 2;
 
         // Game logo (loaded in Preloader)
@@ -59,11 +53,12 @@ export class MainMenu extends Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         // Extend impressum hit area to 44px tall minimum (WCAG 2.5.5)
+        // Math.max(..., 80) guards against zero-width before web font loads
         impressumText.setInteractive(
             new Phaser.Geom.Rectangle(
-                -impressumText.width / 2,
+                -Math.max(impressumText.width, 80) / 2,
                 -22,
-                impressumText.width,
+                Math.max(impressumText.width, 80),
                 44
             ),
             Phaser.Geom.Rectangle.Contains
@@ -75,11 +70,12 @@ export class MainMenu extends Scene {
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
+        // Math.max(..., 80) guards against zero-width before web font loads
         datenschutzText.setInteractive(
             new Phaser.Geom.Rectangle(
-                -datenschutzText.width / 2,
+                -Math.max(datenschutzText.width, 80) / 2,
                 -22,
-                datenschutzText.width,
+                Math.max(datenschutzText.width, 80),
                 44
             ),
             Phaser.Geom.Rectangle.Contains
@@ -95,7 +91,18 @@ export class MainMenu extends Scene {
         });
 
         // TAP TO START handler — iOS audio unlock gate (RESEARCH Pattern 2)
-        this.input.once('pointerdown', () => {
+        // Bound to tapText object (not the global input manager) so legal-link
+        // taps on IMPRESSUM / PRIVACY POLICY do not collide with this handler.
+        tapText.setInteractive(
+            new Phaser.Geom.Rectangle(
+                -tapText.width / 2 - 20,
+                -22,
+                tapText.width + 40,
+                44
+            ),
+            Phaser.Geom.Rectangle.Contains
+        );
+        tapText.once('pointerdown', () => {
             this.sound.unlock();
             this.scene.start('Settings');
         });
