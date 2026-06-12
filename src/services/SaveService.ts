@@ -47,9 +47,9 @@ function migrate(raw: Partial<SaveState>): SaveState {
 export const SaveService = {
     async save(state: SaveState): Promise<void> {
         try {
-            state.version   = SAVE_VERSION;
-            state.updatedAt = Date.now();
-            await set('slot_1', state, store);
+            // IN-02 fix: write a shallow copy so we don't mutate the caller's object
+            const toWrite: SaveState = { ...state, version: SAVE_VERSION, updatedAt: Date.now() };
+            await set('slot_1', toWrite, store);
         } catch {
             // IndexedDB unavailable (private browsing, quota exceeded) — ignore
         }
@@ -57,10 +57,17 @@ export const SaveService = {
 
     async load(): Promise<SaveState | undefined> {
         try {
-            const raw = await get<SaveState>('slot_1', store);
-            if (!raw) return undefined;
-            if (raw.version < SAVE_VERSION) return migrate(raw);
-            return raw;
+            const raw = await get<unknown>('slot_1', store);
+            if (!raw || typeof raw !== 'object') return undefined;
+            // CR-07 fix: always run migrate() regardless of version so that
+            // a save with version===SAVE_VERSION but missing required fields
+            // (corrupted write) still gets its missing fields filled with
+            // safe defaults — never trust the raw shape unconditionally.
+            const partial = raw as Partial<SaveState>;
+            if (typeof partial.version !== 'number' || partial.version < SAVE_VERSION) {
+                return migrate(partial);
+            }
+            return migrate(partial); // validate shape even for current version
         } catch {
             return undefined;
         }
