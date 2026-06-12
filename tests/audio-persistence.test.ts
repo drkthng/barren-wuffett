@@ -10,8 +10,12 @@
  * vitest environment: node — localStorage does not exist in Node.js.
  * We set up a minimal localStorage mock before each test group and
  * restore globals afterward.
+ *
+ * vi.resetModules() is called in every beforeEach to flush the module
+ * registry so each test gets a fresh AudioService import against the
+ * freshly-installed localStorage mock, preventing cross-test contamination.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // ── localStorage mock ───────────────────────────────────────────────────────
 // Node has no localStorage. Provide a minimal synchronous mock that the
@@ -39,8 +43,10 @@ function installLocalStorage(): Storage {
 
 describe('AudioService — default state (no prior localStorage)', () => {
     beforeEach(() => {
+        vi.resetModules();
         installLocalStorage();
     });
+    afterEach(() => vi.resetModules());
 
     it('getMusicEnabled() returns true when nothing is stored', async () => {
         // Fresh localStorage — no key set
@@ -56,8 +62,10 @@ describe('AudioService — default state (no prior localStorage)', () => {
 
 describe('AudioService — persist off and read back (same session)', () => {
     beforeEach(() => {
+        vi.resetModules();
         installLocalStorage();
     });
+    afterEach(() => vi.resetModules());
 
     it('setMusicEnabled(false) then getMusicEnabled() returns false', async () => {
         const { AudioService } = await import('../src/services/AudioService.js');
@@ -76,8 +84,10 @@ describe('AudioService — survives simulated reload (fresh read from same store
     let storage: Storage;
 
     beforeEach(() => {
+        vi.resetModules();
         storage = installLocalStorage();
     });
+    afterEach(() => vi.resetModules());
 
     it('music state persists: set false in session 1, read false in session 2', async () => {
         const { AudioService } = await import('../src/services/AudioService.js');
@@ -85,9 +95,11 @@ describe('AudioService — survives simulated reload (fresh read from same store
         AudioService.setMusicEnabled(false);
         expect(storage.getItem('bw_music_on')).toBe('false');
 
-        // Session 2: same store, re-read (simulates page reload — the key is still there)
-        // AudioService reads from localStorage on every call, so a re-read IS a reload simulation
-        expect(AudioService.getMusicEnabled()).toBe(false);
+        // Session 2: re-import fresh module against the same store to simulate
+        // a page reload (AudioService reads localStorage on every call)
+        vi.resetModules();
+        const { AudioService: AudioService2 } = await import('../src/services/AudioService.js');
+        expect(AudioService2.getMusicEnabled()).toBe(false);
     });
 
     it('music re-enabled: set true restores enabled state', async () => {
@@ -101,8 +113,10 @@ describe('AudioService — survives simulated reload (fresh read from same store
 
 describe('AudioService — SFX independence from Music', () => {
     beforeEach(() => {
+        vi.resetModules();
         installLocalStorage();
     });
+    afterEach(() => vi.resetModules());
 
     it('disabling music does not disable SFX', async () => {
         const { AudioService } = await import('../src/services/AudioService.js');
@@ -122,5 +136,36 @@ describe('AudioService — SFX independence from Music', () => {
         AudioService.setSfxEnabled(false);
         expect(AudioService.getMusicEnabled()).toBe(false);
         expect(AudioService.getSfxEnabled()).toBe(false);
+    });
+});
+
+describe('AudioService — Safari Private Browsing (localStorage throws)', () => {
+    beforeEach(() => {
+        vi.resetModules();
+        // Simulate Private Browsing: localStorage exists but throws SecurityError
+        (globalThis as Record<string, unknown>).localStorage = {
+            getItem: () => { throw new DOMException('Access denied', 'SecurityError'); },
+            setItem: () => { throw new DOMException('Access denied', 'SecurityError'); },
+            removeItem: () => { throw new DOMException('Access denied', 'SecurityError'); },
+            clear: () => { throw new DOMException('Access denied', 'SecurityError'); },
+            length: 0,
+            key: () => null,
+        } as unknown as Storage;
+    });
+    afterEach(() => vi.resetModules());
+
+    it('getMusicEnabled() returns true (default) when localStorage throws', async () => {
+        const { AudioService } = await import('../src/services/AudioService.js');
+        expect(AudioService.getMusicEnabled()).toBe(true);
+    });
+
+    it('getSfxEnabled() returns true (default) when localStorage throws', async () => {
+        const { AudioService } = await import('../src/services/AudioService.js');
+        expect(AudioService.getSfxEnabled()).toBe(true);
+    });
+
+    it('setMusicEnabled(false) does not throw when localStorage throws', async () => {
+        const { AudioService } = await import('../src/services/AudioService.js');
+        expect(() => AudioService.setMusicEnabled(false)).not.toThrow();
     });
 });
