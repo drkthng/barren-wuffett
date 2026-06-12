@@ -66,7 +66,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Playable overworld slice: GameEvents bus, wired InputBus (joystick+keyboard), versioned SaveService (IndexedDB), level-01 data + dialogue, Player/NPC, OverworldScene + UIScene (HUD, dialogue, pause), dog-patrol patience mechanic, Wave 0 tests
+- [x] 02-01-PLAN.md — Playable overworld slice: GameEvents bus, wired InputBus (joystick+keyboard), versioned SaveService (IndexedDB), level-01 data + dialogue, Player/NPC, OverworldScene + UIScene (HUD, dialogue, pause), dog-patrol patience mechanic, Wave 0 tests
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -115,6 +115,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
-| 2. Level 1 — Offline Playable | 0/3 | Planned | - |
+| 2. Level 1 — Offline Playable | 1/3 | In Progress|  |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
