@@ -8,11 +8,12 @@
  *   - Call InputBus.update() + player.update() each tick
  *   - Show/hide TALK prompts by NPC proximity
  *   - Emit DIALOGUE_START on INTERACT-in-range
+ *   - TriggerSystem drives enterMiniGame / enterBoss handoff (Plan 02-02)
  *   - Autosave on checkpoint events + HIDDEN
  *   - Launch UIScene as parallel overlay
  *
- * Pattern: PATTERNS.md OverworldScene.ts + RESEARCH Patterns 1/2/7
- * Pitfalls: 2 (sleep input cleanup), 6 (joystick safe area), 7 (word-wrap)
+ * Pattern: PATTERNS.md OverworldScene.ts + RESEARCH Patterns 1/2/3/7
+ * Pitfalls: 1 (no sync read of launched scene), 2 (sleep input cleanup), 6 (joystick safe area)
  */
 import { Scene } from 'phaser';
 import { InputBus } from '../../input/InputBus';
@@ -23,6 +24,7 @@ import { Player } from '../../entities/Player';
 import { NPC } from '../../entities/NPC';
 import { MAP_DATA } from '../../data/levels/level-01';
 import { t } from '../../services/i18n';
+import { TriggerSystem } from '../../systems/TriggerSystem';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
@@ -38,7 +40,7 @@ const DOG_PERIOD  = 4000;  // 4-second full cycle
 const DOG_GAP_MS  = 1500;  // gap window at far end (patience reward)
 const PATIENCE_BONUS_COINS = 5;
 
-// Boss trigger zone (tile row 22-24, center column)
+// Boss trigger zone (tile row 22-24, center column) — kept for legacy proximity check
 const BOSS_ZONE_X = 224;
 const BOSS_ZONE_Y = 720;
 const BOSS_ZONE_R = 48;
@@ -66,6 +68,10 @@ export class OverworldScene extends Scene {
     private dogDir = 1;
     private dogGapActive = false;
     private bossZoneVisited = false;
+
+    // Trigger system (Plan 02-02)
+    private triggerSystem!: TriggerSystem;
+    private inHandoff = false;  // guards against double-trigger during scene launch queue
 
     // State
     private coins = 0;
@@ -113,6 +119,9 @@ export class OverworldScene extends Scene {
         // Camera follows player
         this.cameras.main.setBounds(0, 0, MAP_DATA[0].length * 32, MAP_DATA.length * 32);
         this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
+
+        // ── TriggerSystem (Plan 02-02) ─────────────────────────────────────
+        this.triggerSystem = new TriggerSystem();
 
         // ── NPCs ───────────────────────────────────────────────────────────
         for (const def of NPC_DEFS) {
@@ -179,11 +188,11 @@ export class OverworldScene extends Scene {
         });
 
         // Boss zone entry — first-time autosave + scene trigger
-        // (full boss trigger wired in Plan 02; seam established here)
+        // (full boss trigger wired in Plan 02-02 via TriggerSystem)
     }
 
     update(): void {
-        if (this.inDialogue) return;
+        if (this.inDialogue || this.inHandoff) return;
 
         // Build merged cursor stub (WASD + arrow keys)
         const mergedCursors = this.buildMergedCursors();
@@ -205,7 +214,7 @@ export class OverworldScene extends Scene {
             if (inRange) this.currentNpcInRange = npc;
         }
 
-        // Boss zone proximity check (first visit autosave)
+        // Boss zone proximity check (first visit autosave — legacy path)
         if (!this.bossZoneVisited) {
             const bx = this.player.sprite.x - BOSS_ZONE_X;
             const by = this.player.sprite.y - BOSS_ZONE_Y;
@@ -215,6 +224,86 @@ export class OverworldScene extends Scene {
                 void SaveService.save(this.buildSaveState());
             }
         }
+
+        // ── TriggerSystem zone check ───────────────────────────────────────
+        const hit = this.triggerSystem.checkZones(
+            this.player.sprite.x,
+            this.player.sprite.y,
+        );
+        if (hit) {
+            this.triggerSystem.consume(hit.zone);
+            if (hit.target === 'PaperThrowScene') {
+                this.enterMiniGame('PaperThrowScene', { zone: hit.zone });
+            } else if (hit.target === 'BossScene') {
+                this.enterBoss();
+            }
+        }
+    }
+
+    // ── Scene handoff: mini-game ─────────────────────────────────────────
+
+    /**
+     * Sleep the overworld, launch a mini-game scene, listen for MINIGAME_COMPLETE
+     * then wake the overworld and apply results (RESEARCH Pattern 3).
+     * Pitfall 1: never read the launched scene synchronously.
+     * Pitfall 2: input cleanup handled by PaperThrowScene.shutdown().
+     */
+    private enterMiniGame(sceneKey: string, data: object): void {
+        this.inHandoff = true;
+        this.scene.sleep();
+        this.scene.launch(sceneKey, data);
+
+        GameEvents.once(Events.MINIGAME_COMPLETE, (result: { score: number; perfect: number }) => {
+            this.scene.stop(sceneKey);
+            this.scene.wake();
+            this.inHandoff = false;
+
+            // Apply coin reward: 2 coins per delivery + 3 bonus per perfect
+            const earned = result.score * 2 + result.perfect * 3;
+            this.coins += earned;
+
+            // Re-allow re-entry after returning from mini-game
+            this.triggerSystem.release('minigame_trigger');
+
+            // Save checkpoint
+            void SaveService.save(this.buildSaveState());
+        });
+    }
+
+    // ── Scene handoff: boss ──────────────────────────────────────────────
+
+    /**
+     * Sleep the overworld, launch BossScene, listen for BOSS_DEFEATED
+     * then wake, set defeat flag, forward event to UIScene, save.
+     * Pitfall 1: never read BossScene state synchronously.
+     */
+    private enterBoss(): void {
+        this.inHandoff = true;
+
+        // Save first-entry checkpoint before sleeping
+        this.flags['boss_zone_visited'] = true;
+        void SaveService.save(this.buildSaveState());
+
+        this.scene.sleep();
+        this.scene.launch('BossScene');
+
+        GameEvents.once(Events.BOSS_DEFEATED, (result: { patienceBonus: number }) => {
+            this.scene.stop('BossScene');
+            this.scene.wake();
+            this.inHandoff = false;
+
+            // Mark boss defeated and apply patience bonus coins
+            this.flags['boss_01_defeated'] = true;
+            this.coins += (result?.patienceBonus ?? 0);
+
+            // Save checkpoint
+            void SaveService.save(this.buildSaveState());
+
+            // Forward BOSS_DEFEATED to UIScene so it can show LEVEL_COMPLETE
+            // (UIScene already listens on GameEvents.on(Events.BOSS_DEFEATED))
+            // Re-emit so UIScene state machine picks it up after wake
+            GameEvents.emit(Events.BOSS_DEFEATED, result);
+        });
     }
 
     /** Handle INTERACT action (Space / Enter / on-screen TALK button). */
