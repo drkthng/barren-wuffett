@@ -15,6 +15,10 @@ const config: Phaser.Types.Core.GameConfig = {
     backgroundColor: '#1a1a2e',
     pixelArt: true,
     antialias: false,
+    physics: {
+        default: 'arcade',
+        arcade: { debug: false },
+    },
     scale: {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,

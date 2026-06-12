@@ -36,12 +36,14 @@ export class MainMenu extends Scene {
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5);
 
-        // 1Hz blink (500ms on, 500ms off)
+        // 1Hz blink (500ms on, 500ms dim) — alpha, NOT setVisible: invisible
+        // GameObjects receive no input in Phaser, which made the CTA deaf
+        // half the time.
         this.blinkTimer = this.time.addEvent({
             delay: 500,
             loop: true,
             callback: () => {
-                tapText.setVisible(!tapText.visible);
+                tapText.setAlpha(tapText.alpha === 1 ? 0.3 : 1);
             }
         });
 
@@ -102,7 +104,12 @@ export class MainMenu extends Scene {
             ),
             Phaser.Geom.Rectangle.Contains
         );
-        tapText.once('pointerdown', () => {
+        // 'on' + guard flag instead of 'once': a thrown error in a once-handler
+        // permanently kills the button; the flag still prevents double-start.
+        let started = false;
+        tapText.on('pointerdown', () => {
+            if (started) return;
+            started = true;
             this.sound.unlock();
             this.scene.start('OverworldScene');
         });
