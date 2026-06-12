@@ -2,6 +2,8 @@ import { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 
 export class Preloader extends Scene {
+    private hasLoadError = false;
+
     constructor() {
         super('Preloader');
     }
@@ -49,8 +51,9 @@ export class Preloader extends Scene {
             fill.width = 300 * value;
         });
 
-        // Error handler
+        // Error handler — set flag to prevent scene transition in create()
         this.load.on('loaderror', () => {
+            this.hasLoadError = true;
             loadingLabel.setVisible(false);
             errorText.setVisible(true);
         });
@@ -60,6 +63,10 @@ export class Preloader extends Scene {
     }
 
     create(): void {
-        this.scene.start('MainMenu');
+        // Guard: do not advance to MainMenu if a load error occurred.
+        // The error text remains visible; user can refresh the page.
+        if (!this.hasLoadError) {
+            this.scene.start('MainMenu');
+        }
     }
 }
