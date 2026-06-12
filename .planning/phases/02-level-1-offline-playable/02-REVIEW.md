@@ -37,6 +37,26 @@ findings:
   info: 4
   total: 19
 status: issues_found
+fixes:
+  CR-01: { fixed: yes, commit: 98ad9a8 }
+  CR-02: { fixed: yes, commit: 763b410 }
+  CR-03: { fixed: yes, commit: "776f756 + 98ad9a8" }
+  CR-04: { fixed: yes, commit: 776f756 }
+  CR-05: { fixed: yes, commit: db151db }
+  CR-06: { fixed: yes, commit: 763b410 }
+  CR-07: { fixed: yes, commit: "07da763 + 40728d6" }
+  CR-08: { fixed: yes, commit: "98ad9a8 + 40728d6" }
+  WR-01: { fixed: yes, commit: 9ce0958 }
+  WR-02: { fixed: yes, commit: 776f756 }
+  WR-03: { fixed: yes, commit: 776f756 }
+  WR-04: { fixed: yes, commit: d0e2ad4 }
+  WR-05: { fixed: yes, commit: 98ad9a8 }
+  WR-06: { fixed: yes, commit: 776f756 }
+  WR-07: { fixed: yes, commit: "776f756 + 40e8969" }
+  IN-01: { fixed: yes, commit: 40e8969 }
+  IN-02: { fixed: yes, commit: 07da763 }
+  IN-03: { fixed: skipped, reason: "tracking delivered houses is a gameplay scope change; current random pick is functional for MVP; deferred to gameplay polish iteration" }
+  IN-04: { fixed: skipped, reason: "test rename/improvement is documentation-only; the smoke test still provides value as-is; deferred to test polish iteration" }
 ---
 
 # Phase 02: Code Review Report
