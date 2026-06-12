@@ -103,6 +103,65 @@ describe('SaveService — schema migration (v0 → v1)', () => {
     });
 });
 
+describe('SaveService — CR-08 regression: journalUnlocked persists through save/load', () => {
+    beforeEach(() => {
+        vi.resetModules();
+        installFakeIndexedDB();
+    });
+    afterEach(() => vi.resetModules());
+
+    it('journalUnlocked array is preserved through save() and load()', async () => {
+        const { SaveService } = await import('../src/services/SaveService.js');
+        const state = {
+            version:         0,
+            updatedAt:       0,
+            level:           'level-01',
+            position:        { x: 96, y: 96 },
+            flags:           { boss_01_defeated: true },
+            coins:           30,
+            journalUnlocked: ['journal_01_patience'],
+        };
+        await SaveService.save(state);
+        const loaded = await SaveService.load();
+        expect(loaded?.journalUnlocked).toEqual(['journal_01_patience']);
+    });
+
+    it('journalUnlocked is [] when saved as empty and remains []', async () => {
+        const { SaveService } = await import('../src/services/SaveService.js');
+        const state = {
+            version:         0,
+            updatedAt:       0,
+            level:           'level-01',
+            position:        { x: 96, y: 96 },
+            flags:           {},
+            coins:           0,
+            journalUnlocked: [],
+        };
+        await SaveService.save(state);
+        const loaded = await SaveService.load();
+        expect(loaded?.journalUnlocked).toEqual([]);
+    });
+
+    it('CR-07: load() returns safe defaults when a field is missing (corrupted save)', async () => {
+        // Simulate a corrupted save: version===1 but missing required fields
+        const { createStore, set } = await import('idb-keyval');
+        const oldStore = createStore('bw-saves', 'saves');
+        await set('slot_1', {
+            version: 1,
+            // Missing: level, position, flags, coins, journalUnlocked
+        }, oldStore);
+
+        const { SaveService } = await import('../src/services/SaveService.js');
+        const loaded = await SaveService.load();
+        expect(loaded).toBeDefined();
+        expect(loaded?.level).toBe('level-01');
+        expect(loaded?.position).toEqual({ x: 96, y: 96 });
+        expect(loaded?.flags).toEqual({});
+        expect(loaded?.coins).toBe(0);
+        expect(loaded?.journalUnlocked).toEqual([]);
+    });
+});
+
 describe('SaveService — SAVE-02 static proof (no backend calls)', () => {
     it('SaveService source contains no supabase import or fetch call', () => {
         const sourcePath = resolve(__dirname, '../src/services/SaveService.ts');
