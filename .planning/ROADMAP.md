@@ -45,7 +45,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Security headers, Cloudflare Pages deploy (public URL), Geltungssatz human-action gate before public sharing
+- [x] 01-03-PLAN.md — Security headers, Cloudflare Pages deploy (public URL live); Geltungssatz deferred by user 2026-06-12 (open legal gate — public sharing blocked)
 
 ### Phase 2: Level 1 — Offline Playable
 
@@ -102,7 +102,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Legal Shell | 2/3 | In Progress|  |
+| 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
 | 2. Level 1 — Offline Playable | 0/TBD | Not started | - |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |

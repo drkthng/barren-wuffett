@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md — Settings scene, 23/23 tests, legal pages live
-last_updated: "2026-06-11T19:06:43.463Z"
-last_activity: 2026-06-11 -- Phase 01 execution started
+stopped_at: Completed 01-03-PLAN.md — Tasks 1-2 done (deploy live); Task 3 (Geltungssatz) deferred by user 2026-06-12
+last_updated: "2026-06-12T00:00:00.000Z"
+last_activity: 2026-06-12 -- Phase 01 plan 3 closed with Geltungssatz deferred by user
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 01 (Foundation & Legal Shell) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-06-11 -- Phase 01 execution started
+Phase: 01 (Foundation & Legal Shell) — EXECUTING (Geltungssatz gate open)
+Plan: 3 of 3 executed (Task 3 deferred by user 2026-06-12)
+Status: Phase 01 plans complete; one open legal gate before phase sign-off
+Last activity: 2026-06-12 -- Phase 01 plan 3 closed with Geltungssatz deferred by user
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-foundation-legal-shell P01-01 | 11min | 3 tasks | 27 files |
 | Phase 01 P01-02 | 8min | 2 tasks | 7 files |
+| Phase 01 P01-03 | ~20min | 2/3 tasks (1 deferred) | 4 files |
 
 ## Accumulated Context
 
@@ -82,15 +83,16 @@ Recent decisions affecting current work:
 - Research flags phaser4-rex-plugins package name as unverified on npm — verify before Phase 1 scaffolding
 - Legal counsel recommended for Persoenlichkeitsrecht, UWG Section 7, and BaFin finfluencer rules before first real subscriber
 - eToro/wikifolio affiliate T&Cs need direct verification before Journal portfolio links go live
+- OPEN LEGAL GATE: Geltungssatz on compoundingknowledge.com/impressum pending (deferred 2026-06-12) — do NOT share game URL publicly; remind user after every step
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| legal | Geltungssatz: add sentence to compoundingknowledge.com/impressum naming https://barren-wuffett.pages.dev; resume signal "geltungssatz-confirmed" | OPEN — blocks public sharing of game URL | 2026-06-12 (user: "Geltungssatz machen wir später!") |
 
 ## Session Continuity
 
-Last session: 2026-06-11T19:06:43.446Z
-Stopped at: Completed 01-02-PLAN.md — Settings scene, 23/23 tests, legal pages live
+Last session: 2026-06-12T00:00:00.000Z
+Stopped at: Completed 01-03-PLAN.md (Tasks 1-2); Task 3 (Geltungssatz) deferred by user — resume when user says "geltungssatz-confirmed"
 Resume file: None
