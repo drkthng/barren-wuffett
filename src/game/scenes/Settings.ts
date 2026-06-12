@@ -89,7 +89,7 @@ export class Settings extends Scene {
         });
 
         // ── Back navigation (tap anywhere below toggle rows) ────────────────
-        const backText = this.add.text(cx, 780, '← BACK', {
+        const backText = this.add.text(cx, 780, t('nav.back'), {
             fontSize: '8px',
             color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
