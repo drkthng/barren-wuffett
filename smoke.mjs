@@ -1,0 +1,23 @@
+import { chromium } from 'playwright';
+import { preview } from 'vite';
+const server = await preview({ configFile: 'vite/config.prod.mjs', preview: { port: 4173 } });
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 412, height: 915 } });
+const errors = [];
+page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`[console.${m.type()}] ${m.text()}`); });
+page.on('pageerror', e => errors.push(`[pageerror] ${e.message}`));
+page.on('requestfailed', r => errors.push(`[requestfailed] ${r.url()} ${r.failure()?.errorText}`));
+await page.goto('http://localhost:4173/');
+await page.waitForTimeout(8000);
+const canvasBox = await page.evaluate(() => {
+  const c = document.querySelector('canvas');
+  if (!c) return null;
+  const r = c.getBoundingClientRect();
+  return { x: r.x, y: r.y, w: r.width, h: r.height, winW: window.innerWidth };
+});
+console.log('CANVAS:', JSON.stringify(canvasBox));
+console.log('ERRORS:', errors.length ? '\n' + errors.join('\n') : 'none');
+await page.screenshot({ path: '/tmp/smoke.png' });
+await browser.close();
+await server.close();
+process.exit(0);

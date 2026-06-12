@@ -17,6 +17,15 @@ export class Boot extends Scene {
         // Store for later use (SFX muting is scene-level in Phaser 4)
         this.registry.set('sfxEnabled', sfxEnabled);
 
-        this.scene.start('Preloader');
+        // Canvas text snapshots the font at creation time — wait for the self-hosted
+        // pixel font (capped at 1.5s so a failed font load never blocks the game).
+        const fontReady = document.fonts
+            ? document.fonts.load('16px "Press Start 2P"').catch(() => undefined)
+            : Promise.resolve(undefined);
+        const timeout = new Promise((resolve) => setTimeout(resolve, 1500));
+
+        Promise.race([fontReady, timeout]).then(() => {
+            this.scene.start('Preloader');
+        });
     }
 }

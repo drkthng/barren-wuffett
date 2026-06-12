@@ -9,7 +9,7 @@
  *
  * Pattern: PATTERNS.md HUD.ts + UI-SPEC Component 1
  */
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { t } from '../services/i18n';
 import { GameEvents, Events } from '../events/GameEvents';
 

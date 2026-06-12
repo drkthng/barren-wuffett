@@ -1,19 +1,20 @@
 /* Barren Wuffett — global CSS shell
    All in-game UI is rendered by Phaser (WebGL canvas).
-   This file covers the HTML wrapper only. */
+   This file covers the HTML wrapper only.
+   Layout/centering rules live inline in index.html (loaded before Phaser boots). */
+
+/* Self-hosted retro font (CSP: font-src 'self') — used by all Phaser text styles */
+@font-face {
+    font-family: 'Press Start 2P';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/press-start-2p-latin.woff2') format('woff2');
+}
 
 /* Canvas pixel-art rendering + touch prevention */
 #game-container canvas {
     touch-action: none;           /* prevents 300ms click delay + pinch-zoom */
     image-rendering: pixelated;  /* preserves pixel-art crispness on high-DPI screens */
     display: block;
-}
-
-/* iOS notch / Dynamic Island safe-area */
-body {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right)
-             env(safe-area-inset-bottom) env(safe-area-inset-left);
-    background-color: #1a1a2e;
-    margin: 0;
-    overflow: hidden;
 }

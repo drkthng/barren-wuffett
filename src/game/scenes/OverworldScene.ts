@@ -15,7 +15,7 @@
  * Pattern: PATTERNS.md OverworldScene.ts + RESEARCH Patterns 1/2/3/7
  * Pitfalls: 1 (no sync read of launched scene), 2 (sleep input cleanup), 6 (joystick safe area)
  */
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { InputBus } from '../../input/InputBus';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { SaveService } from '../../services/SaveService';

@@ -1,4 +1,4 @@
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 
 export class MainMenu extends Scene {

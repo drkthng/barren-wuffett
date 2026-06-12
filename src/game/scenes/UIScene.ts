@@ -14,7 +14,7 @@
  *
  * Pattern: PATTERNS.md UIScene.ts + UI-SPEC UIScene contract
  */
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { HUD } from '../../ui/HUD';
