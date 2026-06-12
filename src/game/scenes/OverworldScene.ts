@@ -20,6 +20,7 @@ import { InputBus } from '../../input/InputBus';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { SaveService } from '../../services/SaveService';
 import type { SaveState } from '../../services/SaveService';
+import { LEVEL_01_MANIFEST } from '../../data/levels/level-01';
 import { Player } from '../../entities/Player';
 import { NPC } from '../../entities/NPC';
 import { MAP_DATA } from '../../data/levels/level-01';
@@ -76,21 +77,42 @@ export class OverworldScene extends Scene {
     // State
     private coins = 0;
     private flags: Record<string, boolean> = {};
+    private journalUnlocked: string[] = [];
     private interactKey: Phaser.Input.Keyboard.Key | null = null;
     private pauseKey: Phaser.Input.Keyboard.Key | null = null;
     private currentNpcInRange: NPC | null = null;
     private inDialogue = false;
 
+    // Loaded in init() before create() is called — avoids async create() race (CR-01)
+    private _savedState: SaveState | undefined = undefined;
+
+    // Stored handler references for precise removal in shutdown() (WR-05, CR-03 fix)
+    private _onHidden = (): void => { void SaveService.save(this.buildSaveState()); };
+    private onDialogueComplete = (): void => {
+        this.inDialogue = false;
+        void SaveService.save(this.buildSaveState());
+    };
+
     constructor() {
         super('OverworldScene');
     }
 
-    async create(): Promise<void> {
+    /**
+     * init() runs synchronously in the Phaser lifecycle before create().
+     * We load save data here so create() can remain synchronous and
+     * update() never runs before this.player is assigned (CR-01 fix).
+     */
+    async init(): Promise<void> {
+        this._savedState = await SaveService.load();
+    }
+
+    create(): void {
         // ── Load saved state (if any) ──────────────────────────────────────
-        const saved: SaveState | undefined = await SaveService.load();
+        const saved: SaveState | undefined = this._savedState;
         if (saved) {
             this.coins = saved.coins;
             this.flags = saved.flags;
+            this.journalUnlocked = saved.journalUnlocked ? [...saved.journalUnlocked] : [];
         }
         const startX = saved?.position?.x ?? 96;
         const startY = saved?.position?.y ?? 96;
@@ -143,14 +165,20 @@ export class OverworldScene extends Scene {
         this.setupDogPatrol();
 
         // ── VirtualJoystick (touch devices only) ──────────────────────────
+        // Dynamic import is intentionally fire-and-forget here. The joystick is
+        // purely additive — if it resolves after a few frames the player has
+        // keyboard fallback via WASD/arrows. The critical async create() race
+        // (update() running before this.player is set) is fully fixed by moving
+        // SaveService.load() to init().  The joystick import only controls
+        // touch input, so a brief delay is acceptable.
         if (this.sys.game.device.input.touch) {
-            // Dynamic import avoids requiring rex types in non-touch builds
-            const VJModule = await import('phaser4-rex-plugins/plugins/virtualjoystick.js');
-            const VJClass = VJModule.default ?? VJModule;
-            const vj = new VJClass(this, {
-                x: 120, y: 750, radius: 80, dir: '8dir', forceMin: 16,
-            }) as { up: boolean; down: boolean; left: boolean; right: boolean };
-            this.joystick = vj;
+            void import('phaser4-rex-plugins/plugins/virtualjoystick.js').then((VJModule) => {
+                const VJClass = VJModule.default ?? VJModule;
+                const vj = new VJClass(this, {
+                    x: 120, y: 750, radius: 80, dir: '8dir', forceMin: 16,
+                }) as { up: boolean; down: boolean; left: boolean; right: boolean };
+                this.joystick = vj;
+            });
         }
 
         // ── Keyboard ──────────────────────────────────────────────────────
@@ -177,15 +205,11 @@ export class OverworldScene extends Scene {
         this.scene.launch('UIScene');
 
         // ── Autosave on game hidden (tab switch / phone lock) ─────────────
-        this.game.events.on(Phaser.Core.Events.HIDDEN, () => {
-            void SaveService.save(this.buildSaveState());
-        });
+        // Stored as a class field so shutdown() can remove it precisely (WR-05 fix)
+        this.game.events.on(Phaser.Core.Events.HIDDEN, this._onHidden, this);
 
         // ── Resume from dialogue ───────────────────────────────────────────
-        GameEvents.on(Events.DIALOGUE_COMPLETE, () => {
-            this.inDialogue = false;
-            void SaveService.save(this.buildSaveState());
-        });
+        GameEvents.on(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
 
         // Boss zone entry — first-time autosave + scene trigger
         // (full boss trigger wired in Plan 02-02 via TriggerSystem)
@@ -296,6 +320,11 @@ export class OverworldScene extends Scene {
             this.flags['boss_01_defeated'] = true;
             this.coins += (result?.patienceBonus ?? 0);
 
+            // Track journal unlock (CR-08 fix: persist across saves)
+            if (!this.journalUnlocked.includes(LEVEL_01_MANIFEST.journalUnlock)) {
+                this.journalUnlocked.push(LEVEL_01_MANIFEST.journalUnlock);
+            }
+
             // Save checkpoint
             void SaveService.save(this.buildSaveState());
 
@@ -386,7 +415,7 @@ export class OverworldScene extends Scene {
             position:        { x: this.player.sprite.x, y: this.player.sprite.y },
             flags:           { ...this.flags },
             coins:           this.coins,
-            journalUnlocked: [],
+            journalUnlocked: [...this.journalUnlocked],
         };
     }
 
@@ -409,9 +438,10 @@ export class OverworldScene extends Scene {
         for (const timer of this.blinkTimers.values()) timer.remove();
         this.blinkTimers.clear();
         if (this.dogTimer) { this.dogTimer.remove(); this.dogTimer = null; }
-        // Remove global event listeners
-        GameEvents.off(Events.DIALOGUE_COMPLETE);
-        this.game.events.off(Phaser.Core.Events.HIDDEN);
+        // Remove only this scene's listeners — pass fn + context so we don't
+        // strip other scenes' listeners for the same event (CR-03, WR-05 fix)
+        GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
+        this.game.events.off(Phaser.Core.Events.HIDDEN, this._onHidden, this);
         this.input.off('pointerdown');
     }
 }
