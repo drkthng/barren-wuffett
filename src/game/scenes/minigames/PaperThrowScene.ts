@@ -140,9 +140,13 @@ export class PaperThrowScene extends Scene {
     private startCountdown(): void {
         let remaining = COUNTDOWN_START;
 
+        // CR-05 fix: Phaser repeat:N fires N+1 times (first trigger + N repeats).
+        // Using repeat:COUNTDOWN_START-1 fires exactly COUNTDOWN_START times,
+        // preventing a 4th callback that would call beginGame() a second time
+        // (remaining would be -1 which also satisfies the <= 0 check).
         this.countdownTimer = this.time.addEvent({
             delay: 1000,
-            repeat: COUNTDOWN_START,
+            repeat: COUNTDOWN_START - 1,
             callback: () => {
                 remaining -= 1;
                 if (remaining > 0) {
@@ -159,6 +163,8 @@ export class PaperThrowScene extends Scene {
     // ── Gameplay phase ───────────────────────────────────────────────────
 
     private beginGame(): void {
+        // CR-05 fix: guard against double-call if countdown fires an extra tick
+        if (this.phase !== 'instructions') return;
         this.phase = 'game';
 
         // Hide instruction panel
