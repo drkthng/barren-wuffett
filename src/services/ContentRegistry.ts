@@ -21,5 +21,11 @@ const registry: LevelManifest[] = []; // populated in Phase 2+
 export const ContentRegistry = {
     getLevel: (id: string): LevelManifest | undefined => registry.find(l => l.id === id),
     getAllLevels: (): LevelManifest[] => registry,
-    register: (manifest: LevelManifest): void => { registry.push(manifest); },
+    // IN-01 fix: guard against duplicate registration on Vite HMR reload —
+    // module re-evaluation would push a second entry for the same level id.
+    register: (manifest: LevelManifest): void => {
+        if (!registry.find(l => l.id === manifest.id)) {
+            registry.push(manifest);
+        }
+    },
 };

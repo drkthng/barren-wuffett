@@ -208,6 +208,13 @@ export class DialogueBox {
 
     destroy(): void {
         this.stopTimers();
-        this.scene.input.off('pointerdown', this.handlePointerDown, this);
+        // WR-07 fix: guard against calling input.off() after the InputPlugin has
+        // been torn down (e.g. if UIScene.shutdown() order changes). Phaser
+        // destroys scene systems after shutdown() returns, so calling destroy()
+        // from within UIScene.shutdown() is normally safe — but the null check
+        // makes the ordering robust against future refactors.
+        if (this.scene.input) {
+            this.scene.input.off('pointerdown', this.handlePointerDown, this);
+        }
     }
 }
