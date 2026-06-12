@@ -11,9 +11,8 @@ export class Boot extends Scene {
         const musicEnabled = AudioService.getMusicEnabled();
         const sfxEnabled = AudioService.getSfxEnabled();
 
-        if (!musicEnabled) {
-            this.sound.mute = true;
-        }
+        // Use setMute() API for consistency with Settings.ts (avoids property vs method divergence)
+        this.sound.setMute(!musicEnabled);
 
         // Store for later use (SFX muting is scene-level in Phaser 4)
         this.registry.set('sfxEnabled', sfxEnabled);

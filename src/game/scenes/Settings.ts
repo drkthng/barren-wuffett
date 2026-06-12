@@ -11,6 +11,10 @@ export class Settings extends Scene {
         const { width } = this.scale;
         const cx = width / 2;
 
+        // Sync Sound Manager mute state with localStorage on every scene entry
+        // Prevents divergence when re-entering Settings after a scene transition
+        this.sound.setMute(!AudioService.getMusicEnabled());
+
         // ── Heading ─────────────────────────────────────────────────────────
         this.add.text(cx, 80, t('settings.title'), {
             fontSize: '16px',
