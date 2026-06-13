@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Cozy Art Spike — Barren Wuffett</title>
+  <!-- Phaser 4.1.0 UMD (matches project engine). CC0 art: Kenney Tiny Town. -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@4.1.0/dist/phaser.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #2b2b33; overflow: hidden; }
+    #game { width: 100vw; height: 100vh; }
+    canvas { image-rendering: pixelated; }
+    #cap {
+      position: fixed; left: 8px; top: 6px; z-index: 10;
+      font: 12px/1.4 system-ui, sans-serif; color: #fff;
+      text-shadow: 0 1px 2px #000; pointer-events: none; opacity: .85;
+    }
+  </style>
+</head>
+<body>
+  <div id="cap">Cozy-art spike · world = Kenney Tiny Town (CC0) · character = quick stand-in<br/>Arrows / WASD — or tap the on-screen pad — to walk.</div>
+  <div id="game"></div>
+  <script>
+    const TILE = 16;
+    const W = 40, H = 28;            // map size in tiles
+    const SPEED = 70;
+
+    // ---- Tile indices mapped from Kenney Tiny Town tilemap_packed.png (12 cols) ----
+    const GRASS = [0, 1, 2];
+    const DIRT = 25;
+    const T = {
+      treeGreen: 4, treeOrange: 3, bush: 5, mushroom: 29, pebbles: 43, shrub: 17,
+      bigTree: [7, 8, 19, 20],                       // tl,tr,bl,br
+      redHouse:  [[52,53,54],[64,65,66],[84,85,86]], // roofTop, roofBot, wall
+      greyHouse: [[48,49,50],[60,61,62],[88,89,90]],
+      fenceL: 44, fenceM: 45, fenceR: 46, sign: 83,
+    };
+
+    function buildMaps() {
+      const ground = [], deco = [];
+      for (let y = 0; y < H; y++) {
+        const g = [], d = [];
+        for (let x = 0; x < W; x++) {
+          const r = Math.random();
+          g.push(r < 0.08 ? GRASS[1] : r < 0.12 ? GRASS[2] : GRASS[0]);
+          d.push(-1);
+        }
+        ground.push(g); deco.push(d);
+      }
+      // dirt paths: a horizontal road + a vertical branch
+      for (let x = 0; x < W; x++) { ground[15][x] = DIRT; ground[16][x] = DIRT; }
+      for (let y = 16; y < H; y++) { ground[y][20] = DIRT; ground[y][21] = DIRT; }
+
+      const occupied = (x, y) => deco[y][x] !== -1 || ground[y][x] === DIRT;
+
+      const placeHouse = (x, y, def) => {
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) deco[y + r][x + c] = def[r][c];
+      };
+      const placeBigTree = (x, y) => {
+        deco[y][x] = T.bigTree[0]; deco[y][x + 1] = T.bigTree[1];
+        deco[y + 1][x] = T.bigTree[2]; deco[y + 1][x + 1] = T.bigTree[3];
+      };
+
+      placeHouse(6, 8, T.redHouse);
+      placeHouse(29, 6, T.greyHouse);
+      placeHouse(12, 19, T.greyHouse);
+      placeBigTree(22, 9);
+      placeBigTree(3, 20);
+
+      // a fence run near the red house
+      deco[12][6] = T.fenceL;
+      for (let x = 7; x < 12; x++) deco[12][x] = T.fenceM;
+      deco[12][12] = T.fenceR;
+      deco[8][10] = T.sign;
+
+      // scatter trees / bushes / detail on free grass
+      const scatter = (idx, n) => {
+        let placed = 0, guard = 0;
+        while (placed < n && guard++ < n * 40) {
+          const x = 1 + Math.floor(Math.random() * (W - 2));
+          const y = 1 + Math.floor(Math.random() * (H - 2));
+          if (!occupied(x, y)) { deco[y][x] = idx; placed++; }
+        }
+      };
+      scatter(T.treeGreen, 26);
+      scatter(T.treeOrange, 10);
+      scatter(T.bush, 14);
+      scatter(T.mushroom, 8);
+      scatter(T.pebbles, 8);
+      scatter(T.shrub, 8);
+
+      return { ground, deco };
+    }
+
+    class Town extends Phaser.Scene {
+      preload() {
+        this.load.image('tt', 'assets/tiny-town/Tilemap/tilemap_packed.png');
+        this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
+      }
+      create() {
+        const { ground, deco } = buildMaps();
+
+        const gMap = this.make.tilemap({ data: ground, tileWidth: TILE, tileHeight: TILE });
+        const gSet = gMap.addTilesetImage('tt', 'tt', TILE, TILE, 0, 0);
+        gMap.createLayer(0, gSet, 0, 0);
+
+        const dMap = this.make.tilemap({ data: deco, tileWidth: TILE, tileHeight: TILE });
+        const dSet = dMap.addTilesetImage('tt', 'tt', TILE, TILE, 0, 0);
+        const dLayer = dMap.createLayer(0, dSet, 0, 0);
+        dLayer.setCollisionByExclusion([-1]);
+
+        // animations
+        const mk = (key, s, e) => this.anims.create({
+          key, frames: this.anims.generateFrameNumbers('player', { start: s, end: e }),
+          frameRate: 6, repeat: -1,
+        });
+        mk('down', 0, 1); mk('up', 2, 3); mk('left', 4, 5); mk('right', 6, 7);
+
+        this.player = this.physics.add.sprite(20 * TILE, 10 * TILE, 'player', 0);
+        this.player.body.setSize(8, 6).setOffset(4, 10); // feet-ish hitbox
+        this.physics.add.collider(this.player, dLayer);
+
+        const worldW = W * TILE, worldH = H * TILE;
+        this.physics.world.setBounds(0, 0, worldW, worldH);
+        this.player.setCollideWorldBounds(true);
+
+        const cam = this.cameras.main;
+        cam.setBounds(0, 0, worldW, worldH);
+        cam.startFollow(this.player, true, 0.15, 0.15);
+        cam.roundPixels = true;
+
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
+        this.touch = { x: 0, y: 0 };
+        this.buildPad();
+        this.facing = 'down';
+      }
+
+      buildPad() {
+        // simple on-screen d-pad fixed to the camera (mobile)
+        const mkBtn = (x, y, label, dx, dy) => {
+          const b = this.add.rectangle(x, y, 30, 30, 0x000000, 0.35)
+            .setScrollFactor(0).setDepth(100).setInteractive();
+          this.add.text(x, y, label, { fontSize: '16px', color: '#fff' })
+            .setOrigin(0.5).setScrollFactor(0).setDepth(101);
+          b.on('pointerdown', () => { this.touch.x = dx; this.touch.y = dy; });
+          const clr = () => {
+            if (dx) this.touch.x = 0;
+            if (dy) this.touch.y = 0;
+          };
+          b.on('pointerup', clr); b.on('pointerout', clr);
+        };
+        const bx = 44, by = this.scale.height - 70;
+        mkBtn(bx, by - 26, '▲', 0, -1);
+        mkBtn(bx, by + 26, '▼', 0, 1);
+        mkBtn(bx - 30, by, '◀', -1, 0);
+        mkBtn(bx + 30, by, '▶', 1, 0);
+      }
+
+      update() {
+        const k = this.keys;
+        let vx = (k.A.isDown || k.LEFT.isDown ? -1 : 0) + (k.D.isDown || k.RIGHT.isDown ? 1 : 0);
+        let vy = (k.W.isDown || k.UP.isDown ? -1 : 0) + (k.S.isDown || k.DOWN.isDown ? 1 : 0);
+        vx += this.touch.x; vy += this.touch.y;
+        vx = Phaser.Math.Clamp(vx, -1, 1); vy = Phaser.Math.Clamp(vy, -1, 1);
+
+        const len = Math.hypot(vx, vy) || 1;
+        this.player.setVelocity((vx / len) * SPEED, (vy / len) * SPEED);
+
+        if (vx === 0 && vy === 0) {
+          this.player.anims.stop();
+          const f = { down: 0, up: 2, left: 4, right: 6 }[this.facing];
+          this.player.setFrame(f);
+        } else {
+          if (Math.abs(vx) > Math.abs(vy)) this.facing = vx < 0 ? 'left' : 'right';
+          else this.facing = vy < 0 ? 'up' : 'down';
+          this.player.anims.play(this.facing, true);
+        }
+      }
+    }
+
+    new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: 'game',
+      width: 384, height: 256,
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+      backgroundColor: '#6abe57',
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
+      scene: [Town],
+    });
+  </script>
+</body>
+</html>
