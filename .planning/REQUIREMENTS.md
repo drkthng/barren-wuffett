@@ -21,8 +21,8 @@
 ### Visual & Art (Phase 2.1 — inserted)
 
 - [ ] **ART-01**: Level 1 overworld renders with a cohesive 16-bit pixel-art tileset (cozy town) replacing placeholder art, with auto-tiled grass↔path/terrain transitions — driven by the existing level-01 tile-index map, no engine changes
-- [ ] **ART-02**: Player, NPCs (grandpa, store clerk, rival), dog, and Mr. Market boss have cohesive multi-frame sprites — 4-direction walk animation for moving characters; boss has distinct phase poses — wired via Preloader spritesheets + Phaser animations
-- [ ] **ART-03**: All shipped art is CC0 or commercially-licensed with provenance/attribution tracked; assets are mobile-optimized (lean bundle, textures ≤2048px) and loaded via the existing Preloader/ContentRegistry pipeline
+- [x] **ART-02**: Player, NPCs (grandpa, store clerk, rival), dog, and Mr. Market boss have cohesive multi-frame sprites — 4-direction walk animation for moving characters; boss has distinct phase poses — wired via Preloader spritesheets + Phaser animations
+- [x] **ART-03**: All shipped art is CC0 or commercially-licensed with provenance/attribution tracked; assets are mobile-optimized (lean bundle, textures ≤2048px) and loaded via the existing Preloader/ContentRegistry pipeline
 - [ ] **ART-04**: A reusable art style guide (palette, 16px grid, perspective, sourcing + pipeline) is documented so Levels 2-3 (Phase 4) reuse the look with data + assets only — no engine code
 
 ### Save & Progress
@@ -105,8 +105,8 @@
 | GAME-09 | Phase 2 | Complete |
 | GAME-10 | Phase 1 | Complete |
 | ART-01 | Phase 2.1 | Pending |
-| ART-02 | Phase 2.1 | Pending |
-| ART-03 | Phase 2.1 | Pending |
+| ART-02 | Phase 2.1 | Complete |
+| ART-03 | Phase 2.1 | Complete |
 | ART-04 | Phase 2.1 | Pending |
 | SAVE-01 | Phase 2 | Complete |
 | SAVE-02 | Phase 2 | Complete |
