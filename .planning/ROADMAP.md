@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in
 - [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
-- [ ] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes
+- [x] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes (completed 2026-06-14)
 - [ ] **Phase 3: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal content, and cookieless analytics — end-to-end tested before launch
 - [ ] **Phase 4: Levels 2-3 + Launch** - Remaining levels using ContentRegistry/manifest pattern, PWA hardening, and public launch
 
@@ -105,7 +105,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 02.1-03-PLAN.md — Slice C "Consistency + reuse": replace HUD coin + share-card victory art; complete ASSET-MANIFEST.md; author reusable art STYLE-GUIDE.md for Levels 2-3 reuse (ART-03, ART-04)
+- [x] 02.1-03-PLAN.md — Slice C "Consistency + reuse": replace HUD coin + share-card victory art; complete ASSET-MANIFEST.md; author reusable art STYLE-GUIDE.md for Levels 2-3 reuse (ART-03, ART-04)
 
 **UI hint**: yes
 
@@ -149,6 +149,6 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
 | 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
-| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 2/3 | In Progress|  |
+| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete   | 2026-06-14 |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |

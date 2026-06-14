@@ -3,14 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-14T13:22:35.620Z"
+stopped_at: Completed 02.1-03-PLAN.md — awaiting Task 3 human-verify checkpoint
+last_updated: "2026-06-14T13:39:46.435Z"
 last_activity: 2026-06-14
 progress:
-  total_phases: 6
-  completed_phases: 2
+  total_phases: 5
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 33
+  completed_plans: 9
+  percent: 60
 ---
 
 # Project State
@@ -25,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 ## Current Position
 
 Phase: 02.1 (visual-pass-cozy-pixel-art-for-level-1) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-14
 
@@ -56,6 +57,7 @@ Progress: [█████████░] 89%
 | Phase 01 P01-03 | ~20min | 2/3 tasks (1 deferred) | 4 files |
 | Phase 02 P02-02 | 25min | 3 tasks | 4 files |
 | Phase 02.1 P02 | 15min | 4 tasks | 10 files |
+| Phase 02.1 P03 | 10min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase ?]: phaser4-rex-plugins VirtualJoystick import smoke-tested in prod build (Pitfall 4) — Phase 2 InputBus wiring unblocked
 - [Phase ?]: Settings scene uses Phaser Container for toggle buttons with setSize(44,44) for WCAG 2.5.5 touch target compliance
 - [Phase ?]: Datenschutz policy written with Supabase and Brevo as future-optional to avoid Phase 3 re-edit (RESEARCH Pattern 7)
+- [Phase 02.1]: ui_pause + ui_save included in scope (user-approved deviation) — clears all remaining HUD black boxes with no engine code changes
+- [Phase 02.1]: STYLE-GUIDE.md written as durable reference prose (not a task log) so Phase 4 developers can reproduce the cozy look with data + assets only — no engine code
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-14T13:22:35.601Z
-Stopped at: Completed 01-03-PLAN.md (Tasks 1-2); Task 3 (Geltungssatz) deferred by user — resume when user says "geltungssatz-confirmed"
+Last session: 2026-06-14T13:39:46.417Z
+Stopped at: Completed 02.1-03-PLAN.md — awaiting Task 3 human-verify checkpoint
 Resume file: None
