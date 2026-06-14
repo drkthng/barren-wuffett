@@ -42,6 +42,9 @@ export class BossScene extends Scene {
     // Tint rectangle
     private tintRect!: Phaser.GameObjects.Rectangle;
 
+    // Boss sprite — stored as a class field so phase transitions can swap textures
+    private bossSprite!: Phaser.GameObjects.Image;
+
     // Boss sprite + labels (bossSprite / nameText are display-only — stored in displayObjects)
     private displayObjects: Phaser.GameObjects.GameObject[] = [];
     private phaseLabel!:    Phaser.GameObjects.Text;
@@ -112,11 +115,12 @@ export class BossScene extends Scene {
         this.tweens.add({ targets: this.tintRect, alpha: 0.15, duration: 500 });
 
         // ── Mr. Market boss sprite ─────────────────────────────────────────
-        this.displayObjects.push(
-            this.add.image(cx, 380, 'boss_mr_market')
-                .setDisplaySize(64, 96)
-                .setDepth(2)
-        );
+        // Initial texture is the GREED pose; panic pose swapped via setTexture on phase transition.
+        // add.image supports setTexture() without upgrading to add.sprite (RESEARCH Pitfall 6a).
+        this.bossSprite = this.add.image(cx, 380, 'boss_mr_market_greed')
+            .setDisplaySize(64, 96)
+            .setDepth(2);
+        this.displayObjects.push(this.bossSprite);
 
         // ── Name label ─────────────────────────────────────────────────────
         this.displayObjects.push(
@@ -237,6 +241,9 @@ export class BossScene extends Scene {
         this.declinesCount     = 0;
         this.greedOfferIndex   = 0;
 
+        // Restore greed pose (handles re-entry after TOO SLOW! reset from panic)
+        if (this.bossSprite) this.bossSprite.setTexture('boss_mr_market_greed');
+
         // Reset tint to greed (0xff4444)
         this.tweens.add({ targets: this.tintRect, fillColor: 0xff4444, alpha: 0.15, duration: 500 });
         this.tintRect.setFillStyle(0xff4444);
@@ -327,6 +334,9 @@ export class BossScene extends Scene {
         // Swap tint to panic (0x4444ff)
         this.tintRect.setFillStyle(0x4444ff);
         this.tweens.add({ targets: this.tintRect, alpha: 0.15, duration: 500 });
+
+        // Swap boss sprite to panic pose (add.image supports setTexture without upgrading to add.sprite)
+        this.bossSprite.setTexture('boss_mr_market_panic');
 
         // Update phase label
         this.phaseLabel.setText(t('boss.phase.panic')).setColor('#4444ff');
