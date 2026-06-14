@@ -83,6 +83,11 @@ export class UIScene extends Scene {
     private onDialogueStart = async (data: { npcId: string; dialogueKey: string }): Promise<void> => {
         try {
             this.setState('DIALOGUE');
+            // Make dialogue modal: freeze the overworld so movement keys
+            // (incl. ArrowDown used to advance dialogue) don't move the player.
+            if (this.scene.get('OverworldScene')?.scene.isActive()) {
+                this.scene.pause('OverworldScene');
+            }
             const allDialogue = await loadDialogue();
             const lines = allDialogue[data.dialogueKey];
             if (Array.isArray(lines)) {
@@ -97,6 +102,9 @@ export class UIScene extends Scene {
     };
 
     private onDialogueComplete = (): void => {
+        if (this.scene.get('OverworldScene')?.scene.isPaused()) {
+            this.scene.resume('OverworldScene');
+        }
         this.setState('HUD');
         this.hud.flashSave();
     };

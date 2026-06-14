@@ -116,8 +116,13 @@ export class DialogueBox {
         this.panel.setVisible(true);
         this.renderLine(this.lineIndex);
 
-        // Pointer to advance
+        // Pointer / keyboard to advance (tap, ArrowDown, or Enter)
         this.scene.input.on('pointerdown', this.handlePointerDown, this);
+        const kb = this.scene.input.keyboard;
+        if (kb) {
+            kb.on('keydown-DOWN', this.handleKeyDown, this);
+            kb.on('keydown-ENTER', this.handleKeyDown, this);
+        }
     }
 
     private renderLine(index: number): void {
@@ -167,7 +172,8 @@ export class DialogueBox {
         });
     }
 
-    private handlePointerDown = (): void => {
+    /** Advance dialogue: skip the typewriter, step to the next line, or close on the last. */
+    private advance = (): void => {
         if (this.typewriterTimer) {
             // Skip typewriter — show full text immediately
             this.stopTimers();
@@ -187,9 +193,18 @@ export class DialogueBox {
         }
     };
 
+    // Tap, ArrowDown, or Enter all advance — and close on the last line.
+    private handlePointerDown = (): void => { this.advance(); };
+    private handleKeyDown = (): void => { this.advance(); };
+
     private close(): void {
         this.stopTimers();
         this.scene.input.off('pointerdown', this.handlePointerDown, this);
+        const kb = this.scene.input.keyboard;
+        if (kb) {
+            kb.off('keydown-DOWN', this.handleKeyDown, this);
+            kb.off('keydown-ENTER', this.handleKeyDown, this);
+        }
         this.backdrop.setVisible(false);
         this.panel.setVisible(false);
         GameEvents.emit(Events.DIALOGUE_COMPLETE, { npcId: this.npcId });
@@ -215,6 +230,11 @@ export class DialogueBox {
         // makes the ordering robust against future refactors.
         if (this.scene.input) {
             this.scene.input.off('pointerdown', this.handlePointerDown, this);
+            const kb = this.scene.input.keyboard;
+            if (kb) {
+                kb.off('keydown-DOWN', this.handleKeyDown, this);
+                kb.off('keydown-ENTER', this.handleKeyDown, this);
+            }
         }
     }
 }
