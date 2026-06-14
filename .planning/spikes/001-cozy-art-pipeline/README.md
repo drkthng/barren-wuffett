@@ -79,4 +79,13 @@ A scrolling cozy town: lush grass with flower variants, a dirt crossroads, red- 
 - **Reuse fuller trees/bushes**; use small-tree tiles sparingly.
 - Pipeline = no engine changes: feed new tile indices into the existing `level-01.ts` MAP_DATA + register sprites in `Preloader.ts`. ContentRegistry/manifest pattern already supports this.
 
-**Aesthetic sign-off:** the *look* decision is the user's — see checkpoint.
+**Aesthetic sign-off:** user approved the look (2026-06-14).
+
+## Polish Iteration (2026-06-14)
+
+Applied the three recommended polishes in-spike to preview the target quality:
+1. **Path auto-tiling** — 8-neighbour rule maps dirt cells to Kenney's rounded 3×3 set (`12-14/24-26/36-38`); roads and a plaza now have rounded grass↔dirt edges + a T-junction instead of hard rectangles.
+2. **Lusher vegetation** — favour bushes (`5`) + big leafy trees (`7,8/19,20`, `10,11/22,23`); small saplings used sparingly.
+3. **Character** — regenerated with a dark Kenney-style outline + simple shading.
+
+Re-verified headless (0 console errors). Screenshots refreshed. These three techniques carry forward as Phase 2.5 implementation notes.
