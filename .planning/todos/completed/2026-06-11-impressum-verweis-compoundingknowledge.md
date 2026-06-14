@@ -3,7 +3,13 @@ created: 2026-06-11T13:39:33.571Z
 title: Impressum per Verweis auf compoundingknowledge.com lösen
 area: legal
 files: []
+status: resolved
+resolved: 2026-06-14
 ---
+
+## ✅ RESOLVED 2026-06-14
+
+Geltungssatz confirmed by the operator ("geltungssatz-confirmed"). The external imprint (compoundingknowledge.com/en/imprint) names the game and the game's imprint links there in ≤2 taps (commit 7553a10). Public-URL sharing gate is **lifted** — https://barren-wuffett.pages.dev may now be shared publicly. Closes Phase 01 plan 01-03 Task 3.
 
 ## Problem
 

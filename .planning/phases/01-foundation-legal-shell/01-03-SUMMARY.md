@@ -13,7 +13,7 @@ provides:
   - "Live Cloudflare Pages deployment at https://barren-wuffett.pages.dev"
   - ".deploy-url (machine-readable canonical URL)"
   - "README.md with deploy settings and pre-public-share checklist"
-  - "OPEN GATE: Geltungssatz deferred — public sharing blocked until confirmed"
+  - "Geltungssatz CONFIRMED 2026-06-14 — public sharing UNBLOCKED (game live at https://barren-wuffett.pages.dev)"
 affects: [phase-02, phase-03, phase-04]
 
 # Tech tracking
@@ -33,7 +33,7 @@ key-files:
 
 key-decisions:
   - "Wrangler CLI deploy used over Git integration — automation-first path succeeded"
-  - "Task 3 (Geltungssatz) deferred by explicit user decision 2026-06-12 — public URL sharing blocked"
+  - "Task 3 (Geltungssatz) confirmed by user 2026-06-14 ('geltungssatz-confirmed') — public URL sharing UNBLOCKED (was deferred 2026-06-12)"
   - "LEGL-01 is functionally satisfied for the deployment half (pages live, linked, two-tap reachable) but NOT for the public-sharing half (external Geltungssatz pending)"
 
 patterns-established:
@@ -49,7 +49,7 @@ completed: 2026-06-12
 
 # Phase 01 Plan 03: Deploy + Security Headers Summary
 
-**Cloudflare Pages deployment live at https://barren-wuffett.pages.dev with security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) — Geltungssatz deferred by user; public URL sharing remains BLOCKED**
+**Cloudflare Pages deployment live at https://barren-wuffett.pages.dev with security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) — Geltungssatz CONFIRMED by user 2026-06-14; public URL sharing now UNBLOCKED**
 
 ## Performance
 
@@ -71,7 +71,7 @@ Each task was committed atomically:
 
 1. **Task 1: Security headers + deploy documentation** - `9d21e93` (feat)
 2. **Task 2: Deploy static bundle to Cloudflare Pages** - `e79f034` (feat)
-3. **Task 3: Geltungssatz checkpoint** - DEFERRED (no commit — user explicitly deferred 2026-06-12)
+3. **Task 3: Geltungssatz checkpoint** - RESOLVED 2026-06-14 (human-action gate, no code commit — user signaled "geltungssatz-confirmed"; deferred 2026-06-12 → confirmed)
 
 **Plan metadata:** (committed in this close-out)
 
@@ -96,19 +96,18 @@ None for Tasks 1-2 — executed exactly as written.
 
 ## Known Stubs / Open Gates
 
-### OPEN LEGAL GATE — Task 3: Geltungssatz (deferred 2026-06-12)
+### RESOLVED LEGAL GATE — Task 3: Geltungssatz (confirmed 2026-06-14)
 
-**Status:** DEFERRED by user. Reminder: user requested "erinnere mich nach jedem Schritt."
+**Status:** RESOLVED. User signaled "geltungssatz-confirmed" on 2026-06-14 — the external Impressum now covers the game domain. Public sharing of the game URL is UNBLOCKED.
 
-**What remains:**
-1. Open https://www.compoundingknowledge.com/impressum
-2. Add the sentence: "Dieses Impressum gilt auch für https://barren-wuffett.pages.dev." (use the actual deployed URL from `.deploy-url`)
-3. Reload the page and confirm the sentence is visible and names the game domain
-4. From the deployed game URL: tap Settings → IMPRESSUM → confirm it links to compoundingknowledge.com/impressum and that page carries the Geltungssatz
+**What was required (now satisfied):**
+1. Geltungssatz live on the external Impressum (compoundingknowledge.com) naming/covering the game domain ✓
+2. Game Impressum/Imprint link reachable in ≤2 taps and pointing at that external page (game imprint → /en/imprint, commit 7553a10) ✓
+3. User confirmed the sentence is live and the link resolves ✓ (2026-06-14)
 
-**Consequence (in bold): PUBLIC SHARING of https://barren-wuffett.pages.dev is BLOCKED until the Geltungssatz is live on www.compoundingknowledge.com/impressum and the user confirms "geltungssatz-confirmed".**
+**Result (in bold): PUBLIC SHARING of https://barren-wuffett.pages.dev is now PERMITTED — the Geltungssatz is live and the user confirmed on 2026-06-14.**
 
-Resume signal: `geltungssatz-confirmed`
+Resume signal received: `geltungssatz-confirmed` (2026-06-14)
 
 ## LEGL-01 Status
 
@@ -117,8 +116,8 @@ Resume signal: `geltungssatz-confirmed`
 | Game live at public Cloudflare Pages URL showing menu screen | SATISFIED — https://barren-wuffett.pages.dev returns 200 |
 | Security headers served on all routes | SATISFIED — verified live via curl |
 | Legal pages reachable in two taps from deployed URL | SATISFIED — /impressum and /datenschutz return 200 with expected content |
-| Geltungssatz confirmed on compoundingknowledge.com/impressum | **OPEN (deferred 2026-06-12)** |
-| Public URL NOT shared until Geltungssatz confirmed | ENFORCED — gate open, URL not shared |
+| Geltungssatz confirmed on external Impressum (compoundingknowledge.com) | **SATISFIED — user confirmed "geltungssatz-confirmed" 2026-06-14** |
+| Public URL sharing gate | LIFTED 2026-06-14 — game URL may now be shared publicly |
 
 ## Threat Surface Scan
 
@@ -138,7 +137,7 @@ None for Tasks 1-2.
 
 - INFR-01 satisfied: game is live and serving security headers
 - Phase 2 (Level 1 Offline Playable) may proceed — it does not depend on the Geltungssatz
-- **REMINDER: Do NOT share the game URL publicly until the Geltungssatz is confirmed** — this applies across all phases until the gate is closed
+- **Geltungssatz CONFIRMED 2026-06-14** — the public-sharing gate is LIFTED; the game URL (https://barren-wuffett.pages.dev) may now be shared publicly
 
 ---
 *Phase: 01-foundation-legal-shell*
