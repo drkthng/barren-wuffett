@@ -93,7 +93,20 @@ Plans:
 
 **Spike**: .planning/spikes/001-cozy-art-pipeline/ (VALIDATED — pipeline + cozy look proven; Kenney Tiny Town CC0; auto-tiling + animation demonstrated)
 
-**Plans**: TBD
+**Plans**: 3 plans (organized as vertical experience slices; fully sequential waves)
+Plans:
+**Wave 1**
+
+- [ ] 02.1-01-PLAN.md — Slice A "Overworld looks cozy": Wave-0 art-assets.test.ts scaffold; self-host Kenney Tiny Town tileset; rewrite level-01 as GROUND_DATA + DECO_DATA (30×52) with auto-tiled paths; two-layer 16px tilemap in OverworldScene (ART-01)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 02.1-02-PLAN.md — Slice B "Characters come alive": license-gate checkpoint; source player/NPC/dog/boss sprites (PixelLab palette-locked / Kenney CC0 fallback); player 4-dir walk anims; Mr. Market greed/panic poses; ASSET-MANIFEST.md provenance (ART-02, ART-03)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 02.1-03-PLAN.md — Slice C "Consistency + reuse": replace HUD coin + share-card victory art; complete ASSET-MANIFEST.md; author reusable art STYLE-GUIDE.md for Levels 2-3 reuse (ART-03, ART-04)
+
 **UI hint**: yes
 
 ### Phase 3: Funnel & Backend
@@ -136,6 +149,6 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
 | 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
-| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 0/TBD | Not started | - |
+| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 0/3 | Planned | - |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
