@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 2.1 (Visual Pass) inserted 2026-06-14 after spike 001 validated cozy art; ready to plan. Phase 2 device-UAT informally pending; Geltungssatz gate still open.
-last_updated: "2026-06-14T07:54:20.412Z"
-last_activity: 2026-06-14 -- Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted; spike 001 VALIDATED
+status: "Planned 2026-06-14 — 3 plans verified (plan-checker PASSED). Next: /gsd-execute-phase 02.1"
+stopped_at: Completed 01-03-PLAN.md (Tasks 1-2); Task 3 (Geltungssatz) deferred by user — resume when user says "geltungssatz-confirmed
+last_updated: "2026-06-14T08:32:05.561Z"
+last_activity: 2026-06-14 -- Phase 2.1 inserted; cozy-art spike VALIDATED
 progress:
   total_phases: 5
   completed_phases: 2
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 02.1 (Visual Pass — Cozy Pixel Art for Level 1) — INSERTED, ready to plan
-Plan: 0 of TBD
-Status: Inserted 2026-06-14 (spike 001 VALIDATED). Next: /gsd-plan-phase 02.1
-Last activity: 2026-06-14 -- Phase 2.1 inserted; cozy-art spike VALIDATED
+Phase: 02.1 (Visual Pass — Cozy Pixel Art for Level 1) — PLANNED, ready to execute
+Plan: 0 of 3 (3 plans created + plan-checker PASSED)
+Status: Planned 2026-06-14 — 3 vertical-slice plans, plan-checker PASSED (0 blockers). Next: /gsd-execute-phase 02.1
+Last activity: 2026-06-14 -- Phase 2.1 planned (3 plans, verified)
 
 Progress: [████░░░░░░] 40%
 
