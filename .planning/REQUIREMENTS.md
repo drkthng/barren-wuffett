@@ -18,6 +18,13 @@
 - [x] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
 - [x] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
 
+### Visual & Art (Phase 2.1 — inserted)
+
+- [ ] **ART-01**: Level 1 overworld renders with a cohesive 16-bit pixel-art tileset (cozy town) replacing placeholder art, with auto-tiled grass↔path/terrain transitions — driven by the existing level-01 tile-index map, no engine changes
+- [ ] **ART-02**: Player, NPCs (grandpa, store clerk, rival), dog, and Mr. Market boss have cohesive multi-frame sprites — 4-direction walk animation for moving characters; boss has distinct phase poses — wired via Preloader spritesheets + Phaser animations
+- [ ] **ART-03**: All shipped art is CC0 or commercially-licensed with provenance/attribution tracked; assets are mobile-optimized (lean bundle, textures ≤2048px) and loaded via the existing Preloader/ContentRegistry pipeline
+- [ ] **ART-04**: A reusable art style guide (palette, 16px grid, perspective, sourcing + pipeline) is documented so Levels 2-3 (Phase 4) reuse the look with data + assets only — no engine code
+
 ### Save & Progress
 
 - [x] **SAVE-01**: Player progress persists locally (IndexedDB) across refresh and return visits — no account needed to play
@@ -97,6 +104,10 @@
 | GAME-08 | Phase 1 | Complete |
 | GAME-09 | Phase 2 | Complete |
 | GAME-10 | Phase 1 | Complete |
+| ART-01 | Phase 2.1 | Pending |
+| ART-02 | Phase 2.1 | Pending |
+| ART-03 | Phase 2.1 | Pending |
+| ART-04 | Phase 2.1 | Pending |
 | SAVE-01 | Phase 2 | Complete |
 | SAVE-02 | Phase 2 | Complete |
 | FUNL-01 | Phase 3 | Pending |
@@ -117,4 +128,4 @@
 | INFR-05 | Phase 1 | Complete |
 
 ---
-*Last updated: 2026-06-11 after roadmap creation*
+*Last updated: 2026-06-14 — added ART-01..04 (Phase 2.1 Visual Pass, inserted)*

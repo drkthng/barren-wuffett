@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in
 - [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
+- [ ] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes
 - [ ] **Phase 3: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal content, and cookieless analytics — end-to-end tested before launch
 - [ ] **Phase 4: Levels 2-3 + Launch** - Remaining levels using ContentRegistry/manifest pattern, PWA hardening, and public launch
 
@@ -76,6 +77,25 @@ Plans:
 
 - [x] 02-03-PLAN.md — Share + viral slice: ShareService + ShareCard (1200×630 one-tap Web Share), Level Complete screen, og:image/og:title/og:description meta + static og-image.png
 
+### Phase 02.1: Visual Pass — Cozy Pixel Art (Level 1) (INSERTED)
+
+**Goal**: Level 1 reads as a real, cohesive cozy 16-bit pixel-art game (Zelda / FF-Mystic-Quest-adjacent) on a real phone — the placeholder colored-square sprites and stub tileset are replaced with a cohesive CC0 art set (Kenney Tiny Town base, validated in spike 001), terrain uses auto-tiled grass↔path transitions, and the player + NPCs + dog + Mr. Market boss have cohesive multi-frame animated sprites — all via the existing Preloader + ContentRegistry pipeline with NO mechanics/engine changes; mobile bundle stays lean
+**Mode:** mvp
+**Depends on**: Phase 2 (mechanics complete). Inserted before Phase 3 so the backend funnel is not built on a placeholder-looking game; does not functionally block Phase 3.
+**Requirements**: ART-01, ART-02, ART-03, ART-04
+**Success Criteria** (what must be TRUE):
+
+  1. A player opening Level 1 sees a cohesive cozy 16-bit town (grass/paths/houses/trees/fences with clean auto-tiled edges) — no placeholder squares anywhere
+  2. The player character and every NPC/dog/Mr. Market boss animate with cohesive multi-frame sprites; the player walks in 4 directions
+  3. The visual upgrade is purely additive — all Phase 2 mechanics, saves, mini-game, boss, and share still work (61/61 tests stay green; no engine changes)
+  4. The mobile bundle stays lean; the game still loads fast on 4G and works offline (PWA-friendly)
+  5. A reusable art style guide + asset manifest exists so a future level needs only data + assets, not engine code
+
+**Spike**: .planning/spikes/001-cozy-art-pipeline/ (VALIDATED — pipeline + cozy look proven; Kenney Tiny Town CC0; auto-tiling + animation demonstrated)
+
+**Plans**: TBD
+**UI hint**: yes
+
 ### Phase 3: Funnel & Backend
 
 **Goal**: The complete email funnel is live and end-to-end tested — a player who completes Level 1 can opt into cloud-save, receive a confirmation email via Brevo, unlock Investment Journal entries, and have all consent recorded in a GDPR-compliant way
@@ -110,11 +130,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
 | 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
+| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 0/TBD | Not started | - |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |

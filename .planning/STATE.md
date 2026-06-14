@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-03-PLAN.md (Tasks 1-2); Task 3 (Geltungssatz) deferred by user — resume when user says "geltungssatz-confirmed"
-last_updated: "2026-06-12T06:45:38.047Z"
-last_activity: 2026-06-12 -- Phase 02 execution started
+status: planning
+stopped_at: Phase 2.1 (Visual Pass) inserted 2026-06-14 after spike 001 validated cozy art; ready to plan. Phase 2 device-UAT informally pending; Geltungssatz gate still open.
+last_updated: "2026-06-14T07:54:20.412Z"
+last_activity: 2026-06-14 -- Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted; spike 001 VALIDATED
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 2
   total_plans: 6
   completed_plans: 6
-  percent: 50
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-11)
 
 **Core value:** A fun, shareable game that makes players want to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
-**Current focus:** Phase 02 — Level 1 — Offline Playable
+**Current focus:** Phase 02.1 — Visual Pass (Cozy Pixel Art for Level 1)
 
 ## Current Position
 
-Phase: 02 (Level 1 — Offline Playable) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-06-12 -- Phase 02 execution started
+Phase: 02.1 (Visual Pass — Cozy Pixel Art for Level 1) — INSERTED, ready to plan
+Plan: 0 of TBD
+Status: Inserted 2026-06-14 (spike 001 VALIDATED). Next: /gsd-plan-phase 02.1
+Last activity: 2026-06-14 -- Phase 2.1 inserted; cozy-art spike VALIDATED
 
-Progress: [██░░░░░░░░] 25%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -58,6 +58,10 @@ Progress: [██░░░░░░░░] 25%
 | Phase 02 P02-02 | 25min | 3 tasks | 4 files |
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted after Phase 2 on 2026-06-14 (URGENT) — replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0) before Phase 3 backend, so the funnel isn't built on a placeholder-looking game. Spike 001 VALIDATED the approach.
 
 ### Decisions
 
