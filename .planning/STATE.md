@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02.1-03-PLAN.md — awaiting Task 3 human-verify checkpoint
-last_updated: "2026-06-14T13:39:46.435Z"
-last_activity: 2026-06-14
+status: verifying
+stopped_at: "Phase 02.1 art execution complete (3/3 plans committed, 80/80 green). Dialogue ↓/Enter + modal fix done (d679952); game imprint link fixed to /en/imprint (7553a10). Pending: formal phase verification + user full-playthrough sign-off."
+last_updated: "2026-06-14T16:45:00.000Z"
+last_activity: 2026-06-14 -- Phase 02.1 art complete; dialogue UX + imprint fixes
 progress:
   total_phases: 5
   completed_phases: 3
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 02.1 (visual-pass-cozy-pixel-art-for-level-1) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-06-14
+Phase: 02.1 (visual-pass-cozy-pixel-art-for-level-1) — ART COMPLETE, verification pending
+Plan: 3 of 3 complete (all SUMMARYs committed; gate 80/80 green; build passes)
+Status: Cozy art shipped across Level 1 (overworld tileset+auto-tiling, full animated cast, HUD coin/pause/save + victory art, STYLE-GUIDE + ASSET-MANIFEST). Dialogue ↓/Enter + modal-during-talk added. Imprint link fixed. NEXT: /gsd-verify-work 02.1 + user full-playthrough sign-off → then Phase 3.
+Last activity: 2026-06-14 -- Phase 02.1 art complete; dialogue UX + imprint fixes
 
 Progress: [█████████░] 89%
 
@@ -92,16 +92,23 @@ Recent decisions affecting current work:
 - Research flags phaser4-rex-plugins package name as unverified on npm — verify before Phase 1 scaffolding
 - Legal counsel recommended for Persoenlichkeitsrecht, UWG Section 7, and BaFin finfluencer rules before first real subscriber
 - eToro/wikifolio affiliate T&Cs need direct verification before Journal portfolio links go live
-- OPEN LEGAL GATE: Geltungssatz on compoundingknowledge.com/impressum pending (deferred 2026-06-12) — do NOT share game URL publicly; remind user after every step
+- LEGAL GATE (game side DONE 2026-06-14): blog EN imprint (compoundingknowledge.com/en/imprint) names the game + game links back in ≤2 clicks (game imprint page fixed to /en/imprint, commit 7553a10). Still do NOT share the game URL publicly until the user explicitly says "geltungssatz-confirmed".
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| legal | Geltungssatz: add sentence to compoundingknowledge.com/impressum naming https://barren-wuffett.pages.dev; resume signal "geltungssatz-confirmed" | OPEN — blocks public sharing of game URL | 2026-06-12 (user: "Geltungssatz machen wir später!") |
+| legal | Geltungssatz / imprint: blog EN imprint (compoundingknowledge.com/en/imprint) now names the game; game imprint page fixed to link there, reachable in ≤2 clicks (commit 7553a10). Both sides satisfied — awaiting user's explicit "geltungssatz-confirmed" to lift the public-sharing gate. | NEARLY RESOLVED — game side done 2026-06-14; awaiting user confirm | 2026-06-12 |
 
 ## Session Continuity
 
-Last session: 2026-06-14T13:39:46.417Z
-Stopped at: Completed 02.1-03-PLAN.md — awaiting Task 3 human-verify checkpoint
+Last session: 2026-06-14 (cleared after Phase 02.1 art execution)
+Stopped at: Phase 02.1 cozy-art visual pass — ALL 3 PLANS EXECUTED & COMMITTED (overworld tileset + auto-tiled paths; full animated cast — player 4-dir walk, 3 NPCs, dog, Mr. Market greed/panic; HUD coin/pause/save + Barren victory art; STYLE-GUIDE.md + ASSET-MANIFEST.md). PLUS dialogue ↓/Enter + modal-during-talk fix (d679952) and game imprint link → /en/imprint (7553a10). Tree clean; build + 80/80 tests green.
+
+Resume steps (next session):
+  1. /gsd-verify-work 02.1 (or /gsd-resume-work) — run formal phase verification (gsd-verifier) to mark Phase 02.1 complete in ROADMAP/STATE.
+  2. User full Level-1 playthrough sign-off — confirm boss greed→panic pose switch + Barren victory art on the Level Complete / share card (couldn't be auto-screenshotted).
+  3. When the user is happy with the imprint, they say "geltungssatz-confirmed" → lift the public-URL gate.
+  4. Then Phase 3 (Funnel & Backend): /gsd-plan-phase 3.
+  Local dev servers may have stopped on clear — restart the real game with `npm run dev` (serves :8080).
 Resume file: None
