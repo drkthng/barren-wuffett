@@ -97,7 +97,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02.1-01-PLAN.md — Slice A "Overworld looks cozy": Wave-0 art-assets.test.ts scaffold; self-host Kenney Tiny Town tileset; rewrite level-01 as GROUND_DATA + DECO_DATA (30×52) with auto-tiled paths; two-layer 16px tilemap in OverworldScene (ART-01)
+- [x] 02.1-01-PLAN.md — Slice A "Overworld looks cozy": Wave-0 art-assets.test.ts scaffold; self-host Kenney Tiny Town tileset; rewrite level-01 as GROUND_DATA + DECO_DATA (30×52) with auto-tiled paths; two-layer 16px tilemap in OverworldScene (ART-01)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -149,6 +149,6 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
 | 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
-| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 0/3 | Planned | - |
+| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 1/3 | In Progress|  |
 | 3. Funnel & Backend | 0/TBD | Not started | - |
 | 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
