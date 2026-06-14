@@ -73,12 +73,10 @@ export class Preloader extends Scene {
         this.load.image('ui_pause',        'assets/images/ui_pause.png');
         this.load.image('barren_victory',  'assets/images/barren_victory.png');
         this.load.image('bw_monogram',     'assets/images/bw_monogram.png');
-        // WR-01 fix: load tileset at 32×32 to match OverworldScene's tileWidth/tileHeight:32.
-        // The previous 16×16 frame size caused Phaser to use the wrong tile frame offsets
-        // when rendering the 32px-grid tilemap (tiles drawn at wrong positions / wrong tiles).
-        this.load.spritesheet('omaha_tiles', 'assets/tilesets/omaha_tiles.png', {
-            frameWidth: 32, frameHeight: 32,
-        });
+        // Tileset: Kenney Tiny Town CC0, 16px tiles, loaded as a plain image.
+        // The tilemap renderer uses the packed sheet directly; no frameWidth needed.
+        // Uses tilemap_packed.png (margin=0, spacing=0) to avoid 1px ghosting seams.
+        this.load.image('tiny_town_tiles', 'assets/tilesets/tiny_town_tiles.png');
     }
 
     create(): void {

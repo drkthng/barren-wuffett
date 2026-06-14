@@ -2,7 +2,7 @@
  * OverworldScene — Level 1 top-down overworld (GAME-01, GAME-05, GAME-06, GAME-09)
  *
  * Responsibilities:
- *   - Build tilemap from MAP_DATA via Arcade Physics
+ *   - Build two-layer 16px tilemap (GROUND_DATA + DECO_DATA) via Arcade Physics
  *   - Instantiate Player + VirtualJoystick (touch only)
  *   - Place 3 NPCs, dog patrol (patience mechanic)
  *   - Call InputBus.update() + player.update() each tick
@@ -20,10 +20,9 @@ import { InputBus } from '../../input/InputBus';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { SaveService } from '../../services/SaveService';
 import type { SaveState } from '../../services/SaveService';
-import { LEVEL_01_MANIFEST } from '../../data/levels/level-01';
+import { LEVEL_01_MANIFEST, GROUND_DATA, DECO_DATA } from '../../data/levels/level-01';
 import { Player } from '../../entities/Player';
 import { NPC } from '../../entities/NPC';
-import { MAP_DATA } from '../../data/levels/level-01';
 import { t } from '../../services/i18n';
 import { TriggerSystem } from '../../systems/TriggerSystem';
 
@@ -117,29 +116,33 @@ export class OverworldScene extends Scene {
         const startX = saved?.position?.x ?? 96;
         const startY = saved?.position?.y ?? 96;
 
-        // ── Tilemap ────────────────────────────────────────────────────────
-        const map = this.make.tilemap({
-            data: MAP_DATA,
-            tileWidth: 32,
-            tileHeight: 32,
-        });
-        const tileset = map.addTilesetImage('omaha_tiles');
-        if (tileset) {
-            const groundLayer = map.createLayer(0, tileset, 0, 0);
-            if (groundLayer) {
-                groundLayer.setCollision([1]);
+        // ── Tilemap: two layers, 16px tiles (Kenney Tiny Town) ────────────
+        const TILE = 16;
 
-                // ── Player ─────────────────────────────────────────────────
-                this.player = new Player(this, startX, startY);
-                this.physics.add.collider(this.player.sprite, groundLayer);
-            }
-        } else {
-            // Fallback when tileset asset is missing (placeholder PNG case)
-            this.player = new Player(this, startX, startY);
+        // Ground layer — grass + auto-tiled dirt; no collision
+        // NOTE: margin=0, spacing=0 because tilemap_packed.png has no tile padding (no ghosting seams).
+        const gMap = this.make.tilemap({ data: GROUND_DATA, tileWidth: TILE, tileHeight: TILE });
+        const gTileset = gMap.addTilesetImage('tiny_town_tiles', 'tiny_town_tiles', TILE, TILE, 0, 0);
+        if (gTileset) {
+            gMap.createLayer(0, gTileset, 0, 0);
         }
 
-        // Camera follows player
-        this.cameras.main.setBounds(0, 0, MAP_DATA[0].length * 32, MAP_DATA.length * 32);
+        // Deco layer — collidable props; -1 cells are empty/transparent
+        const dMap = this.make.tilemap({ data: DECO_DATA, tileWidth: TILE, tileHeight: TILE });
+        const dTileset = dMap.addTilesetImage('tiny_town_tiles', 'tiny_town_tiles', TILE, TILE, 0, 0);
+        const dLayer = dTileset ? dMap.createLayer(0, dTileset, 0, 0) : null;
+
+        // Player must exist before collider is added
+        this.player = new Player(this, startX, startY);
+
+        if (dLayer) {
+            dLayer.setCollisionByExclusion([-1]);   // all non-(-1) deco tiles block movement
+            this.physics.add.collider(this.player.sprite, dLayer);
+        }
+
+        // Camera bounds — world pixel size is same as before (480×832) but formula changes
+        // GROUND_DATA[0].length * 16 = 30 * 16 = 480; GROUND_DATA.length * 16 = 52 * 16 = 832
+        this.cameras.main.setBounds(0, 0, GROUND_DATA[0].length * TILE, GROUND_DATA.length * TILE);
         this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
 
         // ── TriggerSystem (Plan 02-02) ─────────────────────────────────────
