@@ -438,6 +438,20 @@ export class OverworldScene extends Scene {
             }
         }
 
+        // ── Phase 3 Slice 2: Patience-bonus reward (GAME-06, D-09; CR-03 wiring) ──
+        // The dog patrols row 14 (y≈464). When the gap window is open (dogGapActive)
+        // and the player slips through the far-end corridor while the dog is away,
+        // award the one-shot patience bonus. awardPatienceBonus() guards on both
+        // dogGapActive and the patience_used flag so it can fire at most once.
+        if (this.dogGapActive && !this.flags['patience_used']) {
+            const py = this.player.sprite.y;
+            const px = this.player.sprite.x;
+            // Far-end gap corridor: south of the dog's row, near the far (max-X) end.
+            if (py > 440 && px > DOG_MAX_X - 48) {
+                this.awardPatienceBonus();
+            }
+        }
+
         // ── Phase 3 Slice 3: Traversal reward zone (east of gate, D-16) ───────
         // Award once when player enters the reward area (past x=320, y<200 region)
         if (this.flags['upgrade_traversal'] && !this.flags['traversal_reward_collected']) {
@@ -773,8 +787,13 @@ export class OverworldScene extends Scene {
      */
     awardPatienceBonus(): void {
         if (!this.dogGapActive) return;
+        // CR-03 idempotency: award the GAME-06 patience bonus at most once. Without
+        // this guard update() would re-fire it every frame the player lingers in the
+        // gap corridor while dogGapActive is true, draining the reward into a coin geyser.
+        if (this.flags['patience_used']) return;
         this.coins += PATIENCE_BONUS_COINS;
         this.flags['patience_used'] = true;
+        GameEvents.emit(Events.COINS_CHANGED, this.coins);
         GameEvents.emit(Events.PATIENCE_BONUS, PATIENCE_BONUS_COINS);
         void SaveService.save(this.buildSaveState());
     }
