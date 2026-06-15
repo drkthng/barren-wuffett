@@ -135,6 +135,46 @@ export class HUD {
         if (label) label.setVisible(n > 0);
     }
 
+    /**
+     * Phase 3 Slice 2: Flash the streak bonus toast when the 8th bush is cleared (D-07).
+     * Two-line format modeled on flashPatienceBonus (same float-up tween structure).
+     * UI-SPEC §3c: line 1 = "STREAK BONUS!" (#00ff88, Heading 16px), line 2 = coins or journal.
+     */
+    flashStreakBonus(coins: number, journal: boolean): void {
+        // Line 1: "STREAK BONUS!" in accent green
+        const line1 = this.scene.add.text(240, 200,
+            t('hud.streakBonus'),
+            {
+                fontSize: '16px',
+                color: '#00ff88',
+                fontFamily: '"Press Start 2P", monospace',
+            }
+        ).setOrigin(0.5).setDepth(25);
+
+        // Line 2: coins amount or journal page label
+        const line2Text = journal
+            ? t('hud.streakBonusJournal')
+            : t('hud.streakBonusCoins').replace('{n}', String(coins));
+
+        const line2 = this.scene.add.text(240, 222,
+            line2Text,
+            {
+                fontSize: '8px',
+                color: '#f5c842',
+                fontFamily: '"Press Start 2P", monospace',
+            }
+        ).setOrigin(0.5).setDepth(25);
+
+        // Float-up + fade (1200ms, UI-SPEC §3c)
+        this.scene.tweens.add({
+            targets: [line1, line2],
+            y: '-=40',
+            alpha: 0,
+            duration: 1200,
+            onComplete: () => { line1.destroy(); line2.destroy(); },
+        });
+    }
+
     /** Flash the autosave disk icon (800ms total). */
     flashSave(): void {
         this.scene.tweens.add({

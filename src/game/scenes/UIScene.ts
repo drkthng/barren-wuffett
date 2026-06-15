@@ -18,9 +18,11 @@ import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { HUD } from '../../ui/HUD';
+import { HospitalOverlay } from '../../ui/HospitalOverlay';
 import { DialogueBox } from '../../ui/DialogueBox';
 import type { DialogueLine } from '../../ui/DialogueBox';
 import { shareCard } from '../../services/ShareService';
+import { AudioService } from '../../services/AudioService';
 
 type UIState = 'HUD' | 'DIALOGUE' | 'PAUSE' | 'LEVEL_COMPLETE' | 'SHOP' | 'HOSPITAL';
 
@@ -45,6 +47,8 @@ export class UIScene extends Scene {
     private dialogueBox!: DialogueBox;
     private pauseOverlay!: Phaser.GameObjects.Container;
     private pauseBackdrop!: Phaser.GameObjects.Rectangle;
+    private hospitalOverlay!: HospitalOverlay;
+    private _hospitalDismissTimer: Phaser.Time.TimerEvent | null = null;
     private uiState: UIState = 'HUD';
 
     // Stored as a class field so shutdown() can pass it to .off() precisely (CR-03 fix)
@@ -66,6 +70,44 @@ export class UIScene extends Scene {
         this.hud.updateStreak(data.streak);
     };
 
+    // Phase 3 Slice 2: STREAK_BONUS handler — shows streak bonus toast in HUD (D-07, UI-SPEC §3c)
+    private onStreakBonus = (data: { coins: number; journal: boolean }): void => {
+        this.hud.flashStreakBonus(data.coins, data.journal);
+    };
+
+    // Phase 3 Slice 2: PLAYER_HOSPITALIZED handler — shows hospital splash + pauses OverworldScene
+    // Double-fire guard: returns early if already in HOSPITAL state (T-03-14)
+    private onPlayerHospitalized = (data: { fee: number; helmetOwned: boolean }): void => {
+        if (this.uiState === 'HOSPITAL') return;
+        this.setState('HOSPITAL');
+        // Pause OverworldScene so player cannot move during the splash
+        if (this.scene.get('OverworldScene')?.scene.isActive()) {
+            this.scene.pause('OverworldScene');
+        }
+        this.hospitalOverlay.show(data.fee, data.helmetOwned);
+        AudioService.playSfx(this, 'hospital_sting');
+        // Auto-dismiss after 1500ms (RESEARCH Pattern 4)
+        this._hospitalDismissTimer = this.time.delayedCall(1500, this.dismissHospital);
+        // Also dismiss on any tap (standard UIScene pattern)
+        this.input.once('pointerdown', this.dismissHospital);
+    };
+
+    // Phase 3 Slice 2: Dismiss the hospital splash. Idempotent via _state check (T-03-14).
+    // Emits HOSPITAL_DISMISS — this is the carrier that tells OverworldScene to respawn at (96,96).
+    private dismissHospital = (): void => {
+        if (this.uiState !== 'HOSPITAL') return;
+        // Cancel auto-dismiss timer if it hasn't fired yet
+        this._hospitalDismissTimer?.remove();
+        this._hospitalDismissTimer = null;
+        // Resume OverworldScene before setState (setState may call hud.setVisible)
+        if (this.scene.get('OverworldScene')?.scene.isPaused()) {
+            this.scene.resume('OverworldScene');
+        }
+        this.setState('HUD');
+        // Emit the dismiss carrier — OverworldScene.onHospitalDismiss respawns player at (96,96)
+        GameEvents.emit(Events.HOSPITAL_DISMISS);
+    };
+
     constructor() {
         super('UIScene');
     }
@@ -80,6 +122,9 @@ export class UIScene extends Scene {
         // ── Pause overlay ──────────────────────────────────────────────────
         this.buildPauseOverlay();
 
+        // ── Phase 3 Slice 2: Hospital overlay ─────────────────────────────
+        this.hospitalOverlay = new HospitalOverlay(this);
+
         // ── Event subscriptions ────────────────────────────────────────────
         GameEvents.on(Events.DIALOGUE_START, this.onDialogueStart, this);
         GameEvents.on(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
@@ -91,6 +136,10 @@ export class UIScene extends Scene {
         // Phase 3: coin HUD + streak pips
         GameEvents.on(Events.COINS_CHANGED, this.onCoinsChanged, this);
         GameEvents.on(Events.BUSH_WHACKED,  this.onBushWhacked,  this);
+        // Phase 3 Slice 2: hospital splash + streak bonus flash (CR-03)
+        GameEvents.on(Events.PLAYER_HOSPITALIZED, this.onPlayerHospitalized, this);
+        GameEvents.on(Events.STREAK_BONUS,        this.onStreakBonus,         this);
+        // Note: UIScene EMITS HOSPITAL_DISMISS; it does not listen for it — no .on() needed
     }
 
     // ── Event handlers ─────────────────────────────────────────────────────
@@ -421,6 +470,11 @@ export class UIScene extends Scene {
         this.hud.setVisible(state === 'HUD');
         this.pauseBackdrop.setVisible(state === 'PAUSE');
         this.pauseOverlay.setVisible(state === 'PAUSE');
+        // Phase 3 Slice 2: hide hospital overlay when leaving HOSPITAL state
+        // show() is driven by onPlayerHospitalized (needs the fee payload), not here
+        if (state !== 'HOSPITAL') {
+            this.hospitalOverlay?.hide();
+        }
     }
 
     shutdown(): void {
@@ -435,6 +489,13 @@ export class UIScene extends Scene {
         // Phase 3: remove COINS_CHANGED + BUSH_WHACKED handlers (CR-03 — no zombie listeners on restart)
         GameEvents.off(Events.COINS_CHANGED,     this.onCoinsChanged,     this);
         GameEvents.off(Events.BUSH_WHACKED,      this.onBushWhacked,      this);
+        // Phase 3 Slice 2: remove PLAYER_HOSPITALIZED + STREAK_BONUS handlers (CR-03)
+        // UIScene EMITS HOSPITAL_DISMISS but does not listen — no off() needed for that event
+        GameEvents.off(Events.PLAYER_HOSPITALIZED, this.onPlayerHospitalized, this);
+        GameEvents.off(Events.STREAK_BONUS,        this.onStreakBonus,         this);
+        // Cancel pending dismiss timer on shutdown (avoids dangling callback)
+        this._hospitalDismissTimer?.remove();
+        this._hospitalDismissTimer = null;
         // WR-07 fix: destroy DialogueBox before Phaser tears down the input plugin
         this.dialogueBox.destroy();
     }
