@@ -31,6 +31,7 @@ import { WhackSystem } from '../../systems/WhackSystem';
 import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
 import { firstWhackOrRoll } from '../../systems/PrizePack';
 import type { PrizePackState } from '../../systems/PrizePack';
+import { computeHospitalFee } from '../../systems/Economy';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
@@ -109,6 +110,13 @@ export class OverworldScene extends Scene {
     private _onHidden = (): void => { void SaveService.save(this.buildSaveState()); };
     private onDialogueComplete = (): void => {
         this.inDialogue = false;
+        void SaveService.save(this.buildSaveState());
+    };
+
+    // Phase 3 Slice 2: HOSPITAL_DISMISS carrier — UIScene dismiss emits it; we respawn at (96,96) (D-11)
+    private onHospitalDismiss = (): void => {
+        this.hospitalShowing = false;
+        this.player.sprite.setPosition(96, 96);
         void SaveService.save(this.buildSaveState());
     };
 
@@ -308,6 +316,9 @@ export class OverworldScene extends Scene {
         // ── Resume from dialogue ───────────────────────────────────────────
         GameEvents.on(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
 
+        // ── Phase 3 Slice 2: HOSPITAL_DISMISS → respawn player at (96,96) (D-11, CR-03) ──
+        GameEvents.on(Events.HOSPITAL_DISMISS, this.onHospitalDismiss, this);
+
         // Boss zone entry — first-time autosave + scene trigger
         // (full boss trigger wired in Plan 02-02 via TriggerSystem)
     }
@@ -351,6 +362,16 @@ export class OverworldScene extends Scene {
                 this.bossZoneVisited = true;
                 this.flags['boss_zone_visited'] = true;
                 void SaveService.save(this.buildSaveState());
+            }
+        }
+
+        // ── Phase 3 Slice 2: Dog-bite detection (D-09, D-10; Pitfall 2: isInvincible guard) ──
+        // isInvincible guard is MANDATORY — without it the overlap re-fires every frame draining coins
+        if (this.dogSprite && !this.player.isInvincible) {
+            const dx = this.player.sprite.x - this.dogSprite.x;
+            const dy = this.player.sprite.y - this.dogSprite.y;
+            if (Math.sqrt(dx * dx + dy * dy) < 24) {
+                this.onDogBite();
             }
         }
 
@@ -557,14 +578,18 @@ export class OverworldScene extends Scene {
 
     /**
      * Phase 3: Roll the prize-pack for a cleared bush and award coins/items (D-05, D-06, D-08).
+     * Slice 2 extended: streak payout fires on the 8th consecutive bush-without-bite (D-07).
      *
      * - Uses firstWhackOrRoll() seam from Plan 01 for the D-06 first-whack guarantee.
      * - Sets first_whack_done flag AFTER the call (so first whack always returns a coin).
      * - Emits COINS_CHANGED on every coin delta (closes the D-08 HUD gap).
      * - Emits BUSH_WHACKED with streak count (HUD streak pips in UIScene).
+     * - At streak 8: emits STREAK_BONUS (8 coins, or Journal page at special milestone bush).
      * - Autosaves via SaveService after every coin award.
+     *
+     * Note: bushStreak transient — NOT in buildSaveState() (D-07 spec).
      */
-    private awardWhackDrop(_bush: BushEntity): void {
+    private awardWhackDrop(bush: BushEntity): void {
         const drop = firstWhackOrRoll(this.flags, this.prizePackState);
 
         // D-06: mark first_whack_done AFTER the call so the override fires correctly
@@ -575,13 +600,13 @@ export class OverworldScene extends Scene {
         if (drop.coins > 0) {
             this.coins += drop.coins;
             AudioService.playSfx(this, 'coin_ding');
-            // Increment streak counter (reset to 0 by dog bite in Slice 2)
+            // Increment streak counter (reset to 0 by dog bite)
             this.bushStreak += 1;
             // BUSH_WHACKED carries streak so UIScene can update pip indicator (D-07)
             GameEvents.emit(Events.BUSH_WHACKED, { streak: this.bushStreak });
             // COINS_CHANGED — closes D-08 HUD gap; UIScene.onCoinsChanged drives HUD update
             GameEvents.emit(Events.COINS_CHANGED, this.coins);
-            // Autosave: coins + first_whack_done flag already in buildSaveState()
+            // Autosave
             void SaveService.save(this.buildSaveState());
         } else if (drop.item === 'snack') {
             // Snack drop: increment streak + emit BUSH_WHACKED (snack effect deferred to Slice 3)
@@ -590,6 +615,28 @@ export class OverworldScene extends Scene {
             // No COINS_CHANGED (no coins), no autosave needed for snack (transient)
         }
         // No-drop (null-coalesced to {coins:0,item:null}): no events, no save
+
+        // Phase 3 Slice 2: Streak bonus payout on 8th consecutive whack-without-bite (D-07)
+        if (this.bushStreak >= 8) {
+            this.bushStreak = 0;
+            AudioService.playSfx(this, 'streak_bonus');
+            if (bush.special) {
+                // Milestone bush: Journal page (content key is a Phase-3 seed, Slice 3 wires content)
+                const journalKey = 'journal_streak_milestone';
+                if (!this.journalUnlocked.includes(journalKey)) {
+                    this.journalUnlocked.push(journalKey);
+                }
+                GameEvents.emit(Events.STREAK_BONUS, { coins: 0, journal: true });
+            } else {
+                // Regular bush: 8-coin snowball bonus
+                this.coins += 8;
+                GameEvents.emit(Events.COINS_CHANGED, this.coins);
+                GameEvents.emit(Events.STREAK_BONUS, { coins: 8, journal: false });
+            }
+            // Emit BUSH_WHACKED with 0 to clear the HUD pips after payout
+            GameEvents.emit(Events.BUSH_WHACKED, { streak: 0 });
+            void SaveService.save(this.buildSaveState());
+        }
     }
 
     private showTalkPrompt(npc: NPC): void {
@@ -651,6 +698,42 @@ export class OverworldScene extends Scene {
         void SaveService.save(this.buildSaveState());
     }
 
+    /**
+     * Phase 3 Slice 2: Handle dog-contact bite (D-09, D-10, D-11, D-12).
+     * isInvincible is already checked in update() before this is called.
+     * Sequence: SFX → streak reset → compute fee → knockback (sets i-frames) → completeHospital on finish.
+     */
+    private onDogBite(): void {
+        AudioService.playSfx(this, 'dog_bite');
+        // Reset streak immediately (D-12) — pips clear via BUSH_WHACKED { streak: 0 }
+        this.bushStreak = 0;
+        GameEvents.emit(Events.BUSH_WHACKED, { streak: 0 });
+        // Compute fee now (before coins change) so the overlay can show the correct amount
+        const fee = computeHospitalFee(this.coins, this.flags);
+        // applyKnockback sets _invincible=true synchronously (T-03-06: blocks re-entry immediately)
+        // onComplete fires after ~960ms i-frame flash — then show the hospital beat
+        this.player.applyKnockback(
+            this.dogSprite!.x, this.dogSprite!.y,
+            () => this.completeHospital(fee),
+        );
+    }
+
+    /**
+     * Phase 3 Slice 2: Apply hospital fee + emit PLAYER_HOSPITALIZED after knockback (D-11).
+     * Fee is authoritative here (coins can never go negative — T-03-07).
+     * RESPAWN is NOT here — it happens in onHospitalDismiss when UIScene emits HOSPITAL_DISMISS.
+     */
+    private completeHospital(fee: number): void {
+        this.coins = Math.max(0, this.coins - fee);
+        GameEvents.emit(Events.COINS_CHANGED, this.coins);
+        this.hospitalShowing = true;
+        GameEvents.emit(Events.PLAYER_HOSPITALIZED, {
+            fee,
+            helmetOwned: !!this.flags['upgrade_helmet'],
+        });
+        void SaveService.save(this.buildSaveState());
+    }
+
     /** Build current save state from scene fields. */
     buildSaveState(): SaveState {
         return {
@@ -686,6 +769,8 @@ export class OverworldScene extends Scene {
         // Remove only this scene's listeners — pass fn + context so we don't
         // strip other scenes' listeners for the same event (CR-03, WR-05 fix)
         GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
+        // Phase 3 Slice 2: HOSPITAL_DISMISS cleanup (CR-03 — every on() needs off() for restart safety)
+        GameEvents.off(Events.HOSPITAL_DISMISS, this.onHospitalDismiss, this);
         this.game.events.off(Phaser.Core.Events.HIDDEN, this._onHidden, this);
         this.input.off('pointerdown');
     }

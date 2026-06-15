@@ -21,6 +21,7 @@ export const Events = Object.freeze({
     COINS_CHANGED:        'COINS_CHANGED',
     BUSH_WHACKED:         'BUSH_WHACKED',
     PLAYER_HOSPITALIZED:  'PLAYER_HOSPITALIZED',
+    HOSPITAL_DISMISS:     'HOSPITAL_DISMISS',
     SHOP_OPEN:            'SHOP_OPEN',
     SHOP_PURCHASE:        'SHOP_PURCHASE',
     SHOP_CLOSE:           'SHOP_CLOSE',
