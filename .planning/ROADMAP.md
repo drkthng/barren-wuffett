@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in (completed 2026-06-12; Geltungssatz confirmed 2026-06-15)
 - [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
 - [x] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes (completed 2026-06-14)
-- [ ] **Phase 3: Level 1 — The Newspaper Verb & Economy** - Rolled-up-newspaper whack verb, bush/chore coin economy with fair deterministic drops, dog hazard, and a shop of permanent upgrades — the explore→earn→spend loop
+- [x] **Phase 3: Level 1 — The Newspaper Verb & Economy** - Rolled-up-newspaper whack verb, bush/chore coin economy with fair deterministic drops, dog hazard, and a shop of permanent upgrades — the explore→earn→spend loop (completed 2026-06-15, SC-1..SC-5 human verification pending)
 - [ ] **Phase 4: Level 1 — Set Pieces** - Paper-route mini-game glow-up (characterful houses + score splash) and the Mr. Market "Mood Pendulum" boss redesign (read greed/panic, not a linear menu)
 - [ ] **Phase 5: Level 1 — Story & Heart** - The 7-beat young-Barren story spine: new NPCs, cutscenes, Count-the-Caps + Pinball-Snowball hustle mini-games, and hidden Investment Journal collectible pages
 - [ ] **Phase 6: Levels 2-3** - Remaining two levels using the ContentRegistry/manifest pattern with no engine code changes, each with a boss + genre-accent mini-game
@@ -145,7 +145,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 03-04-PLAN.md — Slice 3 "shop + gate": SHOP overlay + 4 items + OWNED/affordability, felt upgrades (newspaper reach, helmet fee-waiver, traversal gate + reward area); end-of-phase human-check (L1E-04)
+- [x] 03-04-PLAN.md — Slice 3 "shop + gate": SHOP overlay + 4 items + OWNED/affordability, felt upgrades (newspaper reach, helmet fee-waiver, traversal gate + reward area); end-of-phase human-check (L1E-04)
 
 ### Phase 4: Level 1 — Set Pieces
 

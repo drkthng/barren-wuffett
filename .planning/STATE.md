@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 Plan 02 complete — WHACK verb + economy spine + COINS_CHANGED HUD
-last_updated: "2026-06-15T19:59:59.962Z"
-last_activity: 2026-06-15 -- Phase 03 Plan 02 complete
+stopped_at: Phase 03 Plan 04 complete — shop overlay + upgrades + traversal gate (Phase 3 L1E-01..04 done)
+last_updated: "2026-06-15T20:14:00Z"
+last_activity: 2026-06-15 -- Phase 03 Plan 04 complete
 progress:
   total_phases: 9
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 12
-  percent: 33
+  completed_plans: 13
+  percent: 44
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 03 (Level 1 — The Newspaper Verb & Economy) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-06-15 -- Phase 03 Plan 02 complete
+Phase: 03 (Level 1 — The Newspaper Verb & Economy) — COMPLETE (all 4 plans)
+Plan: 4 of 4 — DONE
+Status: Phase 3 complete. Ready for Phase 4 (Level 1 Set Pieces)
+Last activity: 2026-06-15 -- Phase 03 Plan 04 complete (shop + upgrades + traversal gate)
 
 Progress: [███░░░░░░░] 33% (3/9 phases)
 
@@ -61,6 +61,7 @@ Progress: [███░░░░░░░] 33% (3/9 phases)
 | Phase 03 P01 | 4min | 2 tasks | 11 files |
 | Phase 03 P02 | 11min | 3 tasks | 30 files |
 | Phase 03 P03 | 7 | 2 tasks | 6 files |
+| Phase 03 P04 | 6min | 2 tasks + 1 verification | 5 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Economy.applyPurchase returns a new flags object (immutable, never mutates input) — snack never sets a flag key (D-15)
 - [Phase 03]: AudioService.playSfx(scene,key) takes scene arg — AudioService stays stateless singleton (no singleton Phaser ref held)
 - [Phase 03]: COINS_CHANGED wired end-to-end in Plan 02 — OverworldScene emits on every coin delta; UIScene.onCoinsChanged drives HUD.setCoins + flashCoinPickup (D-08 gap closed)
+- [Phase 03]: ShopOverlay.show() rebuilds item rows on each call (destroy+recreate) — safe post-purchase refresh without rebuilding backdrop/title/close
+- [Phase 03]: Store Clerk shop entry uses dialogueKey override ('storeClerk.shopIntro') + _lastNpcId check in onDialogueComplete — reuses existing dialogue pipeline with no structural change
+- [Phase 03]: WhackSystem enlarged effect applies both wider rect (48x32) AND +8px reach in facing direction when upgrade_newspaper owned (D-14)
 
 ### Pending Todos
 
@@ -110,14 +114,13 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-15T19:59:59.946Z
-Stopped at: Phase 03 Plan 02 complete — WHACK verb + economy spine + COINS_CHANGED HUD
+Last session: 2026-06-15T20:14:00Z
+Stopped at: Phase 03 Plan 04 complete — shop overlay + upgrades + traversal gate (Phase 3 L1E-01..04 done)
 
 Resume steps (next session):
 
-  1. Execute Plan 03-03 (Slice 2 "hazard + streak"): 8-bush streak bonus, dog→non-lethal hazard (knockback + i-frames), WAKE UP IN HOSPITAL overlay + floored coin fee + streak reset (L1E-02, L1E-03).
-  2. (optional, low priority) /gsd-verify-work 02.1 — cozy-art pass is objectively done. Formal UAT paused; can close anytime.
-  3. Boss locked to "Mood Pendulum" (greed↔panic meter; FOMO lures hurt; strike on panic) — for Phase 4.
-  Dev server: `npm run dev -- --host`. Public URL now shareable: https://barren-wuffett.pages.dev.
+  1. Human SC-1..SC-5 verification on phone (human_verify_mode = end-of-phase): run `npm run dev -- --host`, open on phone/emulation, confirm all 5 success criteria pass (whack verb, coin snowball, dog hazard, shop upgrades, traversal gate + reward area — offline).
+  2. Phase 3 is COMPLETE after SC-1..SC-5 sign-off. Execute Phase 4 (Level 1 Set Pieces): paper-route glow-up + Mr. Market Mood Pendulum boss redesign.
+  Dev server: `npm run dev -- --host`. Public URL: https://barren-wuffett.pages.dev.
   Note: Placeholder art (bush/newspaper/leaf/shop icons as 1px PNGs, OGG as stub headers) needs art pass before Phase verification.
-Resume file: .planning/phases/03-level-1-the-newspaper-verb-economy/03-03-PLAN.md
+Resume file: .planning/phases/03-level-1-the-newspaper-verb-economy/03-04-SUMMARY.md (phase complete)
