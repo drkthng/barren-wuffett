@@ -133,7 +133,7 @@ Plans:
 
 **Wave 0**
 
-- [ ] 03-01-PLAN.md — Wave 0: pure-TS PrizePack + Economy seams (rollPrizePack, applyPurchase, computeHospitalFee, applyKnockbackAngle) + 4 new test files + Action.WHACK + upgrade-flag persistence test (L1E-01..04)
+- [x] 03-01-PLAN.md — Wave 0: pure-TS PrizePack + Economy seams (rollPrizePack, applyPurchase, computeHospitalFee, applyKnockbackAngle) + 4 new test files + Action.WHACK + upgrade-flag persistence test (L1E-01..04)
 
 **Wave 1** *(blocked on Wave 0)*
 
@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7 �
 | 1. Foundation & Legal Shell | 3/3 | Complete | 2026-06-12 (Geltungssatz confirmed 2026-06-15) |
 | 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
-| 3. Level 1 — The Newspaper Verb & Economy | 0/4 | Planned | - |
+| 3. Level 1 — The Newspaper Verb & Economy | 1/4 | In Progress|  |
 | 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |

@@ -29,10 +29,10 @@
 
 > Design source: `.planning/research/level-1-redesign-ideas.md`, `.planning/research/zelda-mystic-quest-patterns.md`, `.planning/research/buffett-early-years-story.md`
 
-- [ ] **L1E-01**: The rolled-up newspaper is a real interaction verb — the player swings it to destroy bushes and whack props/targets, with crisp visual + audio feedback (Phase 3)
-- [ ] **L1E-02**: Whackables drop coins/items via a fair deterministic 8-slot prize-pack (no long droughts); the first bush always drops a coin; a HUD "snowball" coin counter tracks the running total (Phase 3)
-- [ ] **L1E-03**: The patrolling dog is a non-lethal hazard — contact causes knockback + brief i-frames + a "hospital" respawn with a small coin fee and loss of the bush-whacking streak bonus; never a death screen (Phase 3)
-- [ ] **L1E-04**: A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock that gates a new town area, a cheap consumable); each purchase is felt for the rest of Level 1, no forced grinding (Phase 3)
+- [x] **L1E-01**: The rolled-up newspaper is a real interaction verb — the player swings it to destroy bushes and whack props/targets, with crisp visual + audio feedback (Phase 3)
+- [x] **L1E-02**: Whackables drop coins/items via a fair deterministic 8-slot prize-pack (no long droughts); the first bush always drops a coin; a HUD "snowball" coin counter tracks the running total (Phase 3)
+- [x] **L1E-03**: The patrolling dog is a non-lethal hazard — contact causes knockback + brief i-frames + a "hospital" respawn with a small coin fee and loss of the bush-whacking streak bonus; never a death screen (Phase 3)
+- [x] **L1E-04**: A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock that gates a new town area, a cheap consumable); each purchase is felt for the rest of Level 1, no forced grinding (Phase 3)
 - [ ] **L1E-05**: The paper-route mini-game is restyled with characterful house targets and ends on an explicit results splash (papers delivered, accuracy %, coins, grade, NEW BEST) (Phase 4)
 - [ ] **L1E-06**: Mr. Market is redesigned as the "Mood Pendulum" boss — a visible greed↔panic meter, damaging FOMO lures, and a strike-window on panic; non-linear, readable, fair; reuses the newspaper-whack verb with no new mid-fight controls (Phase 4)
 - [ ] **L1E-07**: Level 1 plays a multi-beat young-Barren story spine (The Spark → first stock) delivered via skippable, i18n-ready cutscenes/dialogue that give the boss motivation (Phase 5)
@@ -121,10 +121,10 @@
 | ART-02 | Phase 2.1 | Complete |
 | ART-03 | Phase 2.1 | Complete |
 | ART-04 | Phase 2.1 | Complete |
-| L1E-01 | Phase 3 | Pending |
-| L1E-02 | Phase 3 | Pending |
-| L1E-03 | Phase 3 | Pending |
-| L1E-04 | Phase 3 | Pending |
+| L1E-01 | Phase 3 | Complete |
+| L1E-02 | Phase 3 | Complete |
+| L1E-03 | Phase 3 | Complete |
+| L1E-04 | Phase 3 | Complete |
 | L1E-05 | Phase 4 | Pending |
 | L1E-06 | Phase 4 | Pending |
 | L1E-07 | Phase 5 | Pending |

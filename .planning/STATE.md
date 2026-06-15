@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-06-15T19:20:34.349Z"
-last_activity: 2026-06-15 -- roadmap rearranged; Level 1 expansion defined; planning Phase 3
+status: executing
+stopped_at: Phase 03 Plan 01 complete — Wave 0 pure-TS seams + tests
+last_updated: "2026-06-15T19:31:55.912Z"
+last_activity: 2026-06-15 -- Phase 03 execution started
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 13
+  completed_plans: 10
   percent: 33
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-11)
 
 **Core value:** A fun, shareable game that makes players want to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
-**Current focus:** Phase 3 — Level 1: The Newspaper Verb & Economy (planning next)
+**Current focus:** Phase 03 — Level 1 — The Newspaper Verb & Economy
 
 ## Current Position
 
-Phase: 3 (Level 1 — The Newspaper Verb & Economy) — NOT STARTED, planning next
-Plan: none yet (Plans: TBD)
-Status: Roadmap rearranged 2026-06-15 (entertainment-first). Phases 1, 2, 2.1 complete. Level 1 expanded into 3 new phases (3 economy/verb, 4 set-pieces, 5 story); funnel moved to Phase 7; Levels 2-3 = Phase 6; Launch = Phase 8. Boss redesign locked to "Mood Pendulum" (direction A). Design in .planning/research/. NEXT: /gsd-plan-phase 3.
-Last activity: 2026-06-15 -- roadmap rearranged; Level 1 expansion defined; planning Phase 3
+Phase: 03 (Level 1 — The Newspaper Verb & Economy) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-15 -- Phase 03 execution started
 
 Progress: [███░░░░░░░] 33% (3/9 phases)
 
@@ -58,6 +58,7 @@ Progress: [███░░░░░░░] 33% (3/9 phases)
 | Phase 02 P02-02 | 25min | 3 tasks | 4 files |
 | Phase 02.1 P02 | 15min | 4 tasks | 10 files |
 | Phase 02.1 P03 | 10min | 2 tasks | 6 files |
+| Phase 03 P01 | 4min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Datenschutz policy written with Supabase and Brevo as future-optional to avoid Phase 3 re-edit (RESEARCH Pattern 7)
 - [Phase 02.1]: ui_pause + ui_save included in scope (user-approved deviation) — clears all remaining HUD black boxes with no engine code changes
 - [Phase 02.1]: STYLE-GUIDE.md written as durable reference prose (not a task log) so Phase 4 developers can reproduce the cozy look with data + assets only — no engine code
+- [Phase 03]: PrizePack firstWhackOrRoll does NOT advance the slot on first-whack override — D-06 slot sequence starts fresh from slot 0 once done
+- [Phase 03]: Economy.applyPurchase returns a new flags object (immutable, never mutates input) — snack never sets a flag key (D-15)
 
 ### Pending Todos
 
@@ -103,8 +106,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-15T18:39:23.910Z
-Stopped at: Phase 3 UI-SPEC approved
+Last session: 2026-06-15T19:31:55.896Z
+Stopped at: Phase 03 Plan 01 complete — Wave 0 pure-TS seams + tests
 
 Resume steps (next session):
 
