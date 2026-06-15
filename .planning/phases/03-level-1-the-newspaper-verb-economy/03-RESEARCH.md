@@ -720,22 +720,27 @@ private onShopPurchase = (data: { itemId: string; price: number }): void => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All three resolved within the Phase 3 plans — see the per-item **RESOLVED** notes below. No open blockers remain.
 
 1. **Phaser 4 new particles API exact signature**
    - What we know: Phaser 4 revamped the particles system; the Phaser 3 API is documented everywhere online but Phaser 4 differs.
    - What's unclear: Exact constructor call for a one-shot burst emitter in Phaser 4.1.0.
    - Recommendation: During Wave 1 execution, check `phaser@4.1.0/src/gameobjects/particles/` or the Phaser 4 changelog. If particles are blocked, a simple alpha-tween on a few small sprites is an acceptable MVP fallback (zero new assets needed).
+   - **RESOLVED:** Plan 02 Task 2a uses the alpha-tween puff fallback (no hard dependency on the Phaser 4 particles constructor).
 
 2. **StoreClerk shop entry vs. DIALOGUE conflict**
    - What we know: `handleInteract()` currently fires `DIALOGUE_START` for the storeClerk NPC (line 354 of OverworldScene.ts). D-13 says the shop opens via the storeClerk.
    - What's unclear: Should the storeClerk's first dialogue line lead into the shop (tapping advance → open shop), or should `handleInteract()` detect `npcId === 'storeClerk'` and bypass dialogue entirely?
    - Recommendation: The safest MVP path is to add a clerk intro dialogue line ("COME IN, COME IN! WHAT CAN I DO FOR YOU?") and emit `SHOP_OPEN` on `DIALOGUE_COMPLETE` when `lastNpcId === 'storeClerk'`. This reuses the entire existing dialogue pipeline with no structural change to `handleInteract()`.
+   - **RESOLVED:** Plan 04 Task 1 uses the `DIALOGUE_COMPLETE` (lastNpcId === 'storeClerk') → `SHOP_OPEN` path.
 
 3. **Exact tile indices for gate barrier in DECO_DATA**
    - What we know: The east path (cols 20–29, rows 7–8, pixel ~320–464, 112–128) is a candidate gate location (D-16). DECO_DATA rows 7–8 currently contain: row 7: `[-1,-1,-1,-1,4,-1,...]`, row 8: `[-1,-1,-1,-1,-1,-1,...]` — some open space.
    - What's unclear: The exact fence/chain tile index in the Kenney Tiny Town tileset to use as the visual barrier.
    - Recommendation: For MVP, the gate barrier can be an invisible static body (no art) with a simple text sign ("ROAD CLOSED — BUS PASS REQUIRED"). Art can be added in Phase 2.1 follow-up or Phase 5.
+   - **RESOLVED:** Plan 04 Task 2 uses an invisible static-body barrier + a text sign for MVP (art deferred).
 
 ---
 
