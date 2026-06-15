@@ -129,8 +129,10 @@ export class OverworldScene extends Scene {
         this.shopOpen = false;
     };
 
-    // Loaded in init() before create() is called — avoids async create() race (CR-01)
-    private _savedState: SaveState | undefined = undefined;
+    // World-build gate: create() kicks off SaveService.load() and only builds the
+    // world (and flips _ready) once the load promise settles. update() short-circuits
+    // until _ready so no tick reads scene state before the save is applied (CR-01).
+    private _ready = false;
 
     // Stored handler references for precise removal in shutdown() (WR-05, CR-03 fix)
     private _onHidden = (): void => { void SaveService.save(this.buildSaveState()); };
@@ -157,17 +159,29 @@ export class OverworldScene extends Scene {
     }
 
     /**
-     * init() runs synchronously in the Phaser lifecycle before create().
-     * We load save data here so create() can remain synchronous and
-     * update() never runs before this.player is assigned (CR-01 fix).
+     * create() must NOT build the world from saved state synchronously: Phaser does
+     * NOT await init()/create(), and SaveService.load() is IndexedDB-backed and always
+     * resolves on a later microtask. We therefore kick off the load here and build the
+     * world only inside the resolved callback, flipping _ready when done. update() is
+     * gated on _ready so no tick runs before saved coins/flags/position are applied (CR-01).
      */
-    async init(): Promise<void> {
-        this._savedState = await SaveService.load();
+    create(): void {
+        void SaveService.load().then((saved) => {
+            // Guard against the scene being shut down / restarted while the load
+            // was in flight — building a dead scene throws on this.add/this.physics.
+            if (!this.sys || !this.sys.isActive()) return;
+            this.buildWorld(saved);
+            this._ready = true;
+        });
     }
 
-    create(): void {
-        // ── Load saved state (if any) ──────────────────────────────────────
-        const saved: SaveState | undefined = this._savedState;
+    /**
+     * Build the entire overworld from the (already-resolved) saved state.
+     * Invoked exactly once from create()'s load callback — never before the
+     * save promise settles, so this.coins/flags/position are authoritative here.
+     */
+    private buildWorld(saved: SaveState | undefined): void {
+        // ── Apply saved state (if any) ─────────────────────────────────────
         if (saved) {
             this.coins = saved.coins;
             this.flags = saved.flags;
@@ -370,6 +384,9 @@ export class OverworldScene extends Scene {
     }
 
     update(): void {
+        // World not built yet (SaveService.load() still pending) — skip the tick so
+        // nothing reads this.player/coins/flags before buildWorld() runs (CR-01).
+        if (!this._ready) return;
         if (this.inDialogue || this.inHandoff || this.shopOpen || this.hospitalShowing) return;
 
         // Build merged cursor stub (WASD + arrow keys)
