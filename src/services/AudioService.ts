@@ -12,6 +12,8 @@
  * return null (defaults to enabled) and writes are silently ignored — in-memory toggle
  * state remains consistent within the session.
  */
+import type Phaser from 'phaser';
+
 const KEYS = {
     music: 'bw_music_on',
     sfx: 'bw_sfx_on',
@@ -32,4 +34,17 @@ export const AudioService = {
     setMusicEnabled: (on: boolean): void => { safeSet(KEYS.music, String(on)); },
     getSfxEnabled:   (): boolean => safeGet(KEYS.sfx) !== 'false',
     setSfxEnabled:   (on: boolean): void => { safeSet(KEYS.sfx, String(on)); },
+
+    /**
+     * Play a sound effect via the scene's sound manager, honoring the SFX mute toggle.
+     * Gated on getSfxEnabled() — never call scene.sound.play() directly at call sites (D-20, T-03-05).
+     * Design: takes the scene so AudioService stays a stateless singleton (no singleton Phaser ref).
+     *
+     * @param scene  The current Phaser Scene (owns the sound manager)
+     * @param key    The audio key registered in Preloader (e.g. 'whack', 'coin_ding')
+     */
+    playSfx: (scene: Phaser.Scene, key: string): void => {
+        if (!AudioService.getSfxEnabled()) return;
+        scene.sound.play(key);
+    },
 };

@@ -83,6 +83,25 @@ export class Preloader extends Scene {
         this.load.image('ui_pause',        'assets/images/ui_pause.png');
         this.load.image('barren_victory',  'assets/images/barren_victory.png');
         this.load.image('bw_monogram',     'assets/images/bw_monogram.png');
+
+        // Phase 3: whack button + swing spritesheet + bush + leaf particle
+        this.load.image('ui_newspaper_button', 'assets/images/ui_newspaper_button.png');
+        this.load.spritesheet('newspaper_swing', 'assets/images/newspaper_swing.png',
+            { frameWidth: 32, frameHeight: 32 }); // 3 frames, 96×32 sheet
+        this.load.image('bush',         'assets/images/bush.png');
+        this.load.image('leaf_particle', 'assets/images/leaf_particle.png');
+        // Shop item icons
+        this.load.image('item_newspaper_upgrade', 'assets/images/item_newspaper_upgrade.png');
+        this.load.image('item_helmet',   'assets/images/item_helmet.png');
+        this.load.image('item_bus_pass', 'assets/images/item_bus_pass.png');
+        this.load.image('item_snack',    'assets/images/item_snack.png');
+        // SFX — placeholder OGG files; art pass will replace with real audio
+        this.load.audio('whack',          'assets/audio/sfx_whack.ogg');
+        this.load.audio('coin_ding',      'assets/audio/sfx_coin_ding.ogg');
+        this.load.audio('dog_bite',       'assets/audio/sfx_dog_bite.ogg');
+        this.load.audio('purchase_chime', 'assets/audio/sfx_purchase.ogg');
+        this.load.audio('hospital_sting', 'assets/audio/sfx_hospital.ogg');
+        this.load.audio('streak_bonus',   'assets/audio/sfx_streak_bonus.ogg');
     }
 
     create(): void {
@@ -96,6 +115,16 @@ export class Preloader extends Scene {
                 frameRate: 6,
                 repeat: -1,
             });
+        });
+
+        // Phase 3: newspaper swing animation (3 frames, 18fps, no repeat, hideOnComplete)
+        // Overlay sprite separate from player_sheet — does NOT modify player walk anims (D-04)
+        this.anims.create({
+            key: 'newspaper_swing_anim',
+            frames: this.anims.generateFrameNumbers('newspaper_swing', { start: 0, end: 2 }),
+            frameRate: 18,
+            repeat: 0,
+            hideOnComplete: true,
         });
 
         // Guard: do not advance to MainMenu if a load error occurred.

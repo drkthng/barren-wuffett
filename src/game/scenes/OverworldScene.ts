@@ -16,7 +16,7 @@
  * Pitfalls: 1 (no sync read of launched scene), 2 (sleep input cleanup), 6 (joystick safe area)
  */
 import Phaser, { Scene } from 'phaser';
-import { InputBus } from '../../input/InputBus';
+import { InputBus, Action } from '../../input/InputBus';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { SaveService } from '../../services/SaveService';
 import type { SaveState } from '../../services/SaveService';
@@ -25,6 +25,12 @@ import { Player } from '../../entities/Player';
 import { NPC } from '../../entities/NPC';
 import { t } from '../../services/i18n';
 import { TriggerSystem } from '../../systems/TriggerSystem';
+import { AudioService } from '../../services/AudioService';
+import { BushEntity } from '../../entities/BushEntity';
+import { WhackSystem } from '../../systems/WhackSystem';
+import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
+import { firstWhackOrRoll } from '../../systems/PrizePack';
+import type { PrizePackState } from '../../systems/PrizePack';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
@@ -81,6 +87,20 @@ export class OverworldScene extends Scene {
     private pauseKey: Phaser.Input.Keyboard.Key | null = null;
     private currentNpcInRange: NPC | null = null;
     private inDialogue = false;
+
+    // Phase 3: whack system
+    private whackSystem!: WhackSystem;
+    private whackableGroup!: Phaser.Physics.Arcade.Group;
+    private bushEntities = new Map<string, BushEntity>();
+    private prizePackState: PrizePackState = { slotIndex: 0 };
+    private bushStreak = 0;  // used in Slice 2 (streak bonus)
+
+    // Phase 3: shop/hospital modal flags (guards update() when overlays are shown)
+    private shopOpen = false;
+    private hospitalShowing = false;
+
+    // Phase 3: traversal gate
+    private gateBarrier: Phaser.GameObjects.Rectangle | null = null;
 
     // Loaded in init() before create() is called — avoids async create() race (CR-01)
     private _savedState: SaveState | undefined = undefined;
@@ -172,6 +192,36 @@ export class OverworldScene extends Scene {
             this.talkPrompts.set(def.npcId, prompt);
         }
 
+        // ── Phase 3: Bush whackable group ─────────────────────────────────
+        this.whackableGroup = this.physics.add.group();
+        for (const bushDef of ECONOMY_DATA.bushes) {
+            const bush = new BushEntity(this, bushDef.x, bushDef.y, bushDef.id, bushDef.special);
+            this.whackableGroup.add(bush.sprite);
+            this.bushEntities.set(bushDef.id, bush);
+        }
+
+        // ── Phase 3: WhackSystem (directional hitbox) ──────────────────────
+        this.whackSystem = new WhackSystem(this);
+        this.physics.add.overlap(
+            this.whackSystem.hitbox,
+            this.whackableGroup,
+            this.onBushHit as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+            undefined,
+            this,
+        );
+
+        // ── Phase 3: Traversal gate barrier ────────────────────────────────
+        this.gateBarrier = this.add.rectangle(
+            ECONOMY_DATA.gateBarrier.x, ECONOMY_DATA.gateBarrier.y,
+            ECONOMY_DATA.gateBarrier.w, ECONOMY_DATA.gateBarrier.h,
+            0x000000, 0,
+        );
+        this.physics.add.existing(this.gateBarrier, true);
+        this.physics.add.collider(this.player.sprite, this.gateBarrier);
+        if (this.flags['upgrade_traversal']) {
+            (this.gateBarrier.body as Phaser.Physics.Arcade.StaticBody).enable = false;
+        }
+
         // ── Dog patrol (patience mechanic GAME-06) ─────────────────────────
         this.dogSprite = this.add.image(DOG_MIN_X, 464, 'dog')
             .setDisplaySize(32, 16).setDepth(3);
@@ -192,6 +242,33 @@ export class OverworldScene extends Scene {
                 }) as { up: boolean; down: boolean; left: boolean; right: boolean };
                 this.joystick = vj;
             });
+
+            // ── Phase 3: Touch whack button (right-thumb zone) ─────────────
+            // UI-SPEC §1: 64×64 interactive zone at (360,750); visual 48×48 sprite
+            const whackBtn = this.add.image(360, 750, 'ui_newspaper_button')
+                .setDisplaySize(48, 48)
+                .setDepth(10)
+                .setInteractive(
+                    new Phaser.Geom.Rectangle(-32, -32, 64, 64),
+                    Phaser.Geom.Rectangle.Contains,
+                );
+            // 2px #00ff88 stroke on the outer zone area (signals active interactive element)
+            const whackBtnBorder = this.add.graphics().setDepth(10);
+            whackBtnBorder.lineStyle(2, 0x00ff88, 1);
+            whackBtnBorder.strokeRect(360 - 32, 750 - 32, 64, 64);
+
+            whackBtn.on('pointerdown', () => {
+                whackBtn.setAlpha(0.7).setScale(0.9);
+                InputBus.setAction(Action.WHACK, true);
+            });
+            whackBtn.on('pointerup',  () => {
+                whackBtn.setAlpha(1).setScale(1);
+                InputBus.setAction(Action.WHACK, false);
+            });
+            whackBtn.on('pointerout', () => {
+                whackBtn.setAlpha(1).setScale(1);
+                InputBus.setAction(Action.WHACK, false);
+            });
         }
 
         // ── Keyboard ──────────────────────────────────────────────────────
@@ -207,10 +284,17 @@ export class OverworldScene extends Scene {
             const enterKey   = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
             this.pauseKey    = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
-            this.interactKey.on('down', this.handleInteract, this);
-            enterKey.on('down', this.handleInteract, this);
+            // Space/Enter: interact with NPC if in range, else whack (D-01 context-sensitive)
+            this.interactKey.on('down', this.handleInteractOrWhack, this);
+            enterKey.on('down', this.handleInteractOrWhack, this);
             this.pauseKey.on('down', () => {
                 GameEvents.emit(Events.PAUSE_REQUESTED);
+            });
+
+            // Phase 3: J key = always-whack (unconditional, D-01)
+            const jKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
+            jKey.on('down', () => {
+                InputBus.setAction(Action.WHACK, true);
             });
         }
 
@@ -229,12 +313,20 @@ export class OverworldScene extends Scene {
     }
 
     update(): void {
-        if (this.inDialogue || this.inHandoff) return;
+        if (this.inDialogue || this.inHandoff || this.shopOpen || this.hospitalShowing) return;
 
         // Build merged cursor stub (WASD + arrow keys)
         const mergedCursors = this.buildMergedCursors();
         InputBus.update(this.joystick, mergedCursors);
         this.player.update();
+
+        // Phase 3: WHACK poll — consume the pulse and activate hitbox if cooldown allows
+        if (InputBus.isActive(Action.WHACK)) {
+            InputBus.setAction(Action.WHACK, false); // consume immediately
+            if (this.player.whack()) {
+                this.activateWhack();
+            }
+        }
 
         // NPC range checks
         this.currentNpcInRange = null;
@@ -348,6 +440,18 @@ export class OverworldScene extends Scene {
         });
     }
 
+    /**
+     * Handle Space/Enter: interact with NPC if in range, else fire WHACK (D-01 context-sensitive).
+     * Replaces the direct handleInteract() binding for Space/Enter keys.
+     */
+    private handleInteractOrWhack(): void {
+        if (this.currentNpcInRange) {
+            this.handleInteract();
+        } else {
+            InputBus.setAction(Action.WHACK, true);
+        }
+    }
+
     /** Handle INTERACT action (Space / Enter / on-screen TALK button). */
     private handleInteract(): void {
         if (this.inDialogue) return;
@@ -358,6 +462,111 @@ export class OverworldScene extends Scene {
             npcId:       this.currentNpcInRange.npcId,
             dialogueKey: this.currentNpcInRange.dialogueKey,
         });
+    }
+
+    /**
+     * Phase 3: Activate the whack — hitbox, swing overlay, SFX (D-02, D-03, D-04).
+     * Called from update() when WHACK is polled and player.whack() cooldown allows.
+     */
+    private activateWhack(): void {
+        const px = this.player.sprite.x;
+        const py = this.player.sprite.y;
+        const facing = this.player.facing;
+
+        // Activate the directional hitbox (150ms active window, using WhackOffsets seam)
+        this.whackSystem.activate(px, py, facing);
+
+        // D-04: Overlay swing sprite — separate sprite, NOT a player_sheet re-cut
+        // Anchored 20px in front of the player based on facing
+        const offsets: Record<string, { ox: number; oy: number; flipX: boolean; flipY: boolean }> = {
+            down:  { ox:   0, oy:  20, flipX: false, flipY: false },
+            up:    { ox:   0, oy: -20, flipX: false, flipY: true  },
+            left:  { ox: -20, oy:   0, flipX: true,  flipY: false },
+            right: { ox:  20, oy:   0, flipX: false, flipY: false },
+        };
+        const off = offsets[facing] ?? offsets.down;
+        const swingSprite = this.add.sprite(px + off.ox, py + off.oy, 'newspaper_swing')
+            .setFlipX(off.flipX)
+            .setFlipY(off.flipY)
+            .setDepth(this.player.sprite.depth + 1);
+        swingSprite.play('newspaper_swing_anim');
+        // Auto-cleanup: hideOnComplete destroys visibility; clean up from scene on anim complete
+        swingSprite.on('animationcomplete', () => swingSprite.destroy());
+
+        // SFX (gated on mute toggle via AudioService, T-03-05)
+        AudioService.playSfx(this, 'whack');
+    }
+
+    /**
+     * Phase 3: Called by physics.add.overlap when the WhackSystem hitbox overlaps a bush sprite.
+     * Clears the bush with visual/SFX feedback, then delegates to awardWhackDrop().
+     *
+     * @param _hitbox   The hitbox rectangle (unused — we look up the bush by its sprite data)
+     * @param bushSprite The overlapping bush sprite
+     */
+    private onBushHit(
+        _hitbox: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+        bushSprite: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    ): void {
+        const sprite = bushSprite as Phaser.Physics.Arcade.Sprite;
+        const bushId = sprite.getData('bushId') as string | undefined;
+        if (!bushId) return;
+        const bush = this.bushEntities.get(bushId);
+        if (!bush || bush.isCleared()) return;
+
+        // On-hit white flash before hiding (UI-SPEC §2d)
+        sprite.setTint(0xffffff);
+        this.time.delayedCall(80, () => {
+            sprite.clearTint();
+            bush.onWhacked(); // hide + disable body
+        });
+
+        // Leaf particle burst (UI-SPEC §2b)
+        try {
+            const particles = this.add.particles(sprite.x, sprite.y, 'leaf_particle', {
+                speed: { min: 40, max: 100 },
+                angle: { min: 0, max: 360 },
+                scale: { start: 1, end: 0 },
+                alpha: { start: 1, end: 0 },
+                lifespan: 400,
+                gravityY: 80,
+                quantity: 6,
+                emitting: false,
+            });
+            particles.explode(6);
+            this.time.delayedCall(500, () => particles.destroy());
+        } catch {
+            // Phaser 4 particle API fallback: brief alpha tween on leaf sprites (RESEARCH Open Question 1)
+            for (let i = 0; i < 3; i++) {
+                const leaf = this.add.image(
+                    sprite.x + (Math.random() - 0.5) * 24,
+                    sprite.y + (Math.random() - 0.5) * 24,
+                    'leaf_particle',
+                );
+                this.tweens.add({
+                    targets: leaf, alpha: 0, y: leaf.y - 20,
+                    duration: 400,
+                    onComplete: () => leaf.destroy(),
+                });
+            }
+        }
+
+        // Award prize-pack drop (filled in Task 2b; stub here so 2a compiles)
+        this.awardWhackDrop(bush);
+    }
+
+    /**
+     * Phase 3: Roll the prize-pack for a cleared bush and award coins/items.
+     * Stub in Task 2a — filled in Task 2b with firstWhackOrRoll + COINS_CHANGED + autosave.
+     */
+    private awardWhackDrop(_bush: BushEntity): void {
+        // Task 2b implementation:
+        // const drop = firstWhackOrRoll(this.flags, this.prizePackState);
+        // if (!this.flags['first_whack_done']) this.flags['first_whack_done'] = true;
+        // if (drop.coins > 0) { this.coins += drop.coins; ... emit COINS_CHANGED }
+        void firstWhackOrRoll;   // referenced here to satisfy noUnusedLocals until 2b fills in
+        void this.prizePackState;
+        void this.bushStreak;
     }
 
     private showTalkPrompt(npc: NPC): void {
