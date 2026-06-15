@@ -60,8 +60,7 @@ This phase delivers the **core explore → earn → spend loop** for Level 1 (th
 
 - **D-17: Generic engine systems + level-data content (INFR-04).** New systems (a whack/hitbox system, a deterministic prize-pack/economy module, a shop module) are **content-agnostic**. Level-specific content — bush positions + special bushes, the prize-pack table, shop inventory + prices, gate location — lives in **level data** (extend the `level-01` manifest or add a sibling `src/data/levels/level-01-economy.ts`) consumed by the systems. Extend the `LevelManifest` type minimally where needed; keep the ContentRegistry pattern.
 - **D-18: All new player-facing strings via `t()` + `src/data/dialogue/en/level-01.json`** (INFR-05) — shop labels/prices, hospital splash, whack/empty prompts, clerk shop lines. English now, German addable without refactor.
-- **D-19: New `GameEvents` constants** following the frozen-constants pattern: `COINS_CHANGED`, `BUSH_WHACKED`, `PLAYER_HOSPITALIZED` (dog bite), `SHOP_OPEN`, `SHOP_PURCHASE`, `STREAK_BONUS`.
-- **D-20: Art/audio via the proven CC0 Kenney pipeline (spike 001) through `Preloader`** — placeholder-first is acceptable for mechanics. New assets: bush sprite, `newspaper_swing` overlay, helmet/shop icons (coin already exists); SFX keys (whack, coin ding, dog bite, purchase chime, hospital sting). Mobile-first: whack button ≥44px in thumb reach with no joystick overlap; everything **offline/local** (SAVE-02), no backend.
+- **D-19: New `GameEvents` constants** following the frozen-constants pattern: `COINS_CHANGED`, `BUSH_WHACKED`, `PLAYER_HOSPITALIZED` (dog bite), `HOSPITAL_DISMISS` (hospital-splash dismiss → OverworldScene respawn carrier; UIScene emits, OverworldScene listens and respawns the player at 96,96), `SHOP_OPEN`, `SHOP_PURCHASE`, `SHOP_CLOSE`, `STREAK_BONUS`.
 
 ### Claude's Discretion
 
