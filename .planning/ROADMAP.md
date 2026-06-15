@@ -128,7 +128,24 @@ Plans:
   4. A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock, a cheap snack); each purchase is felt for the rest of Level 1, with no forced grinding
   5. The traversal upgrade gates a previously-unreachable part of town, giving coins a clear purpose; the full explore→earn→spend loop works on a phone, offline
 
-**Plans**: TBD
+**Plans**: 4 plans (vertical experience slices across 4 waves)
+Plans:
+
+**Wave 0**
+
+- [ ] 03-01-PLAN.md — Wave 0: pure-TS PrizePack + Economy seams (rollPrizePack, applyPurchase, computeHospitalFee, applyKnockbackAngle) + 4 new test files + Action.WHACK + upgrade-flag persistence test (L1E-01..04)
+
+**Wave 1** *(blocked on Wave 0)*
+
+- [ ] 03-02-PLAN.md — Slice 1 "the spine": WHACK verb + whack button + swing/particle/SFX, BushEntity + WhackSystem, deterministic prize-pack, first-bush coin, COINS_CHANGED → HUD (+N float) — closes the D-08 gap; autosave (L1E-01, L1E-02)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-03-PLAN.md — Slice 2 "hazard + streak": 8-bush streak bonus, dog→non-lethal hazard (knockback + i-frames), WAKE UP IN HOSPITAL overlay + floored coin fee + streak reset (L1E-02, L1E-03)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 03-04-PLAN.md — Slice 3 "shop + gate": SHOP overlay + 4 items + OWNED/affordability, felt upgrades (newspaper reach, helmet fee-waiver, traversal gate + reward area); end-of-phase human-check (L1E-04)
 
 ### Phase 4: Level 1 — Set Pieces
 
@@ -221,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7 �
 | 1. Foundation & Legal Shell | 3/3 | Complete | 2026-06-12 (Geltungssatz confirmed 2026-06-15) |
 | 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
-| 3. Level 1 — The Newspaper Verb & Economy | 0/TBD | Not started | - |
+| 3. Level 1 — The Newspaper Verb & Economy | 0/4 | Planned | - |
 | 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |
