@@ -141,7 +141,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 03-03-PLAN.md — Slice 2 "hazard + streak": 8-bush streak bonus, dog→non-lethal hazard (knockback + i-frames), WAKE UP IN HOSPITAL overlay + floored coin fee + streak reset (L1E-02, L1E-03)
+- [x] 03-03-PLAN.md — Slice 2 "hazard + streak": 8-bush streak bonus, dog→non-lethal hazard (knockback + i-frames), WAKE UP IN HOSPITAL overlay + floored coin fee + streak reset (L1E-02, L1E-03)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7 �
 | 1. Foundation & Legal Shell | 3/3 | Complete | 2026-06-12 (Geltungssatz confirmed 2026-06-15) |
 | 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
-| 3. Level 1 — The Newspaper Verb & Economy | 1/4 | In Progress|  |
+| 3. Level 1 — The Newspaper Verb & Economy | 3/4 | In Progress|  |
 | 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |
