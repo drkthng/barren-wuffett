@@ -2,7 +2,7 @@
 
 ## Overview
 
-Four phases deliver the complete Barren Wuffett MVP: a legally-safe scaffold first (so a public URL can exist without risk), then a fully offline-playable Level 1 on real devices (so backend work is never built on an unproven game), then the email funnel and compliance layer (so launch traffic is captured correctly), and finally Levels 2-3 and public launch (using the ContentRegistry pattern already proven in Phase 2). Each phase ends with a verifiable capability a human can test — not a technical milestone.
+Nine phases deliver Barren Wuffett v1.0, entertainment-first. A legally-safe scaffold comes first (so a public URL can exist without risk), then a fully offline-playable Level 1 (so nothing is built on an unproven game), then a cozy visual pass. Next, three phases deepen Level 1 until it's genuinely good — the rolled-up-newspaper whack economy, redesigned set-pieces (paper route + a non-linear Mr. Market boss), and a real young-Barren story — *before* any funnel exists. Only then do Levels 2-3 ship (reusing the proven ContentRegistry pattern), followed by the email funnel/backend, and finally public launch. The funnel is deliberately last: entertainment first, funnel second (user decision 2026-06-15). Each phase ends with a verifiable capability a human can test — not a technical milestone.
 
 ## Phases
 
@@ -13,11 +13,15 @@ Four phases deliver the complete Barren Wuffett MVP: a legally-safe scaffold fir
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in
+- [x] **Phase 1: Foundation & Legal Shell** - Deployable scaffold with Impressum/privacy pages, pixel-art engine config, parody naming, and mobile constraints locked in (completed 2026-06-12; Geltungssatz confirmed 2026-06-15)
 - [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
 - [x] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes (completed 2026-06-14)
-- [ ] **Phase 3: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal content, and cookieless analytics — end-to-end tested before launch
-- [ ] **Phase 4: Levels 2-3 + Launch** - Remaining levels using ContentRegistry/manifest pattern, PWA hardening, and public launch
+- [ ] **Phase 3: Level 1 — The Newspaper Verb & Economy** - Rolled-up-newspaper whack verb, bush/chore coin economy with fair deterministic drops, dog hazard, and a shop of permanent upgrades — the explore→earn→spend loop
+- [ ] **Phase 4: Level 1 — Set Pieces** - Paper-route mini-game glow-up (characterful houses + score splash) and the Mr. Market "Mood Pendulum" boss redesign (read greed/panic, not a linear menu)
+- [ ] **Phase 5: Level 1 — Story & Heart** - The 7-beat young-Barren story spine: new NPCs, cutscenes, Count-the-Caps + Pinball-Snowball hustle mini-games, and hidden Investment Journal collectible pages
+- [ ] **Phase 6: Levels 2-3** - Remaining two levels using the ContentRegistry/manifest pattern with no engine code changes, each with a boss + genre-accent mini-game
+- [ ] **Phase 7: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal wiring, and cookieless analytics — end-to-end tested (moved to the end: entertainment first, funnel second)
+- [ ] **Phase 8: Launch** - Final pre-launch checklist + public go-live at a public URL with the funnel active (optional PWA install prompt after Level 1)
 
 ## Phase Details
 
@@ -47,7 +51,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [x] 01-03-PLAN.md — Security headers, Cloudflare Pages deploy (public URL live); Geltungssatz deferred by user 2026-06-12 (open legal gate — public sharing blocked)
+- [x] 01-03-PLAN.md — Security headers, Cloudflare Pages deploy (public URL live); Geltungssatz confirmed by user 2026-06-15 — public-sharing gate lifted
 
 ### Phase 2: Level 1 — Offline Playable
 
@@ -109,46 +113,117 @@ Plans:
 
 **UI hint**: yes
 
-### Phase 3: Funnel & Backend
+### Phase 3: Level 1 — The Newspaper Verb & Economy
 
-**Goal**: The complete email funnel is live and end-to-end tested — a player who completes Level 1 can opt into cloud-save, receive a confirmation email via Brevo, unlock Investment Journal entries, and have all consent recorded in a GDPR-compliant way
+**Goal**: As a player roaming the town of Ohama, I want to whack bushes and chores with my rolled-up newspaper to earn coins and spend them on a few permanent shop upgrades, so that exploring feels rewarding and my money finally has a purpose.
 **Mode:** mvp
-**Depends on**: Phase 2
-**Requirements**: FUNL-01, FUNL-02, FUNL-03, FUNL-04, FUNL-05, LEGL-03, LEGL-04, INFR-02, INFR-03
+**Depends on**: Phase 2.1 (cozy art + Level 1 mechanics in place)
+**Requirements**: L1E-01, L1E-02, L1E-03, L1E-04
+**Design**: .planning/research/level-1-redesign-ideas.md, .planning/research/zelda-mystic-quest-patterns.md
 **Success Criteria** (what must be TRUE):
 
-  1. After Level 1 completion, player sees an optional cloud-save prompt ("save your progress" framing); declining lets the game continue without friction; accepting triggers a real confirmation email delivered via Brevo custom SMTP (not Supabase default)
-  2. Marketing consent uses a separate, unchecked checkbox; a player who ticks it receives a double opt-in confirmation email; a player who unticks it is not added to the marketing list — both flows verifiable with real email addresses
-  3. After opting in, player can unlock the Level 1 Investment Journal entry; each entry contains a visible financial disclaimer, is written in Barren's voice, and portfolio pointers read as information rather than calls to action
-  4. A player who declined cloud-save is offered a secondary "deep cut" Journal entry unlock via newsletter subscription (softer, distinct touchpoint); this does not re-trigger the cloud-save prompt
-  5. Cookieless analytics records level completions, email gate conversion events, and share-card clicks without requiring a cookie consent banner; data collection is limited to email, level progress, score, and consent timestamp
+  1. The player can swing the rolled-up newspaper as a real verb; bushes and whackable props react and clear with crisp visual/audio feedback (touch + keyboard)
+  2. Whacking yields coins/items via a fair, deterministic 8-slot prize-pack (no long droughts); the very first bush always drops a coin; a HUD "snowball" coin counter tracks the running total
+  3. The patrolling dog is a non-lethal hazard — contact knocks the player back, grants brief invulnerability, sends them to the "hospital" (respawn + small coin fee), and resets the bush-whacking streak bonus; never a death screen
+  4. A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock, a cheap snack); each purchase is felt for the rest of Level 1, with no forced grinding
+  5. The traversal upgrade gates a previously-unreachable part of town, giving coins a clear purpose; the full explore→earn→spend loop works on a phone, offline
 
 **Plans**: TBD
 
-### Phase 4: Levels 2-3 + Launch
+### Phase 4: Level 1 — Set Pieces
 
-**Goal**: The complete 3-level game is playable and publicly launched — Levels 2 and 3 ship using the ContentRegistry/manifest pattern with no engine code changes, PWA is hardened, and the game is live at a public URL
+**Goal**: As a player, I want to play a characterful paper-route mini-game that ends on a clear score screen and to beat a Mr. Market boss by reading his swinging greed and panic moods, so that Level 1's set pieces feel like real, fair challenges instead of a linear menu.
 **Mode:** mvp
-**Depends on**: Phase 3
+**Depends on**: Phase 3 (the newspaper-whack verb is reused by the boss)
+**Requirements**: L1E-05, L1E-06
+**Design**: .planning/research/level-1-redesign-ideas.md, .planning/research/zelda-mystic-quest-patterns.md
+**Success Criteria** (what must be TRUE):
+
+  1. The paper-route targets are characterful houses (varied designs, mailboxes/porches), not plain doors; aiming/throwing reads clearly on a phone
+  2. The paper-route ends on an explicit results splash — papers delivered, accuracy %, coins earned, a letter grade, and a "NEW BEST!" indicator — so the mini-game has a clear win state
+  3. Mr. Market is rebuilt as the "Mood Pendulum": a visible greed↔panic meter swings, his "FOMO" lures damage the player on contact, and the strike window opens when he swings to panic — reusing the newspaper-whack with no new mid-fight controls
+  4. The boss is non-linear and fair — telegraphed, readable, survivable, recoverable on a miss — and winning rewards reading his mood (buy-fear / sell-greed) over a fixed sequence
+  5. Defeating the boss flows into the existing Level Complete / share-card path with the Barren victory art
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 5: Level 1 — Story & Heart
+
+**Goal**: As a player, I want to experience young Barren's story through cutscenes, townsfolk, and small hustle mini-games that build toward the boss, so that Level 1's world feels alive and its finale feels earned.
+**Mode:** mvp
+**Depends on**: Phase 3, Phase 4 (economy + set pieces exist to hang the story on)
+**Requirements**: L1E-07, L1E-08, L1E-09
+**Design**: .planning/research/buffett-early-years-story.md
+**Success Criteria** (what must be TRUE):
+
+  1. Level 1 plays out the multi-beat story spine (The Spark → the first stock) from the design doc, giving the Mr. Market boss real motivation
+  2. New named NPCs (Dottie, Donno, Barber Bristle, Old Penny) appear with distinct sprites + dialogue and drive specific beats; all content is parody-safe (no real names/brands/likenesses)
+  3. At least two story mini-games ship — "Count-the-Caps" (research / market-share) and the "Pinball Snowball" (reinvest-for-passive-income compounding loop) — each an isolated scene with clean handoff back to the overworld
+  4. Hidden Investment Journal collectible pages are scattered in Level 1; collecting them is content-only (no backend) and unlocks a reward, each entry carrying a visible disclaimer in Barren's voice (BaFin-safe — no buy/sell calls)
+  5. Story is delivered through skippable, mobile-friendly cutscenes/dialogue and stays i18n-ready (English now, German-addable without code changes)
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 6: Levels 2-3
+
+**Goal**: The complete 3-level game is playable — Levels 2 and 3 ship using the ContentRegistry/manifest pattern with no engine code changes, each with distinct length, difficulty, a boss fight, and a genre-accent mini-game
+**Mode:** mvp
+**Depends on**: Phase 5 (Level 1 fully realized as the reusable template)
 **Requirements**: GAME-02, GAME-03, GAME-04
 **Success Criteria** (what must be TRUE):
 
   1. Player can complete all 3 levels (paper route, pinball/Coke hustle, first stock investment) each with distinct length, difficulty, and a boss fight — Mr. Market appears with era-specific behavior per level
   2. Each level contains a distinct mini-game accent from another genre (platformer, point-and-click, or resource management) implemented as an isolated scene with clean handoff back to the overworld
-  3. The game installs as a PWA and plays offline after install; adding a future level requires only a new data manifest file — no engine code changes needed
+  3. Adding a level requires only a new data manifest + assets — no engine code changes — proving the ContentRegistry pattern
 
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 7: Funnel & Backend
+
+**Goal**: The complete email funnel is live and end-to-end tested — a player who completes a level can opt into cloud-save, receive a confirmation email via Brevo, unlock Investment Journal entries, and have all consent recorded in a GDPR-compliant way
+**Mode:** mvp
+**Depends on**: Phase 6 (a complete, polished game exists to attach the funnel to)
+**Requirements**: FUNL-01, FUNL-02, FUNL-03, FUNL-04, FUNL-05, LEGL-03, LEGL-04, INFR-02, INFR-03
+**Success Criteria** (what must be TRUE):
+
+  1. After level completion, player sees an optional cloud-save prompt ("save your progress" framing); declining lets the game continue without friction; accepting triggers a real confirmation email delivered via Brevo custom SMTP (not Supabase default)
+  2. Marketing consent uses a separate, unchecked checkbox; a player who ticks it receives a double opt-in confirmation email; a player who unticks it is not added to the marketing list — both flows verifiable with real email addresses
+  3. After opting in, player can unlock Investment Journal entries (wiring the collectible system built in Phase 5 to email); each entry contains a visible financial disclaimer, is written in Barren's voice, and portfolio pointers read as information rather than calls to action
+  4. A player who declined cloud-save is offered a secondary "deep cut" Journal entry unlock via newsletter subscription (softer, distinct touchpoint); this does not re-trigger the cloud-save prompt
+  5. Cookieless analytics records level completions, email gate conversion events, and share-card clicks without requiring a cookie consent banner; data collection is limited to email, level progress, score, and consent timestamp
+
+**Plans**: TBD
+
+### Phase 8: Launch
+
+**Goal**: The game goes live publicly at a public URL with the funnel active — the final pre-launch checklist passes and a soft PWA "install" path exists
+**Mode:** mvp
+**Depends on**: Phase 7
+**Requirements**: INFR-01 (hosting live — already satisfied), plus the pre-launch checklist (LEGL-01/02 ✓, Geltungssatz ✓, security headers ✓)
+**Success Criteria** (what must be TRUE):
+
+  1. The pre-launch checklist passes: legal pages reachable in two taps, Geltungssatz confirmed (done 2026-06-15), parody-naming audit clean, security headers served, funnel flows verified end-to-end
+  2. The game is announced/shared publicly at its public URL (https://barren-wuffett.pages.dev or a custom domain) with the funnel live
+  3. An optional "Add to Home Screen" install prompt appears after Level 1 (beforeinstallprompt), per the PWA stack pattern; full offline-after-install service-worker hardening may follow as a fast-follow (v1.x)
+
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Legal Shell | 3/3 | In Progress (Geltungssatz gate open) | 2026-06-12 |
-| 2. Level 1 — Offline Playable | 3/3 | Complete   | 2026-06-12 |
-| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete   | 2026-06-14 |
-| 3. Funnel & Backend | 0/TBD | Not started | - |
-| 4. Levels 2-3 + Launch | 0/TBD | Not started | - |
+| 1. Foundation & Legal Shell | 3/3 | Complete | 2026-06-12 (Geltungssatz confirmed 2026-06-15) |
+| 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
+| 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
+| 3. Level 1 — The Newspaper Verb & Economy | 0/TBD | Not started | - |
+| 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
+| 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
+| 6. Levels 2-3 | 0/TBD | Not started | - |
+| 7. Funnel & Backend | 0/TBD | Not started | - |
+| 8. Launch | 0/TBD | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Phase 02.1 art complete (3/3 plans, 80/80 green). Geltungssatz CONFIRMED by user 2026-06-14 -> public-URL gate LIFTED (game live at https://barren-wuffett.pages.dev, shareable now). Pending: formal phase verification (/gsd-verify-work 02.1) + user sign-off on boss pose-switch & victory art."
-last_updated: "2026-06-14T19:11:51.000Z"
-last_activity: 2026-06-14 -- Geltungssatz confirmed (public gate lifted); Phase 02.1 awaiting verification
+status: planning
+stopped_at: "Roadmap rearranged 2026-06-15 (entertainment-first): funnel -> Phase 7; Level 1 expanded into 3 new phases (3 Newspaper Verb & Economy, 4 Set Pieces, 5 Story & Heart); Levels 2-3 -> Phase 6, Launch -> Phase 8. Phase 1 marked complete (Geltungssatz confirmed). Boss locked to Mood Pendulum (A). NEXT: plan Phase 3 (/gsd-plan-phase 3)."
+last_updated: "2026-06-15T16:18:02.000Z"
+last_activity: 2026-06-15 -- roadmap rearranged (funnel->end); Level 1 expansion phases 3-5 defined; planning Phase 3 next
 progress:
-  total_phases: 5
+  total_phases: 9
   completed_phases: 3
   total_plans: 9
   completed_plans: 9
-  percent: 60
+  percent: 33
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-11)
 
 **Core value:** A fun, shareable game that makes players want to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
-**Current focus:** Phase 02.1 — visual-pass-cozy-pixel-art-for-level-1
+**Current focus:** Phase 3 — Level 1: The Newspaper Verb & Economy (planning next)
 
 ## Current Position
 
-Phase: 02.1 (visual-pass-cozy-pixel-art-for-level-1) — ART COMPLETE, verification pending
-Plan: 3 of 3 complete (all SUMMARYs committed; gate 80/80 green; build passes)
-Status: Cozy art shipped across Level 1 (overworld tileset+auto-tiling, full animated cast, HUD coin/pause/save + victory art, STYLE-GUIDE + ASSET-MANIFEST). Dialogue ↓/Enter + modal-during-talk added. Imprint link fixed. NEXT: /gsd-verify-work 02.1 + user full-playthrough sign-off → then Phase 3.
-Last activity: 2026-06-14 -- Phase 02.1 art complete; dialogue UX + imprint fixes
+Phase: 3 (Level 1 — The Newspaper Verb & Economy) — NOT STARTED, planning next
+Plan: none yet (Plans: TBD)
+Status: Roadmap rearranged 2026-06-15 (entertainment-first). Phases 1, 2, 2.1 complete. Level 1 expanded into 3 new phases (3 economy/verb, 4 set-pieces, 5 story); funnel moved to Phase 7; Levels 2-3 = Phase 6; Launch = Phase 8. Boss redesign locked to "Mood Pendulum" (direction A). Design in .planning/research/. NEXT: /gsd-plan-phase 3.
+Last activity: 2026-06-15 -- roadmap rearranged; Level 1 expansion defined; planning Phase 3
 
-Progress: [█████████░] 89%
+Progress: [███░░░░░░░] 33% (3/9 phases)
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [█████████░] 89%
 ### Roadmap Evolution
 
 - Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted after Phase 2 on 2026-06-14 (URGENT) — replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0) before Phase 3 backend, so the funnel isn't built on a placeholder-looking game. Spike 001 VALIDATED the approach.
+- Roadmap rearranged 2026-06-15 (entertainment-first, user decision): the funnel/backend (old Phase 3) moved to Phase 7 — built only after the game is genuinely good. Level 1 expanded into 3 new phases: 3 (The Newspaper Verb & Economy), 4 (Set Pieces — paper-route glow-up + Mr. Market "Mood Pendulum" boss redesign, direction A), 5 (Story & Heart — 7-beat young-Barren spine + Investment Journal collectibles). Old Phase 4 split into Phase 6 (Levels 2-3) and Phase 8 (Launch). New requirements L1E-01..09. Design: .planning/research/level-1-redesign-ideas.md (+ zelda-mystic-quest-patterns.md, buffett-early-years-story.md).
 
 ### Decisions
 
@@ -102,13 +103,12 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-14 (resumed) — dev server exposed on LAN (http://192.168.2.208:8090) for phone playthrough; user confirmed "geltungssatz-confirmed" (public-URL gate LIFTED) and reported the game runs on phone.
-Stopped at: Phase 02.1 cozy-art visual pass — ALL 3 PLANS EXECUTED & COMMITTED (overworld tileset + auto-tiled paths; full animated cast — player 4-dir walk, 3 NPCs, dog, Mr. Market greed/panic; HUD coin/pause/save + Barren victory art; STYLE-GUIDE.md + ASSET-MANIFEST.md). PLUS dialogue ↓/Enter + modal-during-talk fix (d679952) and game imprint link → /en/imprint (7553a10). Tree clean; build + 80/80 tests green. Awaiting user playthrough sign-off on (a) Mr. Market greed→panic pose switch, (b) Barren victory art on Level Complete — then /gsd-verify-work 02.1 → Phase 3.
+Last session: 2026-06-15 — big roadmap pivot. User played on phone, confirmed "geltungssatz-confirmed" (public-URL gate lifted), then decided to defer the funnel to the very end and expand Level 1 first. Ran 2 research dives (Zelda/Mystic-Quest patterns + young-Buffett story → .planning/research/). User endorsed the direction and picked boss "Mood Pendulum" (A). Roadmap + REQUIREMENTS rearranged accordingly and committed.
+Stopped at: Roadmap rewritten — funnel→Phase 7; Level 1 → 3 new phases (3 Newspaper Verb & Economy, 4 Set Pieces, 5 Story & Heart); Levels 2-3→Phase 6; Launch→Phase 8; Phase 1 marked complete. New reqs L1E-01..09. NEXT: plan Phase 3.
 
 Resume steps (next session):
-  1. /gsd-verify-work 02.1 (or /gsd-resume-work) — run formal phase verification (gsd-verifier) to mark Phase 02.1 complete in ROADMAP/STATE.
-  2. User full Level-1 playthrough sign-off — confirm boss greed→panic pose switch + Barren victory art on the Level Complete / share card (couldn't be auto-screenshotted).
-  3. DONE 2026-06-14 — geltungssatz-confirmed; public-URL gate lifted (https://barren-wuffett.pages.dev shareable).
-  4. Then Phase 3 (Funnel & Backend): /gsd-plan-phase 3.
-  Local dev servers may have stopped on clear — restart the real game with `npm run dev` (serves :8080).
+  1. /gsd-plan-phase 3 — plan "Level 1: The Newspaper Verb & Economy" (bush-whack verb, coins + deterministic drops, dog hazard, shop + upgrades). Design: .planning/research/level-1-redesign-ideas.md (locked decisions) + zelda-mystic-quest-patterns.md.
+  2. (optional, low priority) /gsd-verify-work 02.1 — cozy-art pass is objectively done (80/80 green, committed; per-plan checkpoints approved). Formal UAT was paused when we pivoted to the redesign; can close anytime.
+  3. Boss locked to "Mood Pendulum" (greed↔panic meter; FOMO lures hurt; strike on panic) — for Phase 4.
+  Dev server: `npm run dev -- --host` (was on :8090 for phone; may have stopped). Public URL now shareable: https://barren-wuffett.pages.dev.
 Resume file: None

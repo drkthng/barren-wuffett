@@ -20,10 +20,24 @@
 
 ### Visual & Art (Phase 2.1 — inserted)
 
-- [ ] **ART-01**: Level 1 overworld renders with a cohesive 16-bit pixel-art tileset (cozy town) replacing placeholder art, with auto-tiled grass↔path/terrain transitions — driven by the existing level-01 tile-index map, no engine changes
+- [x] **ART-01**: Level 1 overworld renders with a cohesive 16-bit pixel-art tileset (cozy town) replacing placeholder art, with auto-tiled grass↔path/terrain transitions — driven by the existing level-01 tile-index map, no engine changes
 - [x] **ART-02**: Player, NPCs (grandpa, store clerk, rival), dog, and Mr. Market boss have cohesive multi-frame sprites — 4-direction walk animation for moving characters; boss has distinct phase poses — wired via Preloader spritesheets + Phaser animations
 - [x] **ART-03**: All shipped art is CC0 or commercially-licensed with provenance/attribution tracked; assets are mobile-optimized (lean bundle, textures ≤2048px) and loaded via the existing Preloader/ContentRegistry pipeline
-- [x] **ART-04**: A reusable art style guide (palette, 16px grid, perspective, sourcing + pipeline) is documented so Levels 2-3 (Phase 4) reuse the look with data + assets only — no engine code
+- [x] **ART-04**: A reusable art style guide (palette, 16px grid, perspective, sourcing + pipeline) is documented so later levels reuse the look with data + assets only — no engine code
+
+### Level 1 Expansion (Phases 3–5 — added 2026-06-15, entertainment-first redesign)
+
+> Design source: `.planning/research/level-1-redesign-ideas.md`, `.planning/research/zelda-mystic-quest-patterns.md`, `.planning/research/buffett-early-years-story.md`
+
+- [ ] **L1E-01**: The rolled-up newspaper is a real interaction verb — the player swings it to destroy bushes and whack props/targets, with crisp visual + audio feedback (Phase 3)
+- [ ] **L1E-02**: Whackables drop coins/items via a fair deterministic 8-slot prize-pack (no long droughts); the first bush always drops a coin; a HUD "snowball" coin counter tracks the running total (Phase 3)
+- [ ] **L1E-03**: The patrolling dog is a non-lethal hazard — contact causes knockback + brief i-frames + a "hospital" respawn with a small coin fee and loss of the bush-whacking streak bonus; never a death screen (Phase 3)
+- [ ] **L1E-04**: A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock that gates a new town area, a cheap consumable); each purchase is felt for the rest of Level 1, no forced grinding (Phase 3)
+- [ ] **L1E-05**: The paper-route mini-game is restyled with characterful house targets and ends on an explicit results splash (papers delivered, accuracy %, coins, grade, NEW BEST) (Phase 4)
+- [ ] **L1E-06**: Mr. Market is redesigned as the "Mood Pendulum" boss — a visible greed↔panic meter, damaging FOMO lures, and a strike-window on panic; non-linear, readable, fair; reuses the newspaper-whack verb with no new mid-fight controls (Phase 4)
+- [ ] **L1E-07**: Level 1 plays a multi-beat young-Barren story spine (The Spark → first stock) delivered via skippable, i18n-ready cutscenes/dialogue that give the boss motivation (Phase 5)
+- [ ] **L1E-08**: New parody NPCs (Dottie, Donno, Barber Bristle, Old Penny) with distinct sprites + dialogue drive specific story beats; all parody-safe — no real names/brands/likenesses (Phase 5)
+- [ ] **L1E-09**: At least two story mini-games ship — Count-the-Caps and the Pinball Snowball (reinvest-for-passive-income compounding loop) — as isolated scenes; hidden Investment Journal collectible pages are scattered in Level 1 (content-only, no backend) and unlock a reward (Phase 5)
 
 ### Save & Progress
 
@@ -52,7 +66,7 @@
 
 ### Infrastructure
 
-- [ ] **INFR-01**: Game is deployed on Cloudflare Pages (free tier) and playable via public URL
+- [x] **INFR-01**: Game is deployed on Cloudflare Pages (free tier) and playable via public URL
 - [ ] **INFR-02**: Supabase handles email capture and cloud save; custom SMTP (Brevo) configured before any user-facing email flows
 - [ ] **INFR-03**: Cookieless analytics tracks the funnel (level completions, gate conversion, share clicks) without a consent banner
 - [x] **INFR-04**: Levels are defined as data manifests (ContentRegistry) — adding a level or future pack means adding data files, not engine code
@@ -63,8 +77,7 @@
 ### v1.x (after launch validation)
 
 - **Leaderboard** — email-gated submission, public top 10; add after ~100 email captures (dead leaderboard is harmful)
-- **PWA install prompt** — after Level 1 completion; add once core game is stable with first ~50 players
-- **Offline play via service worker** — add once players actually install the PWA
+- **Offline play via service worker (full hardening)** — install prompt ships in Phase 8; full offline-after-install hardening lands once players actually install the PWA
 - **Referral bonus system** — in-game cosmetic reward for shares; add when share-card analytics show traction
 - **Lore-card collectibles + gallery** — ungated exploration rewards; add when there's enough content to display
 - **Levels 4–5** — complete the childhood/youth arc as fast-follow updates
@@ -95,37 +108,46 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | GAME-01 | Phase 2 | Complete |
-| GAME-02 | Phase 4 | Pending |
-| GAME-03 | Phase 4 | Pending |
-| GAME-04 | Phase 4 | Pending |
+| GAME-02 | Phase 6 | Pending |
+| GAME-03 | Phase 6 | Pending |
+| GAME-04 | Phase 6 | Pending |
 | GAME-05 | Phase 2 | Complete |
 | GAME-06 | Phase 2 | Complete |
 | GAME-07 | Phase 1 | Complete |
 | GAME-08 | Phase 1 | Complete |
 | GAME-09 | Phase 2 | Complete |
 | GAME-10 | Phase 1 | Complete |
-| ART-01 | Phase 2.1 | Pending |
+| ART-01 | Phase 2.1 | Complete |
 | ART-02 | Phase 2.1 | Complete |
 | ART-03 | Phase 2.1 | Complete |
 | ART-04 | Phase 2.1 | Complete |
+| L1E-01 | Phase 3 | Pending |
+| L1E-02 | Phase 3 | Pending |
+| L1E-03 | Phase 3 | Pending |
+| L1E-04 | Phase 3 | Pending |
+| L1E-05 | Phase 4 | Pending |
+| L1E-06 | Phase 4 | Pending |
+| L1E-07 | Phase 5 | Pending |
+| L1E-08 | Phase 5 | Pending |
+| L1E-09 | Phase 5 | Pending |
 | SAVE-01 | Phase 2 | Complete |
 | SAVE-02 | Phase 2 | Complete |
-| FUNL-01 | Phase 3 | Pending |
-| FUNL-02 | Phase 3 | Pending |
-| FUNL-03 | Phase 3 | Pending |
-| FUNL-04 | Phase 3 | Pending |
-| FUNL-05 | Phase 3 | Pending |
+| FUNL-01 | Phase 7 | Pending |
+| FUNL-02 | Phase 7 | Pending |
+| FUNL-03 | Phase 7 | Pending |
+| FUNL-04 | Phase 7 | Pending |
+| FUNL-05 | Phase 7 | Pending |
 | VIRL-01 | Phase 2 | Complete |
 | VIRL-02 | Phase 2 | Complete |
 | LEGL-01 | Phase 1 | Complete |
 | LEGL-02 | Phase 1 | Complete |
-| LEGL-03 | Phase 3 | Pending |
-| LEGL-04 | Phase 3 | Pending |
-| INFR-01 | Phase 1 | Pending |
-| INFR-02 | Phase 3 | Pending |
-| INFR-03 | Phase 3 | Pending |
+| LEGL-03 | Phase 7 | Pending |
+| LEGL-04 | Phase 7 | Pending |
+| INFR-01 | Phase 1 | Complete |
+| INFR-02 | Phase 7 | Pending |
+| INFR-03 | Phase 7 | Pending |
 | INFR-04 | Phase 1 | Complete |
 | INFR-05 | Phase 1 | Complete |
 
 ---
-*Last updated: 2026-06-14 — added ART-01..04 (Phase 2.1 Visual Pass, inserted)*
+*Last updated: 2026-06-15 — entertainment-first rearrange: funnel → Phase 7; added L1E-01..09 (Level 1 expansion, Phases 3–5); marked ART-01 + INFR-01 complete; renumbered Levels 2-3 → Phase 6, Launch → Phase 8*
