@@ -20,6 +20,7 @@ export enum Action {
     MOVE_RIGHT = 'MOVE_RIGHT',
     INTERACT   = 'INTERACT',
     PAUSE      = 'PAUSE',
+    WHACK      = 'WHACK',   // Phase 3 — pulse action (setAction driven, not joystick/cursors)
 }
 
 const activeActions = new Set<Action>();
