@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 Plan 01 complete — Wave 0 pure-TS seams + tests
-last_updated: "2026-06-15T19:31:55.912Z"
-last_activity: 2026-06-15 -- Phase 03 execution started
+stopped_at: Phase 03 Plan 02 complete — WHACK verb + economy spine + COINS_CHANGED HUD
+last_updated: "2026-06-15T19:45:37Z"
+last_activity: 2026-06-15 -- Phase 03 Plan 02 executed
 progress:
   total_phases: 9
   completed_phases: 3
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 ## Current Position
 
 Phase: 03 (Level 1 — The Newspaper Verb & Economy) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
-Last activity: 2026-06-15 -- Phase 03 execution started
+Last activity: 2026-06-15 -- Phase 03 Plan 02 complete
 
 Progress: [███░░░░░░░] 33% (3/9 phases)
 
@@ -59,6 +59,7 @@ Progress: [███░░░░░░░] 33% (3/9 phases)
 | Phase 02.1 P02 | 15min | 4 tasks | 10 files |
 | Phase 02.1 P03 | 10min | 2 tasks | 6 files |
 | Phase 03 P01 | 4min | 2 tasks | 11 files |
+| Phase 03 P02 | 11min | 3 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 02.1]: STYLE-GUIDE.md written as durable reference prose (not a task log) so Phase 4 developers can reproduce the cozy look with data + assets only — no engine code
 - [Phase 03]: PrizePack firstWhackOrRoll does NOT advance the slot on first-whack override — D-06 slot sequence starts fresh from slot 0 once done
 - [Phase 03]: Economy.applyPurchase returns a new flags object (immutable, never mutates input) — snack never sets a flag key (D-15)
+- [Phase 03]: AudioService.playSfx(scene,key) takes scene arg — AudioService stays stateless singleton (no singleton Phaser ref held)
+- [Phase 03]: COINS_CHANGED wired end-to-end in Plan 02 — OverworldScene emits on every coin delta; UIScene.onCoinsChanged drives HUD.setCoins + flashCoinPickup (D-08 gap closed)
 
 ### Pending Todos
 
@@ -107,12 +110,13 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-06-15T19:31:55.896Z
-Stopped at: Phase 03 Plan 01 complete — Wave 0 pure-TS seams + tests
+Stopped at: Phase 03 Plan 02 complete — WHACK verb + economy spine + COINS_CHANGED HUD
 
 Resume steps (next session):
 
-  1. /gsd-plan-phase 3 — plan "Level 1: The Newspaper Verb & Economy" (bush-whack verb, coins + deterministic drops, dog hazard, shop + upgrades). Design: .planning/research/level-1-redesign-ideas.md (locked decisions) + zelda-mystic-quest-patterns.md.
-  2. (optional, low priority) /gsd-verify-work 02.1 — cozy-art pass is objectively done (80/80 green, committed; per-plan checkpoints approved). Formal UAT was paused when we pivoted to the redesign; can close anytime.
+  1. Execute Plan 03-03 (Slice 2 "hazard + streak"): 8-bush streak bonus, dog→non-lethal hazard (knockback + i-frames), WAKE UP IN HOSPITAL overlay + floored coin fee + streak reset (L1E-02, L1E-03).
+  2. (optional, low priority) /gsd-verify-work 02.1 — cozy-art pass is objectively done. Formal UAT paused; can close anytime.
   3. Boss locked to "Mood Pendulum" (greed↔panic meter; FOMO lures hurt; strike on panic) — for Phase 4.
-  Dev server: `npm run dev -- --host` (was on :8090 for phone; may have stopped). Public URL now shareable: https://barren-wuffett.pages.dev.
-Resume file: .planning/phases/03-level-1-the-newspaper-verb-economy/03-UI-SPEC.md
+  Dev server: `npm run dev -- --host`. Public URL now shareable: https://barren-wuffett.pages.dev.
+  Note: Placeholder art (bush/newspaper/leaf/shop icons as 1px PNGs, OGG as stub headers) needs art pass before Phase verification.
+Resume file: .planning/phases/03-level-1-the-newspaper-verb-economy/03-03-PLAN.md

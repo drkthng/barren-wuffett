@@ -137,7 +137,7 @@ Plans:
 
 **Wave 1** *(blocked on Wave 0)*
 
-- [ ] 03-02-PLAN.md — Slice 1 "the spine": WHACK verb + whack button + swing/particle/SFX, BushEntity + WhackSystem, deterministic prize-pack, first-bush coin, COINS_CHANGED → HUD (+N float) — closes the D-08 gap; autosave (L1E-01, L1E-02)
+- [x] 03-02-PLAN.md — Slice 1 "the spine": WHACK verb + whack button + swing/particle/SFX, BushEntity + WhackSystem, deterministic prize-pack, first-bush coin, COINS_CHANGED → HUD (+N float) — closes the D-08 gap; autosave (L1E-01, L1E-02)
 
 **Wave 2** *(blocked on Wave 1)*
 
