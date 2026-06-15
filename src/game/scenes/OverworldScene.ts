@@ -558,7 +558,8 @@ export class OverworldScene extends Scene {
         const facing = this.player.facing;
 
         // Activate the directional hitbox (150ms active window, using WhackOffsets seam)
-        this.whackSystem.activate(px, py, facing);
+        // upgrade_newspaper effect: pass enlarged flag so WhackSystem grows the hitbox (D-14)
+        this.whackSystem.activate(px, py, facing, !!this.flags['upgrade_newspaper']);
 
         // D-04: Overlay swing sprite — separate sprite, NOT a player_sheet re-cut
         // Anchored 20px in front of the player based on facing

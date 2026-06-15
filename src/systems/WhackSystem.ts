@@ -36,19 +36,39 @@ export class WhackSystem {
      * @param playerX  Player sprite world X
      * @param playerY  Player sprite world Y
      * @param facing   'down' | 'up' | 'left' | 'right' (unknown falls back to 'down')
-     * @param enlarged Reserved for the upgrade_newspaper effect (Slice 3); no-op this slice.
+     * @param enlarged True when upgrade_newspaper is owned — grows hitbox by 8px reach + wider rect (D-14).
      */
     activate(playerX: number, playerY: number, facing: string, enlarged = false): void {
-        void enlarged; // deferred to Slice 3 — param accepted now so no signature change needed
         const { dx, dy } = whackHitboxOffset(facing);
-        this._hitbox.setPosition(playerX + dx, playerY + dy);
+
+        // upgrade_newspaper effect: +8px reach in facing direction, wider rect (D-14, Slice 3)
+        const baseW = enlarged ? 48 : 32;
+        const baseH = enlarged ? 32 : 24;
+        // Extra offset in facing direction (8px more reach when enlarged)
+        const extraReach = enlarged ? 8 : 0;
+        let finalDx = dx;
+        let finalDy = dy;
+        if (enlarged) {
+            // Push the hitbox 8px further in the facing direction
+            if (Math.abs(dx) > Math.abs(dy)) {
+                finalDx = dx + Math.sign(dx) * extraReach;
+            } else {
+                finalDy = dy + Math.sign(dy) * extraReach;
+            }
+        }
+
+        this._hitbox.setPosition(playerX + finalDx, playerY + finalDy);
+        this._hitbox.setSize(baseW, baseH);
+
         const body = this._hitbox.body as Phaser.Physics.Arcade.StaticBody;
         body.enable = true;
-        body.reset(playerX + dx, playerY + dy); // sync static body position after setPosition
+        body.reset(playerX + finalDx, playerY + finalDy); // sync static body position
 
         // Active window ~150ms (D-02: 120–180ms)
         this._hitbox.scene.time.delayedCall(150, () => {
             body.enable = false;
+            // Reset hitbox to base size after deactivation so next whack starts fresh
+            this._hitbox.setSize(32, 24);
         });
     }
 
