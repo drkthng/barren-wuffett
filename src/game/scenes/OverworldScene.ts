@@ -556,17 +556,40 @@ export class OverworldScene extends Scene {
     }
 
     /**
-     * Phase 3: Roll the prize-pack for a cleared bush and award coins/items.
-     * Stub in Task 2a — filled in Task 2b with firstWhackOrRoll + COINS_CHANGED + autosave.
+     * Phase 3: Roll the prize-pack for a cleared bush and award coins/items (D-05, D-06, D-08).
+     *
+     * - Uses firstWhackOrRoll() seam from Plan 01 for the D-06 first-whack guarantee.
+     * - Sets first_whack_done flag AFTER the call (so first whack always returns a coin).
+     * - Emits COINS_CHANGED on every coin delta (closes the D-08 HUD gap).
+     * - Emits BUSH_WHACKED with streak count (HUD streak pips in UIScene).
+     * - Autosaves via SaveService after every coin award.
      */
     private awardWhackDrop(_bush: BushEntity): void {
-        // Task 2b implementation:
-        // const drop = firstWhackOrRoll(this.flags, this.prizePackState);
-        // if (!this.flags['first_whack_done']) this.flags['first_whack_done'] = true;
-        // if (drop.coins > 0) { this.coins += drop.coins; ... emit COINS_CHANGED }
-        void firstWhackOrRoll;   // referenced here to satisfy noUnusedLocals until 2b fills in
-        void this.prizePackState;
-        void this.bushStreak;
+        const drop = firstWhackOrRoll(this.flags, this.prizePackState);
+
+        // D-06: mark first_whack_done AFTER the call so the override fires correctly
+        if (!this.flags['first_whack_done']) {
+            this.flags['first_whack_done'] = true;
+        }
+
+        if (drop.coins > 0) {
+            this.coins += drop.coins;
+            AudioService.playSfx(this, 'coin_ding');
+            // Increment streak counter (reset to 0 by dog bite in Slice 2)
+            this.bushStreak += 1;
+            // BUSH_WHACKED carries streak so UIScene can update pip indicator (D-07)
+            GameEvents.emit(Events.BUSH_WHACKED, { streak: this.bushStreak });
+            // COINS_CHANGED — closes D-08 HUD gap; UIScene.onCoinsChanged drives HUD update
+            GameEvents.emit(Events.COINS_CHANGED, this.coins);
+            // Autosave: coins + first_whack_done flag already in buildSaveState()
+            void SaveService.save(this.buildSaveState());
+        } else if (drop.item === 'snack') {
+            // Snack drop: increment streak + emit BUSH_WHACKED (snack effect deferred to Slice 3)
+            this.bushStreak += 1;
+            GameEvents.emit(Events.BUSH_WHACKED, { streak: this.bushStreak });
+            // No COINS_CHANGED (no coins), no autosave needed for snack (transient)
+        }
+        // No-drop (null-coalesced to {coins:0,item:null}): no events, no save
     }
 
     private showTalkPrompt(npc: NPC): void {

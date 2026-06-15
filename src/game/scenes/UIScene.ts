@@ -22,7 +22,7 @@ import { DialogueBox } from '../../ui/DialogueBox';
 import type { DialogueLine } from '../../ui/DialogueBox';
 import { shareCard } from '../../services/ShareService';
 
-type UIState = 'HUD' | 'DIALOGUE' | 'PAUSE' | 'LEVEL_COMPLETE';
+type UIState = 'HUD' | 'DIALOGUE' | 'PAUSE' | 'LEVEL_COMPLETE' | 'SHOP' | 'HOSPITAL';
 
 // Dialogue JSON (bundled; no runtime fetch)
 // Using dynamic import so the module is not imported at the top level
@@ -52,6 +52,20 @@ export class UIScene extends Scene {
         this.hud.flashPatienceBonus(amount);
     };
 
+    // Phase 3: COINS_CHANGED handler — closes the D-08 HUD↔coins gap
+    // Tracks previous coin value to compute the delta for flashCoinPickup
+    private _prevCoins = 0;
+    private onCoinsChanged = (n: number): void => {
+        this.hud.setCoins(n);
+        this.hud.flashCoinPickup(n - this._prevCoins);
+        this._prevCoins = n;
+    };
+
+    // Phase 3: BUSH_WHACKED handler — updates streak pip indicator (D-07)
+    private onBushWhacked = (data: { streak: number }): void => {
+        this.hud.updateStreak(data.streak);
+    };
+
     constructor() {
         super('UIScene');
     }
@@ -74,6 +88,9 @@ export class UIScene extends Scene {
         GameEvents.on(Events.BOSS_DEFEATED, this.onBossDefeated, this);
         // CR-03 fix: use stored handler reference so shutdown() can remove precisely
         GameEvents.on(Events.PATIENCE_BONUS, this.onPatienceBonus, this);
+        // Phase 3: coin HUD + streak pips
+        GameEvents.on(Events.COINS_CHANGED, this.onCoinsChanged, this);
+        GameEvents.on(Events.BUSH_WHACKED,  this.onBushWhacked,  this);
     }
 
     // ── Event handlers ─────────────────────────────────────────────────────
@@ -415,6 +432,9 @@ export class UIScene extends Scene {
         GameEvents.off(Events.RESUME_REQUESTED,  this.onResumeRequested,  this);
         GameEvents.off(Events.BOSS_DEFEATED,     this.onBossDefeated,     this);
         GameEvents.off(Events.PATIENCE_BONUS,    this.onPatienceBonus,    this);
+        // Phase 3: remove COINS_CHANGED + BUSH_WHACKED handlers (CR-03 — no zombie listeners on restart)
+        GameEvents.off(Events.COINS_CHANGED,     this.onCoinsChanged,     this);
+        GameEvents.off(Events.BUSH_WHACKED,      this.onBushWhacked,      this);
         // WR-07 fix: destroy DialogueBox before Phaser tears down the input plugin
         this.dialogueBox.destroy();
     }

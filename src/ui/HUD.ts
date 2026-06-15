@@ -15,20 +15,49 @@ import { GameEvents, Events } from '../events/GameEvents';
 
 export class HUD {
     private readonly scene: Scene;
-    private coinText: Phaser.GameObjects.Text;
+    // Phase 3: split coin label + value for two-color rendering (UI-SPEC §3a)
+    private coinLabel: Phaser.GameObjects.Text;
+    private coinValue: Phaser.GameObjects.Text;
+    // Legacy alias kept for setCoins tween target (no external refs outside this file)
+    private get coinText(): Phaser.GameObjects.Text { return this.coinValue; }
     private readonly saveIcon: Phaser.GameObjects.Image;
     private readonly container: Phaser.GameObjects.Container;
+    // Phase 3: streak pips (8 rectangles, visible when streak > 0)
+    private readonly streakPips: Phaser.GameObjects.Rectangle[] = [];
 
     constructor(scene: Scene) {
         this.scene = scene;
 
-        // ── Coin counter (top-left) ──────────────────────────────────────────
+        // ── Coin counter (top-left) — split label/value for two-color rendering (UI-SPEC §3a)
         const coinIcon = scene.add.image(24, 24, 'coin').setDisplaySize(16, 16);
-        this.coinText = scene.add.text(36, 16, this.formatCoins(0), {
+        // "COINS:" label stays #e8e8e8; coin value uses #f5c842 (coin gold)
+        this.coinLabel = scene.add.text(36, 16, t('hud.coinsLabel'), {
             fontSize: '8px',
             color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
         });
+        this.coinValue = scene.add.text(36 + this.coinLabel.width + 4, 16, '0', {
+            fontSize: '8px',
+            color: '#f5c842',
+            fontFamily: '"Press Start 2P", monospace',
+        });
+
+        // ── Streak pips (Phase 3) — 8 × 12×8px rectangles at y=40 ──────────
+        // Visible only when streak > 0 (D-07, UI-SPEC §3b)
+        const streakLabel = scene.add.text(16, 40, t('hud.streak'), {
+            fontSize: '8px',
+            color: '#e8e8e8',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setVisible(false);
+        // Store label ref for visibility toggling in updateStreak
+        (this as unknown as { _streakLabel: Phaser.GameObjects.Text })._streakLabel = streakLabel;
+
+        for (let i = 0; i < 8; i++) {
+            const pip = scene.add.rectangle(72 + i * 16, 40, 12, 8, 0x16213e)
+                .setDepth(20)
+                .setVisible(false);
+            this.streakPips.push(pip);
+        }
 
         // ── Autosave disk flash (bottom-left) ────────────────────────────────
         this.saveIcon = scene.add.image(16, 838, 'ui_save')
@@ -47,22 +76,63 @@ export class HUD {
             GameEvents.emit(Events.PAUSE_REQUESTED);
         });
 
-        // Container holds all HUD elements
+        // Container holds core HUD elements (pips are separate — depth set individually)
         this.container = scene.add.container(0, 0, [
-            coinIcon, this.coinText, this.saveIcon, pauseBtn,
+            coinIcon, this.coinLabel, this.coinValue, streakLabel, this.saveIcon, pauseBtn,
         ]).setDepth(20);
     }
 
     /** Update the displayed coin count. */
     setCoins(count: number): void {
-        this.coinText.setText(this.formatCoins(count));
-        // Scale-up tween on increment
+        this.coinValue.setText(String(count));
+        // Reposition value text to follow label width (handles different number widths)
+        this.coinValue.setX(36 + this.coinLabel.width + 4);
+        // Scale-up tween on increment (on coinValue — the gold number)
         this.scene.tweens.add({
             targets: this.coinText,
             scaleX: 1.2, scaleY: 1.2,
             duration: 75,
             yoyo: true,
         });
+    }
+
+    /**
+     * Phase 3: Flash a "+N" coin pickup float (snowball juice, UI-SPEC §2c / §3a).
+     * Early-returns when amount ≤ 0. Uses #f5c842 coin-gold color.
+     * Pattern: flashPatienceBonus (same float-up tween, different color + text).
+     */
+    flashCoinPickup(amount: number): void {
+        if (amount <= 0) return;
+        const pickupText = this.scene.add.text(240, 200,
+            `+${amount}`,
+            {
+                fontSize: '8px',
+                color: '#f5c842',
+                fontFamily: '"Press Start 2P", monospace',
+            }
+        ).setOrigin(0.5).setDepth(25);
+
+        this.scene.tweens.add({
+            targets: pickupText,
+            y: 160,
+            alpha: 0,
+            duration: 700,
+            onComplete: () => pickupText.destroy(),
+        });
+    }
+
+    /**
+     * Phase 3: Update streak pips (UI-SPEC §3b).
+     * Filled pips = #00ff88 (accent); empty = #16213e (secondary).
+     * All pips hidden when n = 0 (no streak active).
+     */
+    updateStreak(n: number): void {
+        const label = (this as unknown as { _streakLabel: Phaser.GameObjects.Text })._streakLabel;
+        this.streakPips.forEach((pip, i) => {
+            pip.setFillStyle(i < n ? 0x00ff88 : 0x16213e);
+            pip.setVisible(n > 0);
+        });
+        if (label) label.setVisible(n > 0);
     }
 
     /** Flash the autosave disk icon (800ms total). */
@@ -105,7 +175,4 @@ export class HUD {
         this.container.setVisible(visible);
     }
 
-    private formatCoins(n: number): string {
-        return t('hud.coins').replace('{n}', String(n));
-    }
 }
