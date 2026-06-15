@@ -19,6 +19,8 @@ import { t } from '../../services/i18n';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { HUD } from '../../ui/HUD';
 import { HospitalOverlay } from '../../ui/HospitalOverlay';
+import { ShopOverlay } from '../../ui/ShopOverlay';
+import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
 import { DialogueBox } from '../../ui/DialogueBox';
 import type { DialogueLine } from '../../ui/DialogueBox';
 import { shareCard } from '../../services/ShareService';
@@ -49,6 +51,8 @@ export class UIScene extends Scene {
     private pauseBackdrop!: Phaser.GameObjects.Rectangle;
     private hospitalOverlay!: HospitalOverlay;
     private _hospitalDismissTimer: Phaser.Time.TimerEvent | null = null;
+    private shopOverlay!: ShopOverlay;
+    private escKey: Phaser.Input.Keyboard.Key | null = null;
     private uiState: UIState = 'HUD';
 
     // Stored as a class field so shutdown() can pass it to .off() precisely (CR-03 fix)
@@ -73,6 +77,31 @@ export class UIScene extends Scene {
     // Phase 3 Slice 2: STREAK_BONUS handler — shows streak bonus toast in HUD (D-07, UI-SPEC §3c)
     private onStreakBonus = (data: { coins: number; journal: boolean }): void => {
         this.hud.flashStreakBonus(data.coins, data.journal);
+    };
+
+    // Phase 3 Slice 3: SHOP_OPEN handler — shows/refreshes shop panel (D-13, T-03-11)
+    // Re-entry guard: if already in SHOP state, refresh the panel only (do NOT re-pause OverworldScene)
+    private onShopOpen = (data: { coins: number; flags: Record<string, boolean> }): void => {
+        if (this.uiState === 'SHOP') {
+            // Refresh-only path: re-render the panel WITHOUT re-pausing (prevents Phaser double-pause)
+            this.shopOverlay.show(data.coins, data.flags, ECONOMY_DATA.shopItems);
+            return;
+        }
+        // First open: transition to SHOP state + pause OverworldScene
+        this.setState('SHOP');
+        if (this.scene.get('OverworldScene')?.scene.isActive()) {
+            this.scene.pause('OverworldScene');
+        }
+        this.shopOverlay.show(data.coins, data.flags, ECONOMY_DATA.shopItems);
+    };
+
+    // Phase 3 Slice 3: SHOP_CLOSE handler — returns to HUD + resumes OverworldScene (D-13)
+    private onShopClose = (): void => {
+        if (this.uiState !== 'SHOP') return;
+        this.setState('HUD');
+        if (this.scene.get('OverworldScene')?.scene.isPaused()) {
+            this.scene.resume('OverworldScene');
+        }
     };
 
     // Phase 3 Slice 2: PLAYER_HOSPITALIZED handler — shows hospital splash + pauses OverworldScene
@@ -125,6 +154,19 @@ export class UIScene extends Scene {
         // ── Phase 3 Slice 2: Hospital overlay ─────────────────────────────
         this.hospitalOverlay = new HospitalOverlay(this);
 
+        // ── Phase 3 Slice 3: Shop overlay ─────────────────────────────────
+        this.shopOverlay = new ShopOverlay(this);
+
+        // ── ESC keyboard shortcut: close shop when in SHOP state ─────────
+        if (this.input.keyboard) {
+            this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+            this.escKey.on('down', () => {
+                if (this.uiState === 'SHOP') {
+                    GameEvents.emit(Events.SHOP_CLOSE);
+                }
+            });
+        }
+
         // ── Event subscriptions ────────────────────────────────────────────
         GameEvents.on(Events.DIALOGUE_START, this.onDialogueStart, this);
         GameEvents.on(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
@@ -139,6 +181,9 @@ export class UIScene extends Scene {
         // Phase 3 Slice 2: hospital splash + streak bonus flash (CR-03)
         GameEvents.on(Events.PLAYER_HOSPITALIZED, this.onPlayerHospitalized, this);
         GameEvents.on(Events.STREAK_BONUS,        this.onStreakBonus,         this);
+        // Phase 3 Slice 3: shop open/close (CR-03)
+        GameEvents.on(Events.SHOP_OPEN,  this.onShopOpen,  this);
+        GameEvents.on(Events.SHOP_CLOSE, this.onShopClose, this);
         // Note: UIScene EMITS HOSPITAL_DISMISS; it does not listen for it — no .on() needed
     }
 
@@ -470,6 +515,11 @@ export class UIScene extends Scene {
         this.hud.setVisible(state === 'HUD');
         this.pauseBackdrop.setVisible(state === 'PAUSE');
         this.pauseOverlay.setVisible(state === 'PAUSE');
+        // Phase 3 Slice 3: hide shop overlay when leaving SHOP state
+        // show() is driven by onShopOpen (needs coins/flags payload), not here
+        if (state !== 'SHOP') {
+            this.shopOverlay?.hide();
+        }
         // Phase 3 Slice 2: hide hospital overlay when leaving HOSPITAL state
         // show() is driven by onPlayerHospitalized (needs the fee payload), not here
         if (state !== 'HOSPITAL') {
@@ -493,6 +543,9 @@ export class UIScene extends Scene {
         // UIScene EMITS HOSPITAL_DISMISS but does not listen — no off() needed for that event
         GameEvents.off(Events.PLAYER_HOSPITALIZED, this.onPlayerHospitalized, this);
         GameEvents.off(Events.STREAK_BONUS,        this.onStreakBonus,         this);
+        // Phase 3 Slice 3: remove SHOP_OPEN + SHOP_CLOSE handlers (CR-03)
+        GameEvents.off(Events.SHOP_OPEN,  this.onShopOpen,  this);
+        GameEvents.off(Events.SHOP_CLOSE, this.onShopClose, this);
         // Cancel pending dismiss timer on shutdown (avoids dangling callback)
         this._hospitalDismissTimer?.remove();
         this._hospitalDismissTimer = null;

@@ -31,7 +31,7 @@ import { WhackSystem } from '../../systems/WhackSystem';
 import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
 import { firstWhackOrRoll } from '../../systems/PrizePack';
 import type { PrizePackState } from '../../systems/PrizePack';
-import { computeHospitalFee } from '../../systems/Economy';
+import { computeHospitalFee, applyPurchase } from '../../systems/Economy';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
@@ -102,6 +102,32 @@ export class OverworldScene extends Scene {
 
     // Phase 3: traversal gate
     private gateBarrier: Phaser.GameObjects.Rectangle | null = null;
+    private gateSignText: Phaser.GameObjects.Text | null = null;
+
+    // Phase 3 Slice 3: track last interacted NPC id (for shop entry after dialogue)
+    private _lastNpcId: string | null = null;
+
+    // Phase 3 Slice 3: shop purchase handler (stored ref for CR-03 cleanup)
+    private onShopPurchase = (data: { itemId: string; price: number }): void => {
+        const res = applyPurchase(this.coins, this.flags, data.itemId, data.price);
+        if (!res) return;   // rejected (insufficient funds or already owned)
+        this.coins    = res.newCoins;
+        this.flags    = res.newFlags;
+        AudioService.playSfx(this, 'purchase_chime');
+        if (data.itemId === 'upgrade_traversal') {
+            this.removeGate();
+        }
+        GameEvents.emit(Events.COINS_CHANGED, this.coins);
+        // Refresh-only re-emit: UIScene's onShopOpen re-entry guard re-renders
+        // the panel WITHOUT re-pausing OverworldScene (T-03-11 / Pitfall 3)
+        GameEvents.emit(Events.SHOP_OPEN, { coins: this.coins, flags: { ...this.flags } });
+        void SaveService.save(this.buildSaveState());
+    };
+
+    // Phase 3 Slice 3: shop close — clear the shopOpen guard (T-03-12)
+    private onShopClose = (): void => {
+        this.shopOpen = false;
+    };
 
     // Loaded in init() before create() is called — avoids async create() race (CR-01)
     private _savedState: SaveState | undefined = undefined;
@@ -111,6 +137,12 @@ export class OverworldScene extends Scene {
     private onDialogueComplete = (): void => {
         this.inDialogue = false;
         void SaveService.save(this.buildSaveState());
+        // Phase 3 Slice 3: after storeClerk dialogue completes, open the shop (Open Question 2)
+        if (this._lastNpcId === 'storeClerk') {
+            this._lastNpcId = null;
+            this.shopOpen = true;
+            GameEvents.emit(Events.SHOP_OPEN, { coins: this.coins, flags: { ...this.flags } });
+        }
     };
 
     // Phase 3 Slice 2: HOSPITAL_DISMISS carrier — UIScene dismiss emits it; we respawn at (96,96) (D-11)
@@ -226,9 +258,23 @@ export class OverworldScene extends Scene {
         );
         this.physics.add.existing(this.gateBarrier, true);
         this.physics.add.collider(this.player.sprite, this.gateBarrier);
+        // Gate sign — visible MVP text (Open Question 3: invisible body + sign)
+        this.gateSignText = this.add.text(
+            ECONOMY_DATA.gateBarrier.x, ECONOMY_DATA.gateBarrier.y,
+            'ROAD CLOSED\nBUS PASS REQUIRED',
+            {
+                fontSize: '6px', color: '#ff4444',
+                fontFamily: '"Press Start 2P", monospace',
+                align: 'center',
+            },
+        ).setOrigin(0.5).setDepth(5);
         if (this.flags['upgrade_traversal']) {
-            (this.gateBarrier.body as Phaser.Physics.Arcade.StaticBody).enable = false;
+            this.removeGate();
         }
+
+        // ── Phase 3 Slice 3: SHOP event listeners (CR-03) ─────────────────
+        GameEvents.on(Events.SHOP_PURCHASE, this.onShopPurchase, this);
+        GameEvents.on(Events.SHOP_CLOSE,    this.onShopClose,    this);
 
         // ── Dog patrol (patience mechanic GAME-06) ─────────────────────────
         this.dogSprite = this.add.image(DOG_MIN_X, 464, 'dog')
@@ -375,6 +421,17 @@ export class OverworldScene extends Scene {
             }
         }
 
+        // ── Phase 3 Slice 3: Traversal reward zone (east of gate, D-16) ───────
+        // Award once when player enters the reward area (past x=320, y<200 region)
+        if (this.flags['upgrade_traversal'] && !this.flags['traversal_reward_collected']) {
+            const px = this.player.sprite.x;
+            const py = this.player.sprite.y;
+            // Reward zone: east of gate (x>340, y<200) — covers the previously-blocked area
+            if (px > 340 && py < 200) {
+                this.awardTraversalReward();
+            }
+        }
+
         // ── TriggerSystem zone check ───────────────────────────────────────
         const hit = this.triggerSystem.checkZones(
             this.player.sprite.x,
@@ -478,10 +535,16 @@ export class OverworldScene extends Scene {
         if (this.inDialogue) return;
         if (!this.currentNpcInRange) return;
         this.inDialogue = true;
+        // Phase 3 Slice 3: track last NPC id for shop-entry after dialogue (Open Question 2)
+        this._lastNpcId = this.currentNpcInRange.npcId;
         this.hideTalkPrompt(this.currentNpcInRange);
+        // Store Clerk uses the shopIntro dialogue so the shop opens after it completes
+        const dialogueKey = this.currentNpcInRange.npcId === 'storeClerk'
+            ? 'storeClerk.shopIntro'
+            : this.currentNpcInRange.dialogueKey;
         GameEvents.emit(Events.DIALOGUE_START, {
             npcId:       this.currentNpcInRange.npcId,
-            dialogueKey: this.currentNpcInRange.dialogueKey,
+            dialogueKey,
         });
     }
 
@@ -734,6 +797,44 @@ export class OverworldScene extends Scene {
         void SaveService.save(this.buildSaveState());
     }
 
+    /**
+     * Phase 3 Slice 3: Remove the traversal gate barrier when upgrade_traversal is purchased.
+     * Disables the collider body and hides the sign text (D-16, Pattern 5).
+     * Also gives a one-time coin stash + journal page in the now-accessible area.
+     */
+    private removeGate(): void {
+        if (this.gateBarrier) {
+            (this.gateBarrier.body as Phaser.Physics.Arcade.StaticBody).enable = false;
+        }
+        if (this.gateSignText) {
+            this.gateSignText.setVisible(false);
+        }
+        // One-time reward (only when actually purchasing, not on load-restore)
+        // The coin stash + journal page are awarded when the player first enters the area.
+        // They are flagged by 'traversal_reward_collected' to prevent duplicate awards.
+        // (Actual pickup is in update() via zone check — see awardTraversalReward.)
+    }
+
+    /**
+     * Phase 3 Slice 3: Award the one-time traversal reward (coin stash + journal page).
+     * Called from update() when the player enters the east reward area (past the gate).
+     * Guarded by 'traversal_reward_collected' flag so it fires only once.
+     */
+    private awardTraversalReward(): void {
+        if (this.flags['traversal_reward_collected']) return;
+        this.flags['traversal_reward_collected'] = true;
+        // Coin stash: 15 coins
+        this.coins += 15;
+        AudioService.playSfx(this, 'coin_ding');
+        GameEvents.emit(Events.COINS_CHANGED, this.coins);
+        // Journal page seed (content wired when Journal UI is built in Phase 5)
+        const journalKey = 'journal_traversal_reward';
+        if (!this.journalUnlocked.includes(journalKey)) {
+            this.journalUnlocked.push(journalKey);
+        }
+        void SaveService.save(this.buildSaveState());
+    }
+
     /** Build current save state from scene fields. */
     buildSaveState(): SaveState {
         return {
@@ -771,6 +872,9 @@ export class OverworldScene extends Scene {
         GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
         // Phase 3 Slice 2: HOSPITAL_DISMISS cleanup (CR-03 — every on() needs off() for restart safety)
         GameEvents.off(Events.HOSPITAL_DISMISS, this.onHospitalDismiss, this);
+        // Phase 3 Slice 3: SHOP_PURCHASE + SHOP_CLOSE cleanup (CR-03)
+        GameEvents.off(Events.SHOP_PURCHASE, this.onShopPurchase, this);
+        GameEvents.off(Events.SHOP_CLOSE,    this.onShopClose,    this);
         this.game.events.off(Phaser.Core.Events.HIDDEN, this._onHidden, this);
         this.input.off('pointerdown');
     }

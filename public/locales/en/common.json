@@ -66,5 +66,19 @@
   "hospital.fee": "HOSPITAL FEE: -{n} COINS",
   "hospital.feeLow": "HOSPITAL FEE: -0 COINS (BROKE!)",
   "hospital.helmetBlocked": "HELMET BLOCKED THE FEE!",
-  "hospital.dismiss": "TAP OR WAIT TO CONTINUE"
+  "hospital.dismiss": "TAP OR WAIT TO CONTINUE",
+  "shop.title": "SHOP",
+  "shop.close": "CLOSE",
+  "shop.buy": "BUY",
+  "shop.owned": "OWNED",
+  "shop.notEnoughCoins": "NOT ENOUGH COINS",
+  "shop.price": "{n}",
+  "shop.item.sunday_edition.name": "SUNDAY EDITION",
+  "shop.item.sunday_edition.desc": "BIGGER WHACK RANGE",
+  "shop.item.bike_helmet.name": "BIKE HELMET",
+  "shop.item.bike_helmet.desc": "WAIVES HOSPITAL FEE",
+  "shop.item.bus_pass.name": "BUS PASS",
+  "shop.item.bus_pass.desc": "UNLOCKS EAST TOWN",
+  "shop.item.snack.name": "SNACK",
+  "shop.item.snack.desc": "RESTORES ENERGY"
 }

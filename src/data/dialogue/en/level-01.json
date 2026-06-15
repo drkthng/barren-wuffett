@@ -5,6 +5,10 @@
   "npc_store_clerk": [
     { "portrait": "npc_store_clerk", "text": "THAT MR. MARKET FELLOW KEEPS CHANGING HIS PRICES. CAN'T TRUST HIM." }
   ],
+  "storeClerk.shopIntro": [
+    { "portrait": "npc_store_clerk", "text": "COME IN, COME IN!" },
+    { "portrait": "npc_store_clerk", "text": "WHAT CAN I DO FOR YOU?" }
+  ],
   "npc_rival": [
     { "portrait": "npc_rival", "text": "HEY! THAT'S MY ROUTE!" },
     { "portrait": "npc_rival", "text": "MR. MARKET SAYS YOUR PRICES ARE TOO LOW." }
