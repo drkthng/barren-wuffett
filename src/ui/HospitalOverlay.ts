@@ -84,10 +84,15 @@ export class HospitalOverlay {
 
     /**
      * Show the hospital splash.
-     * Fee-line logic per UI-SPEC §5:
-     *   - helmet owned → "HELMET BLOCKED THE FEE!" in #00ff88
-     *   - fee ≥ 5     → "HOSPITAL FEE: -5 COINS" in #ff4444
-     *   - fee 0 (broke) → "HOSPITAL FEE: -0 COINS (BROKE!)" in #ff4444
+     * Fee-line logic per UI-SPEC §5 (CR-02 — explicit partial-balance branch):
+     *   - helmet owned       → "HELMET BLOCKED THE FEE!" in #00ff88
+     *   - fee 0 (broke)      → "HOSPITAL FEE: -0 COINS (BROKE!)" in #ff4444
+     *   - 0 < fee < 5 (partial, player zeroed out) → "...(CLEANED OUT!)" in #ff4444
+     *   - fee ≥ 5            → "HOSPITAL FEE: -5 COINS" in #ff4444
+     *
+     * `fee` is the LIVE amount actually deducted (re-clamped against the player's
+     * balance in OverworldScene.completeHospital), so a 1–4 coin player shows the
+     * true deduction with a "cleaned out" tag rather than a misleading bare number.
      */
     show(fee: number, helmetOwned: boolean): void {
         if (helmetOwned) {
@@ -95,6 +100,9 @@ export class HospitalOverlay {
             this.feeText.setColor('#00ff88');
         } else if (fee === 0) {
             this.feeText.setText(t('hospital.feeLow'));
+            this.feeText.setColor('#ff4444');
+        } else if (fee < 5) {
+            this.feeText.setText(t('hospital.feePartial').replace('{n}', String(fee)));
             this.feeText.setColor('#ff4444');
         } else {
             this.feeText.setText(t('hospital.fee').replace('{n}', String(fee)));

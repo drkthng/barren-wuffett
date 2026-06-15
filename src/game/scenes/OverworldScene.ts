@@ -789,13 +789,16 @@ export class OverworldScene extends Scene {
         // Reset streak immediately (D-12) — pips clear via BUSH_WHACKED { streak: 0 }
         this.bushStreak = 0;
         GameEvents.emit(Events.BUSH_WHACKED, { streak: 0 });
-        // Compute fee now (before coins change) so the overlay can show the correct amount
+        // Compute fee now (before coins change) so the overlay can show the correct amount.
+        // WR-05: snapshot helmetOwned at the SAME instant as the fee so the two reads
+        // can't desync during the ~960ms i-frame window; thread both into completeHospital.
         const fee = computeHospitalFee(this.coins, this.flags);
+        const helmetOwned = !!this.flags['upgrade_helmet'];
         // applyKnockback sets _invincible=true synchronously (T-03-06: blocks re-entry immediately)
         // onComplete fires after ~960ms i-frame flash — then show the hospital beat
         this.player.applyKnockback(
             this.dogSprite!.x, this.dogSprite!.y,
-            () => this.completeHospital(fee),
+            () => this.completeHospital(fee, helmetOwned),
         );
     }
 
@@ -804,13 +807,19 @@ export class OverworldScene extends Scene {
      * Fee is authoritative here (coins can never go negative — T-03-07).
      * RESPAWN is NOT here — it happens in onHospitalDismiss when UIScene emits HOSPITAL_DISMISS.
      */
-    private completeHospital(fee: number): void {
-        this.coins = Math.max(0, this.coins - fee);
+    private completeHospital(fee: number, helmetOwned: boolean): void {
+        // CR-02: the fee was captured at bite time (~960ms ago). Re-clamp against
+        // the LIVE balance at deduction time so we never deduct more than the player
+        // currently holds, and so the overlay shows the amount actually removed.
+        const liveFee = Math.min(fee, this.coins);
+        this.coins = this.coins - liveFee;
         GameEvents.emit(Events.COINS_CHANGED, this.coins);
         this.hospitalShowing = true;
         GameEvents.emit(Events.PLAYER_HOSPITALIZED, {
-            fee,
-            helmetOwned: !!this.flags['upgrade_helmet'],
+            fee: liveFee,
+            // WR-05: helmetOwned captured once in onDogBite and threaded through here
+            // so it stays consistent with the fee that was computed at bite time.
+            helmetOwned,
         });
         void SaveService.save(this.buildSaveState());
     }

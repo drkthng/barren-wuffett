@@ -64,6 +64,7 @@
   "level.01.title": "THE PAPER ROUTE",
   "hospital.heading": "WAKE UP IN HOSPITAL!",
   "hospital.fee": "HOSPITAL FEE: -{n} COINS",
+  "hospital.feePartial": "HOSPITAL FEE: -{n} COINS (CLEANED OUT!)",
   "hospital.feeLow": "HOSPITAL FEE: -0 COINS (BROKE!)",
   "hospital.helmetBlocked": "HELMET BLOCKED THE FEE!",
   "hospital.dismiss": "TAP OR WAIT TO CONTINUE",
