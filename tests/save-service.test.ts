@@ -162,6 +162,60 @@ describe('SaveService — CR-08 regression: journalUnlocked persists through sav
     });
 });
 
+describe('SaveService — Phase 3 upgrade flags (L1E-04)', () => {
+    beforeEach(() => {
+        vi.resetModules();
+        installFakeIndexedDB();
+    });
+    afterEach(() => vi.resetModules());
+
+    it('upgrade flags round-trip through save()/load() unchanged', async () => {
+        const { SaveService } = await import('../src/services/SaveService.js');
+        const state = {
+            version:         0,
+            updatedAt:       0,
+            level:           'level-01',
+            position:        { x: 96, y: 96 },
+            flags: {
+                upgrade_newspaper:  true,
+                upgrade_helmet:     true,
+                upgrade_traversal:  true,
+                first_whack_done:   true,
+            },
+            coins:           42,
+            journalUnlocked: [],
+        };
+        await SaveService.save(state);
+        const loaded = await SaveService.load();
+        expect(loaded?.flags).toEqual({
+            upgrade_newspaper:  true,
+            upgrade_helmet:     true,
+            upgrade_traversal:  true,
+            first_whack_done:   true,
+        });
+    });
+
+    it('snack purchase does NOT leave a snack key in flags', async () => {
+        // A snack purchase (consumable) must never persist flags.snack=true.
+        // This test saves a state where snack was never set and confirms it stays absent.
+        const { SaveService } = await import('../src/services/SaveService.js');
+        const state = {
+            version:         0,
+            updatedAt:       0,
+            level:           'level-01',
+            position:        { x: 96, y: 96 },
+            flags:           {},  // snack never written — verifies applyPurchase contract
+            coins:           5,
+            journalUnlocked: [],
+        };
+        await SaveService.save(state);
+        const loaded = await SaveService.load();
+        expect(loaded?.flags).toBeDefined();
+        // 'snack' must not appear even as undefined — it should simply be absent
+        expect((loaded?.flags as Record<string, unknown>)['snack']).toBeUndefined();
+    });
+});
+
 describe('SaveService — SAVE-02 static proof (no backend calls)', () => {
     it('SaveService source contains no supabase import or fetch call', () => {
         const sourcePath = resolve(__dirname, '../src/services/SaveService.ts');

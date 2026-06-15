@@ -115,3 +115,21 @@ describe('InputBus — setAction (INTERACT / PAUSE)', () => {
         expect(InputBus.isActive(Action.INTERACT)).toBe(false);
     });
 });
+
+describe('InputBus — WHACK pulse (Phase 3, L1E-01)', () => {
+    beforeEach(() => { vi.resetModules(); });
+    afterEach(() => { vi.resetModules(); });
+
+    it('setAction(WHACK, true) makes isActive(WHACK) true', async () => {
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.setAction(Action.WHACK, true);
+        expect(InputBus.isActive(Action.WHACK)).toBe(true);
+    });
+
+    it('setAction(WHACK, false) clears WHACK', async () => {
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.setAction(Action.WHACK, true);
+        InputBus.setAction(Action.WHACK, false);
+        expect(InputBus.isActive(Action.WHACK)).toBe(false);
+    });
+});
