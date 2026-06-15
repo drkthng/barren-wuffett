@@ -17,6 +17,14 @@ export const Events = Object.freeze({
     MINIGAME_COMPLETE: 'MINIGAME_COMPLETE',
     BOSS_DEFEATED:     'BOSS_DEFEATED',
     PATIENCE_BONUS:    'PATIENCE_BONUS',
+    // Phase 3 additions — append here:
+    COINS_CHANGED:        'COINS_CHANGED',
+    BUSH_WHACKED:         'BUSH_WHACKED',
+    PLAYER_HOSPITALIZED:  'PLAYER_HOSPITALIZED',
+    SHOP_OPEN:            'SHOP_OPEN',
+    SHOP_PURCHASE:        'SHOP_PURCHASE',
+    SHOP_CLOSE:           'SHOP_CLOSE',
+    STREAK_BONUS:         'STREAK_BONUS',
 } as const);
 
 export type EventNames = typeof Events[keyof typeof Events];
