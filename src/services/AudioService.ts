@@ -45,6 +45,14 @@ export const AudioService = {
      */
     playSfx: (scene: Phaser.Scene, key: string): void => {
         if (!AudioService.getSfxEnabled()) return;
-        scene.sound.play(key);
+        // A missing/undecodable audio key makes Phaser's sound.play() THROW, which
+        // propagates out of update()/event handlers and freezes the game. Audio must
+        // never break gameplay (mirrors the try/catch discipline above): only play keys
+        // that are actually in the decoded cache, and swallow any play error.
+        try {
+            if (scene.cache?.audio?.exists(key)) scene.sound.play(key);
+        } catch {
+            /* ignore — silent SFX is always better than a frozen game */
+        }
     },
 };

@@ -139,11 +139,19 @@ export class OverworldScene extends Scene {
     private onDialogueComplete = (): void => {
         this.inDialogue = false;
         void SaveService.save(this.buildSaveState());
-        // Phase 3 Slice 3: after storeClerk dialogue completes, open the shop (Open Question 2)
+        // Phase 3 Slice 3: after storeClerk dialogue completes, open the shop (Open Question 2).
+        // DEFER the SHOP_OPEN emit to the next tick. This same DIALOGUE_COMPLETE event is
+        // ALSO handled by UIScene (registered after us), whose handler resets state to HUD and
+        // resumes OverworldScene. Emitting synchronously here opens the shop while UIScene is
+        // still in DIALOGUE state, and UIScene's later handler then reverts it to HUD — hiding
+        // the shop while shopOpen stays true → soft-lock. Deferring lets UIScene finish its
+        // DIALOGUE_COMPLETE first, so SHOP_OPEN lands cleanly from the HUD state.
         if (this._lastNpcId === 'storeClerk') {
             this._lastNpcId = null;
             this.shopOpen = true;
-            GameEvents.emit(Events.SHOP_OPEN, { coins: this.coins, flags: { ...this.flags } });
+            this.time.delayedCall(0, () => {
+                GameEvents.emit(Events.SHOP_OPEN, { coins: this.coins, flags: { ...this.flags } });
+            });
         }
     };
 

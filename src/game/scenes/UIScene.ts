@@ -113,12 +113,13 @@ export class UIScene extends Scene {
         if (this.scene.get('OverworldScene')?.scene.isActive()) {
             this.scene.pause('OverworldScene');
         }
+        // Schedule the dismiss paths FIRST so the player can always recover even if the
+        // overlay render below throws — a stranded paused OverworldScene is an
+        // unrecoverable freeze. (Auto-dismiss 1500ms — RESEARCH Pattern 4 — plus any tap.)
+        this._hospitalDismissTimer = this.time.delayedCall(1500, this.dismissHospital);
+        this.input.once('pointerdown', this.dismissHospital);
         this.hospitalOverlay.show(data.fee, data.helmetOwned);
         AudioService.playSfx(this, 'hospital_sting');
-        // Auto-dismiss after 1500ms (RESEARCH Pattern 4)
-        this._hospitalDismissTimer = this.time.delayedCall(1500, this.dismissHospital);
-        // Also dismiss on any tap (standard UIScene pattern)
-        this.input.once('pointerdown', this.dismissHospital);
     };
 
     // Phase 3 Slice 2: Dismiss the hospital splash. Idempotent via _state check (T-03-14).
