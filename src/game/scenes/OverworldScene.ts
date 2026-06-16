@@ -31,7 +31,7 @@ import { WhackSystem } from '../../systems/WhackSystem';
 import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
 import { firstWhackOrRoll } from '../../systems/PrizePack';
 import type { PrizePackState } from '../../systems/PrizePack';
-import { computeHospitalFee, applyPurchase } from '../../systems/Economy';
+import { computeHospitalFee, applyPurchase, awardMinigameCoins } from '../../systems/Economy';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
@@ -510,9 +510,8 @@ export class OverworldScene extends Scene {
             this.scene.wake();
             this.inHandoff = false;
 
-            // Apply coin reward: 2 coins per delivery + 3 bonus per perfect
-            const earned = result.score * 2 + result.perfect * 3;
-            this.coins += earned;
+            // Apply coin reward via injectable helper — emits COINS_CHANGED so HUD updates
+            this.coins = awardMinigameCoins(this.coins, result, (n) => GameEvents.emit(Events.COINS_CHANGED, n));
 
             // Re-allow re-entry after returning from mini-game
             this.triggerSystem.release('minigame_trigger');

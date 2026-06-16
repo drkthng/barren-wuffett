@@ -60,6 +60,45 @@ export function applyPurchase(
 }
 
 /**
+ * Compute the coins earned from a mini-game result.
+ *
+ * Paper-route reward formula: 2 coins per delivery + 3 bonus per perfect timing.
+ * Kept here as a named helper so callers and tests can reference the formula
+ * without duplicating the arithmetic.
+ */
+export function computeMinigameReward(score: number, perfect: number): number {
+    return score * 2 + perfect * 3;
+}
+
+/**
+ * Apply a mini-game coin reward and notify the caller via an injected emitter.
+ *
+ * The emitter (onCoinsChanged) is injected rather than imported so this function
+ * stays pure TS / Phaser-free — mirroring how PrizePack.ts injects `rng`.
+ *
+ * Behaviour:
+ *   - Computes earned = computeMinigameReward(result.score, result.perfect)
+ *   - Computes newCoins = coins + earned
+ *   - Calls onCoinsChanged(newCoins) UNCONDITIONALLY (even when earned === 0)
+ *     so the HUD always stays authoritative after any mini-game completion.
+ *   - Returns newCoins so the caller can store it.
+ *
+ * OverworldScene.enterMiniGame() wires onCoinsChanged to
+ *   (n) => GameEvents.emit(Events.COINS_CHANGED, n)
+ * so the HUD coin counter updates after every paper-route run.
+ */
+export function awardMinigameCoins(
+    coins: number,
+    result: { score: number; perfect: number },
+    onCoinsChanged: (newCoins: number) => void
+): number {
+    const earned = computeMinigameReward(result.score, result.perfect);
+    const newCoins = coins + earned;
+    onCoinsChanged(newCoins);
+    return newCoins;
+}
+
+/**
  * Compute the knockback angle pointing away from the dog.
  *
  * Returns Math.atan2(playerY - fromY, playerX - fromX) — the angle the player
