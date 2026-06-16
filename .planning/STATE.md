@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 Phase: 03 (Level 1 — The Newspaper Verb & Economy) — COMPLETE (all 4 plans)
 Plan: 4 of 4 — DONE
 Status: Phase 3 complete. Ready for Phase 4 (Level 1 Set Pieces)
-Last activity: 2026-06-15 -- Phase 03 Plan 04 complete (shop + upgrades + traversal gate)
+Last activity: 2026-06-16 -- Quick task 260616-n60: fixed paper-route coin-earning regression (HUD now updates) + regression test
 
 Progress: [███░░░░░░░] 33% (3/9 phases)
 
@@ -105,6 +105,12 @@ Recent decisions affecting current work:
 - Legal counsel recommended for Persoenlichkeitsrecht, UWG Section 7, and BaFin finfluencer rules before first real subscriber
 - eToro/wikifolio affiliate T&Cs need direct verification before Journal portfolio links go live
 - LEGAL GATE — RESOLVED 2026-06-14: user confirmed "geltungssatz-confirmed". External imprint (compoundingknowledge.com/en/imprint) names the game; game imprint links back in ≤2 clicks (commit 7553a10). Public-URL sharing gate LIFTED — https://barren-wuffett.pages.dev may now be shared publicly.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260616-n60 | Fix paper-route coin-earning regression (emit COINS_CHANGED) + regression test | 2026-06-16 | 6a7ec1c | [260616-n60-fix-paper-route-coin-earning-regression-](./quick/260616-n60-fix-paper-route-coin-earning-regression-/) |
 
 ## Deferred Items
 
