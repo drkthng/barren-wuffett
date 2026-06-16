@@ -36,7 +36,7 @@ import { computeHospitalFee, applyPurchase } from '../../systems/Economy';
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
 const NPC_DEFS = [
     { x: 96,  y: 96,  texture: 'npc_grandpa',     npcId: 'grandpa',   dialogueKey: 'npc_grandpa' },
-    { x: 352, y: 160, texture: 'npc_store_clerk',  npcId: 'storeClerk',dialogueKey: 'npc_store_clerk' },
+    { x: 344, y: 200, texture: 'npc_store_clerk',  npcId: 'storeClerk',dialogueKey: 'npc_store_clerk' },
     { x: 224, y: 320, texture: 'npc_rival',        npcId: 'rival',     dialogueKey: 'npc_rival' },
 ] as const;
 
@@ -297,6 +297,12 @@ export class OverworldScene extends Scene {
         // ── Phase 3 Slice 3: SHOP event listeners (CR-03) ─────────────────
         GameEvents.on(Events.SHOP_PURCHASE, this.onShopPurchase, this);
         GameEvents.on(Events.SHOP_CLOSE,    this.onShopClose,    this);
+
+        // ── Shop sign over the Store Clerk's storefront (house tiles at rows 9-11, cols 20-22) ──
+        this.add.text(344, 136, t('shop.title'), {
+            fontSize: '8px', color: '#f5c842',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(0.5).setDepth(6);
 
         // ── Dog patrol (patience mechanic GAME-06) ─────────────────────────
         this.dogSprite = this.add.image(DOG_MIN_X, 464, 'dog')
