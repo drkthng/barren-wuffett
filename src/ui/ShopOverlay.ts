@@ -12,7 +12,12 @@
  *   - CLOSE tap emits SHOP_CLOSE.
  *   - The overlay NEVER stores coin state — it reads from the show() payload only (Pitfall 3).
  *
- * Pattern: buildPauseOverlay() analog (UIScene.ts lines 135-232)
+ * INPUT NOTE (UAT fix): interactive hit targets are transparent Rectangle zones added
+ * DIRECTLY to the scene (NOT nested inside a Container) — Phaser 4 does not reliably
+ * deliver pointer events to container-nested Text with a custom hitArea. The visible
+ * label Text stays purely cosmetic; a sibling Rectangle zone owns the click. This mirrors
+ * the OverworldScene NPC tap-zone pattern, which works.
+ *
  * UI-SPEC: §4 SHOP overlay layout
  */
 import Phaser, { Scene } from 'phaser';
@@ -32,15 +37,19 @@ const ROW_YS = [325, 373, 421, 469];
 // Action/price X reference (world pixel coords)
 const TEXT_X   = 192;  // icon (at 168) right + 8px gap
 const ACTION_X = 384;  // panel right (240+160) - 16px padding
+const BUY_ZONE_CX = ACTION_X - 28;  // center of the BUY hit zone (covers the BUY label)
 
 export class ShopOverlay {
     private readonly scene: Scene;
     private readonly backdrop: Phaser.GameObjects.Rectangle;
     private readonly panel: Phaser.GameObjects.Container;
+    private readonly closeText: Phaser.GameObjects.Text;
+    private readonly closeZone: Phaser.GameObjects.Rectangle;
     private readonly notEnoughText: Phaser.GameObjects.Text;
-    // Per-row containers — rebuilt on each show() call
-    private rowContainers: Phaser.GameObjects.Container[] = [];
-    // Rows reference (for shake tween) — index matches item row
+    // All dynamic per-row objects (visuals + interactive zones) — destroyed on each show()/hide().
+    // Flat tracking (NOT a container) so interactive zones stay direct scene children.
+    private rowObjects: Phaser.GameObjects.GameObject[] = [];
+    // Row backgrounds (for shake tween) — index matches item row
     private rowRects: Phaser.GameObjects.Rectangle[] = [];
 
     constructor(scene: Scene) {
@@ -62,39 +71,37 @@ export class ShopOverlay {
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5, 0);
 
-        // ── Top divider ──────────────────────────────────────────────────────
+        // ── Dividers ─────────────────────────────────────────────────────────
         const dividerTop = scene.add.rectangle(PANEL_CX, PANEL_TOP + 72, 280, 1, 0x16213e);
-
-        // ── Bottom divider ───────────────────────────────────────────────────
         const dividerBottom = scene.add.rectangle(PANEL_CX, PANEL_TOP + 288, 280, 1, 0x16213e);
 
-        // ── CLOSE button ─────────────────────────────────────────────────────
-        // y = PANEL_TOP + 288 + 32 = 557 (UI-SPEC §4)
+        // ── CLOSE label (cosmetic) — input is owned by closeZone below ────────
         const closeY = PANEL_TOP + 320;
-        const closeText = scene.add.text(PANEL_CX, closeY, t('shop.close'), {
+        this.closeText = scene.add.text(PANEL_CX, closeY, t('shop.close'), {
             fontSize: '16px', color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setInteractive(
-            new Phaser.Geom.Rectangle(-140, -22, 280, 44),
-            Phaser.Geom.Rectangle.Contains,
-        );
-        closeText.on('pointerdown', () => {
-            closeText.setAlpha(0.7);
-            scene.time.delayedCall(100, () => closeText.setAlpha(1));
+        }).setOrigin(0.5);
+
+        // Panel container holds the STATIC, NON-interactive visuals only (depth 31).
+        this.panel = scene.add.container(0, 0, [
+            panelRect, titleText, dividerTop, dividerBottom, this.closeText,
+        ]).setDepth(31).setVisible(false);
+
+        // ── CLOSE interactive zone — direct scene child (depth 31), transparent ──
+        this.closeZone = scene.add.rectangle(PANEL_CX, closeY, 280, 44, 0x000000, 0)
+            .setDepth(31)
+            .setVisible(false);
+        this.closeZone.on('pointerdown', () => {
+            this.closeText.setAlpha(0.7);
+            scene.time.delayedCall(100, () => this.closeText.setAlpha(1));
             GameEvents.emit(Events.SHOP_CLOSE);
         });
 
         // ── "Not enough coins" flash text ─────────────────────────────────────
-        // y=625 (UI-SPEC §4: below the panel at y=617+8)
         this.notEnoughText = scene.add.text(PANEL_CX, 625, t('shop.notEnoughCoins'), {
             fontSize: '8px', color: '#ff4444',
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5).setVisible(false).setDepth(33);
-
-        // ── Panel container (depth 31) ────────────────────────────────────────
-        this.panel = scene.add.container(0, 0, [
-            panelRect, titleText, dividerTop, dividerBottom, closeText,
-        ]).setDepth(31).setVisible(false);
     }
 
     /**
@@ -103,122 +110,102 @@ export class ShopOverlay {
      * so the post-purchase refresh path works without rebuilding the whole panel.
      */
     show(coins: number, flags: Record<string, boolean>, items: ShopItem[]): void {
-        // Destroy old row containers (so we can re-render with fresh state)
-        for (const rc of this.rowContainers) {
-            rc.destroy();
-        }
-        this.rowContainers = [];
-        this.rowRects = [];
+        this.destroyRows();
 
-        // Build item rows
+        const add = this.scene.add;
+
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
             const rowY = ROW_YS[i] ?? (ROW_YS[ROW_YS.length - 1]! + (i - (ROW_YS.length - 1)) * 48);
 
-            const isOwned       = !item.consumable && !!flags[item.itemId];
-            const isAffordable  = coins >= item.price;
+            const isOwned      = !item.consumable && !!flags[item.itemId];
+            const isAffordable = coins >= item.price;
 
-            // Row background (transparent, for shake animation anchor)
-            const rowBg = this.scene.add.rectangle(PANEL_CX, rowY, 280, 44, 0x000000, 0)
-                .setDepth(32);
+            // Row background (transparent, shake anchor)
+            const rowBg = add.rectangle(PANEL_CX, rowY, 280, 44, 0x000000, 0).setDepth(32);
             this.rowRects.push(rowBg);
+            this.rowObjects.push(rowBg);
 
-            // Icon (16×16)
+            // Icon (16×16) — placeholder-safe
             let iconObj: Phaser.GameObjects.Image;
             try {
-                iconObj = this.scene.add.image(168, rowY, item.iconKey)
-                    .setDisplaySize(16, 16)
-                    .setDepth(32);
+                iconObj = add.image(168, rowY, item.iconKey).setDisplaySize(16, 16).setDepth(32);
             } catch {
-                // Icon texture not loaded — create a colored rect placeholder
-                iconObj = this.scene.add.image(168, rowY, '__DEFAULT')
-                    .setDisplaySize(16, 16)
-                    .setDepth(32);
+                iconObj = add.image(168, rowY, '__DEFAULT').setDisplaySize(16, 16).setDepth(32);
             }
+            this.rowObjects.push(iconObj);
 
-            // Item name (Heading 16px, #e8e8e8)
-            const nameText = this.scene.add.text(TEXT_X, rowY, t(item.nameKey), {
+            const nameText = add.text(TEXT_X, rowY, t(item.nameKey), {
                 fontSize: '8px', color: '#e8e8e8',
                 fontFamily: '"Press Start 2P", monospace',
             }).setOrigin(0, 0.5).setDepth(32);
-
-            // Description (tiny, below name)
-            const descText = this.scene.add.text(TEXT_X, rowY + 10, t(item.descKey), {
+            const descText = add.text(TEXT_X, rowY + 10, t(item.descKey), {
                 fontSize: '6px', color: '#888888',
                 fontFamily: '"Press Start 2P", monospace',
             }).setOrigin(0, 0.5).setDepth(32);
-
-            const rowObjects: Phaser.GameObjects.GameObject[] = [rowBg, iconObj, nameText, descText];
+            this.rowObjects.push(nameText, descText);
 
             if (isOwned) {
-                // Owned permanent — show OWNED badge, no price
-                const ownedText = this.scene.add.text(ACTION_X, rowY, t('shop.owned'), {
+                const ownedText = add.text(ACTION_X, rowY, t('shop.owned'), {
                     fontSize: '8px', color: '#e8e8e8',
                     fontFamily: '"Press Start 2P", monospace',
                 }).setOrigin(1, 0.5).setDepth(32).setAlpha(0.9);
-                rowObjects.push(ownedText);
-            } else {
-                // Price (coin icon + number)
-                const priceColor = isAffordable ? '#f5c842' : '#ff4444';
-                const priceText = this.scene.add.text(ACTION_X - 56, rowY, `${item.price}`, {
-                    fontSize: '8px', color: priceColor,
-                    fontFamily: '"Press Start 2P", monospace',
-                }).setOrigin(0, 0.5).setDepth(32);
-
-                // Coin icon (tiny — use coin texture if loaded, else placeholder char)
-                const coinIcon = this.scene.add.text(ACTION_X - 70, rowY, '¢', {
-                    fontSize: '8px', color: priceColor,
-                    fontFamily: '"Press Start 2P", monospace',
-                }).setOrigin(0, 0.5).setDepth(32);
-
-                // BUY button
-                const buyColor  = isAffordable ? '#00ff88' : '#e8e8e8';
-                const buyAlpha  = isAffordable ? 1.0 : 0.5;
-                const buyText = this.scene.add.text(ACTION_X, rowY, t('shop.buy'), {
-                    fontSize: '8px', color: buyColor,
-                    fontFamily: '"Press Start 2P", monospace',
-                }).setOrigin(1, 0.5).setDepth(32).setAlpha(buyAlpha);
-
-                // Row alpha for unaffordable state (UI-SPEC)
-                const rowAlpha = isAffordable ? 1.0 : 0.7;
-                rowBg.setAlpha(rowAlpha);
-                iconObj.setAlpha(rowAlpha);
-                nameText.setAlpha(rowAlpha);
-                descText.setAlpha(rowAlpha);
-                priceText.setAlpha(rowAlpha);
-                coinIcon.setAlpha(rowAlpha);
-
-                // Make BUY interactive — hit zone covers the right ~100px of the row
-                buyText.setInteractive(
-                    new Phaser.Geom.Rectangle(-60, -22, 120, 44),
-                    Phaser.Geom.Rectangle.Contains,
-                );
-                const capturedItem = item;
-                const capturedIndex = i;
-                buyText.on('pointerdown', () => {
-                    buyText.setAlpha(0.7);
-                    this.scene.time.delayedCall(100, () => buyText.setAlpha(buyAlpha));
-
-                    if (!isAffordable) {
-                        // Not enough coins — show feedback, shake row (UI-SPEC §4)
-                        this.flashNotEnoughCoins(capturedIndex);
-                        return;
-                    }
-                    GameEvents.emit(Events.SHOP_PURCHASE, {
-                        itemId: capturedItem.itemId,
-                        price: capturedItem.price,
-                    });
-                });
-
-                rowObjects.push(priceText, coinIcon, buyText);
+                this.rowObjects.push(ownedText);
+                continue;
             }
 
-            const rowContainer = this.scene.add.container(0, 0, rowObjects).setDepth(32);
-            this.rowContainers.push(rowContainer);
+            // Price + coin glyph
+            const priceColor = isAffordable ? '#f5c842' : '#ff4444';
+            const priceText = add.text(ACTION_X - 56, rowY, `${item.price}`, {
+                fontSize: '8px', color: priceColor,
+                fontFamily: '"Press Start 2P", monospace',
+            }).setOrigin(0, 0.5).setDepth(32);
+            const coinIcon = add.text(ACTION_X - 70, rowY, '¢', {
+                fontSize: '8px', color: priceColor,
+                fontFamily: '"Press Start 2P", monospace',
+            }).setOrigin(0, 0.5).setDepth(32);
+
+            // BUY label (cosmetic)
+            const buyColor = isAffordable ? '#00ff88' : '#e8e8e8';
+            const buyAlpha = isAffordable ? 1.0 : 0.5;
+            const buyText = add.text(ACTION_X, rowY, t('shop.buy'), {
+                fontSize: '8px', color: buyColor,
+                fontFamily: '"Press Start 2P", monospace',
+            }).setOrigin(1, 0.5).setDepth(32).setAlpha(buyAlpha);
+
+            // Unaffordable row dimming (UI-SPEC)
+            const rowAlpha = isAffordable ? 1.0 : 0.7;
+            for (const o of [rowBg, iconObj, nameText, descText, priceText, coinIcon]) o.setAlpha(rowAlpha);
+
+            this.rowObjects.push(priceText, coinIcon, buyText);
+
+            // BUY interactive zone — a TRANSPARENT Rectangle added directly to the scene
+            // (NOT in a container). A Rectangle's own geometry is its hit area, so this is
+            // reliable in Phaser 4 where container-nested Text hitAreas are not.
+            const buyZone = add.rectangle(BUY_ZONE_CX, rowY, 96, 40, 0x000000, 0)
+                .setDepth(33)
+                .setInteractive({ useHandCursor: true });
+            const capturedItem = item;
+            const capturedIndex = i;
+            buyZone.on('pointerdown', () => {
+                buyText.setAlpha(0.7);
+                this.scene.time.delayedCall(100, () => buyText.setAlpha(buyAlpha));
+                if (coins < capturedItem.price) {
+                    this.flashNotEnoughCoins(capturedIndex);
+                    return;
+                }
+                GameEvents.emit(Events.SHOP_PURCHASE, {
+                    itemId: capturedItem.itemId,
+                    price: capturedItem.price,
+                });
+            });
+            this.rowObjects.push(buyZone);
         }
 
         this.backdrop.setVisible(true);
         this.panel.setVisible(true);
+        this.closeText.setAlpha(1);
+        this.closeZone.setVisible(true).setInteractive({ useHandCursor: true });
     }
 
     /** Hide the shop panel. */
@@ -226,36 +213,33 @@ export class ShopOverlay {
         this.backdrop.setVisible(false);
         this.panel.setVisible(false);
         this.notEnoughText.setVisible(false);
-        // Destroy row containers when hiding (cleanup)
-        for (const rc of this.rowContainers) {
-            rc.destroy();
-        }
-        this.rowContainers = [];
+        this.closeZone.setVisible(false).disableInteractive();
+        this.destroyRows();
+    }
+
+    /** Destroy all dynamic per-row objects (visuals + interactive zones). */
+    private destroyRows(): void {
+        for (const o of this.rowObjects) o.destroy();
+        this.rowObjects = [];
         this.rowRects = [];
     }
 
     /** Flash "NOT ENOUGH COINS" below panel + shake the affected row (UI-SPEC §4). */
     private flashNotEnoughCoins(rowIndex: number): void {
-        // Flash the text for 800ms
         this.notEnoughText.setVisible(true).setAlpha(1);
         this.scene.tweens.add({
             targets: this.notEnoughText,
-            alpha: 0,
-            delay: 600,
-            duration: 200,
+            alpha: 0, delay: 600, duration: 200,
             onComplete: () => { this.notEnoughText.setVisible(false).setAlpha(1); },
         });
 
-        // Shake the row (±4px, 3 cycles, ~80ms per cycle)
         const rowBg = this.rowRects[rowIndex];
         if (rowBg) {
             const origX = rowBg.x;
             this.scene.tweens.add({
                 targets: rowBg,
                 x: { from: origX - 4, to: origX + 4 },
-                duration: 80,
-                yoyo: true,
-                repeat: 2,
+                duration: 80, yoyo: true, repeat: 2,
                 onComplete: () => { rowBg.setX(origX); },
             });
         }
