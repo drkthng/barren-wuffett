@@ -230,6 +230,20 @@ export class OverworldScene extends Scene {
         // ── TriggerSystem (Plan 02-02) ─────────────────────────────────────
         this.triggerSystem = new TriggerSystem();
 
+        // Defeat guard — permanently consume the boss zone so a beaten boss
+        // never re-triggers, even after the player walks out and back in.
+        // Order is load-bearing: this must run BEFORE armLoadPosition so that
+        // armLoadPosition's consumed.has() check skips the already-consumed zone
+        // (leaving it permanently suppressed, not re-armable via pendingExit).
+        if (this.flags['boss_01_defeated']) {
+            this.triggerSystem.consume('boss_trigger');
+        }
+
+        // Arm load-position: if the save parked the player inside any zone (e.g.,
+        // the boss zone save written by enterBoss() before sleep), suppress the zone
+        // until the player steps out — preventing an auto-launch on the first tick.
+        this.triggerSystem.armLoadPosition(startX, startY);
+
         // ── NPCs ───────────────────────────────────────────────────────────
         for (const def of NPC_DEFS) {
             const npc = new NPC(this, def.x, def.y, def.texture, def.npcId, def.dialogueKey);

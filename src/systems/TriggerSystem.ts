@@ -104,4 +104,38 @@ export class TriggerSystem {
     release(zone: string): void {
         this.pendingExit.add(zone);
     }
+
+    /**
+     * Arm zones the player loads into so they don't auto-fire on the first tick.
+     *
+     * When a save is written while the player stands inside a trigger zone (e.g.,
+     * the save written by enterBoss() before scene.sleep()), the restored position
+     * overlaps the zone on the very first update() call — instantly re-launching
+     * the scene. This method adds any zone the player is currently inside to both
+     * `consumed` and `pendingExit`, mirroring the normal mid-zone re-arm semantics:
+     * the zone stays suppressed until the player steps OUT, then re-arms normally.
+     *
+     * Call order in buildWorld() is load-bearing: run consume('boss_trigger') for a
+     * defeated boss FIRST, then call armLoadPosition — that way the boss zone's
+     * permanent consume is already in `consumed` and this method's `consumed.has()`
+     * check skips it, leaving it permanently suppressed rather than re-armable.
+     *
+     * @param playerX - restored player world X (center-based)
+     * @param playerY - restored player world Y (center-based)
+     */
+    armLoadPosition(playerX: number, playerY: number): void {
+        for (const [zone, def] of Object.entries(LEVEL_01_ZONES)) {
+            // Skip zones already permanently consumed (e.g., defeated boss) —
+            // they must not be added to pendingExit, which would re-arm them on exit.
+            if (this.consumed.has(zone)) continue;
+            const { rect } = def;
+            const inside =
+                playerX >= rect.x && playerX <= rect.x + rect.w &&
+                playerY >= rect.y && playerY <= rect.y + rect.h;
+            if (inside) {
+                this.consumed.add(zone);
+                this.pendingExit.add(zone);
+            }
+        }
+    }
 }
