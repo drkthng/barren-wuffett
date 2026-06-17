@@ -43,7 +43,7 @@ export class HospitalOverlay {
                 wordWrap: { width: 280, useAdvancedWrap: true },
                 align: 'center',
             }
-        ).setOrigin(0.5, 0).setDepth(32);
+        ).setOrigin(0.5, 0).setDepth(32).setVisible(false);
 
         // Fee line — color and content set dynamically in show() (UI-SPEC §5 fee logic)
         this.feeText = scene.add.text(240, 405,
@@ -54,7 +54,7 @@ export class HospitalOverlay {
                 fontFamily: '"Press Start 2P", monospace',
                 align: 'center',
             }
-        ).setOrigin(0.5).setDepth(32);
+        ).setOrigin(0.5).setDepth(32).setVisible(false);
 
         // Dismiss hint: "TAP OR WAIT TO CONTINUE" — Label 8px, alpha 0.6
         const hintText = scene.add.text(240, 433,
@@ -65,7 +65,7 @@ export class HospitalOverlay {
                 fontFamily: '"Press Start 2P", monospace',
                 align: 'center',
             }
-        ).setOrigin(0.5).setAlpha(0.6).setDepth(32);
+        ).setOrigin(0.5).setAlpha(0.6).setDepth(32).setVisible(false);
 
         // Panel container — depth 31 so it sits above backdrop (30) but below texts (32)
         this.panel = scene.add.container(0, 0, [panelRect])
