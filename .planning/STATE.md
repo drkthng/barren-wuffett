@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 Phase: 03 (Level 1 — The Newspaper Verb & Economy) — COMPLETE (all 4 plans)
 Plan: 4 of 4 — DONE
 Status: Phase 3 complete. Ready for Phase 4 (Level 1 Set Pieces)
-Last activity: 2026-06-17 -- Quick task 260617-k8p: fixed startup boss auto-launch + stray hospital text on load + TriggerSystem regression test
+Last activity: 2026-06-23 -- Quick task 260623-f1i: fixed whack verb (InputBus.update no longer wipes the WHACK pulse) + regression test
 
 Progress: [███░░░░░░░] 33% (3/9 phases)
 
@@ -112,6 +112,7 @@ Recent decisions affecting current work:
 |---|-------------|------|--------|-----------|
 | 260616-n60 | Fix paper-route coin-earning regression (emit COINS_CHANGED) + regression test | 2026-06-16 | 6a7ec1c | [260616-n60-fix-paper-route-coin-earning-regression-](./quick/260616-n60-fix-paper-route-coin-earning-regression-/) |
 | 260617-k8p | Fix startup boots into boss fight + stray "wake up in hospital" text on load + trigger regression test | 2026-06-17 | 99fc335 | [260617-k8p-fix-startup-boots-into-boss-fight-stray-](./quick/260617-k8p-fix-startup-boots-into-boss-fight-stray-/) |
+| 260623-f1i | Fix whack verb non-functional in browser — InputBus.update() wiped the WHACK pulse before the poll read it + regression test | 2026-06-23 | 38ad588 | [260623-f1i-fix-whack-does-nothing-inputbus-update-c](./quick/260623-f1i-fix-whack-does-nothing-inputbus-update-c/) |
 
 ## Deferred Items
 
