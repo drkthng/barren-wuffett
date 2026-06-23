@@ -25,6 +25,19 @@ export enum Action {
 
 const activeActions = new Set<Action>();
 
+/**
+ * The four continuous movement actions rebuilt from joystick/cursors each frame.
+ * Pulse actions (WHACK, INTERACT, PAUSE) are set by event handlers between frames
+ * and must survive update() so the OverworldScene poll can read them; only these
+ * continuous movement actions are cleared and rebuilt here.
+ */
+const MOVEMENT_ACTIONS = [
+    Action.MOVE_UP,
+    Action.MOVE_DOWN,
+    Action.MOVE_LEFT,
+    Action.MOVE_RIGHT,
+] as const;
+
 export const InputBus = {
     isActive: (action: Action): boolean => activeActions.has(action),
 
@@ -32,7 +45,9 @@ export const InputBus = {
         joystick: { up: boolean; down: boolean; left: boolean; right: boolean } | null,
         cursors: Phaser.Types.Input.Keyboard.CursorKeys | null
     ): void {
-        activeActions.clear();
+        // Clear only movement actions — pulse actions (WHACK/INTERACT/PAUSE) set by
+        // event handlers between frames must survive until the OverworldScene poll reads them.
+        for (const mv of MOVEMENT_ACTIONS) activeActions.delete(mv);
         if (joystick) {
             if (joystick.up)    activeActions.add(Action.MOVE_UP);
             if (joystick.down)  activeActions.add(Action.MOVE_DOWN);
