@@ -133,3 +133,51 @@ describe('InputBus — WHACK pulse (Phase 3, L1E-01)', () => {
         expect(InputBus.isActive(Action.WHACK)).toBe(false);
     });
 });
+
+describe('InputBus — WHACK pulse survives update() (regression guard, L1E-01)', () => {
+    beforeEach(() => { vi.resetModules(); });
+    afterEach(() => { vi.resetModules(); });
+
+    it('GUARD: setAction(WHACK,true) then update(all-false,null) leaves WHACK active', async () => {
+        // This is the regression guard: if update() ever reverts to activeActions.clear()
+        // this case will fail, exposing the bug where J/touch does nothing.
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.setAction(Action.WHACK, true);
+        InputBus.update({ up: false, down: false, left: false, right: false }, null);
+        expect(InputBus.isActive(Action.WHACK)).toBe(true);
+    });
+
+    it('WHACK pulse survives update() that also processes keyboard movement', async () => {
+        // update() must still do its movement job while preserving the WHACK pulse
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.setAction(Action.WHACK, true);
+        const cursors = {
+            up:    { isDown: false },
+            down:  { isDown: false },
+            left:  { isDown: true  },
+            right: { isDown: false },
+        } as unknown as Phaser.Types.Input.Keyboard.CursorKeys;
+        InputBus.update({ up: false, down: false, left: false, right: false }, cursors);
+        expect(InputBus.isActive(Action.WHACK)).toBe(true);
+        expect(InputBus.isActive(Action.MOVE_LEFT)).toBe(true);
+    });
+
+    it('movement is still cleared by update() (fix does not over-preserve)', async () => {
+        // Proves the fix did not break movement clearing
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.update({ up: true, down: false, left: false, right: false }, null);
+        expect(InputBus.isActive(Action.MOVE_UP)).toBe(true);
+        InputBus.update({ up: false, down: false, left: false, right: false }, null);
+        expect(InputBus.isActive(Action.MOVE_UP)).toBe(false);
+    });
+
+    it('consume path: setAction(WHACK,false) after update() clears the pulse', async () => {
+        // Proves the OverworldScene poll can consume the WHACK pulse via setAction(WHACK,false)
+        const { InputBus, Action } = await import('../src/input/InputBus.js');
+        InputBus.setAction(Action.WHACK, true);
+        InputBus.update({ up: false, down: false, left: false, right: false }, null);
+        expect(InputBus.isActive(Action.WHACK)).toBe(true);
+        InputBus.setAction(Action.WHACK, false);
+        expect(InputBus.isActive(Action.WHACK)).toBe(false);
+    });
+});
