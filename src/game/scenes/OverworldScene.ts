@@ -31,6 +31,7 @@ import { WhackSystem } from '../../systems/WhackSystem';
 import { ECONOMY_DATA } from '../../data/levels/level-01-economy';
 import { firstWhackOrRoll } from '../../systems/PrizePack';
 import type { PrizePackState } from '../../systems/PrizePack';
+import { SwingTracker } from '../../systems/SwingTracker';
 import { computeHospitalFee, applyPurchase, awardMinigameCoins } from '../../systems/Economy';
 
 // NPC placement on the tile grid (in pixel coords = tile * 32 + 16)
@@ -52,6 +53,21 @@ const BOSS_ZONE_X = 224;
 const BOSS_ZONE_Y = 720;
 const BOSS_ZONE_R = 48;
 
+// Phase 3.1: player spawn/respawn. Was (96,96) — the exact pixel grandpa stands
+// on, so the player spawned INSIDE the NPC. One tile south is open grass.
+const SPAWN_X = 96;
+const SPAWN_Y = 128;
+
+// Phase 3.1 (FEEL-06): bushes regrow after this cooldown so the 60-coin bus
+// pass is earnable without exploits (one-shot bushes capped total coins ~50).
+const BUSH_REGROW_MS = 45000;
+
+// Phase 3.1 (FEEL-06): set-piece marker positions (zone centers from TriggerSystem)
+const MARKER_DEFS = [
+    { zone: 'minigame_trigger', x: 352, y: 320, texture: 'marker_route', promptKey: 'trigger.route' },
+    { zone: 'boss_trigger',     x: 256, y: 720, texture: 'marker_boss',  promptKey: 'trigger.boss' },
+] as const;
+
 export class OverworldScene extends Scene {
     // Player and movement
     private player!: Player;
@@ -69,10 +85,9 @@ export class OverworldScene extends Scene {
     private talkPrompts: Map<string, Phaser.GameObjects.Text> = new Map();
     private blinkTimers: Map<string, Phaser.Time.TimerEvent> = new Map();
 
-    // Dog patrol
+    // Dog patrol (Phase 3.1: gap window driven by the patrol tween's onYoyo —
+    // the old separate TimerEvent drifted out of sync with the sprite)
     private dogSprite: Phaser.GameObjects.Image | null = null;
-    private dogTimer: Phaser.Time.TimerEvent | null = null;
-    private dogDir = 1;
     private dogGapActive = false;
     private bossZoneVisited = false;
 
@@ -95,6 +110,13 @@ export class OverworldScene extends Scene {
     private bushEntities = new Map<string, BushEntity>();
     private prizePackState: PrizePackState = { slotIndex: 0 };
     private bushStreak = 0;  // used in Slice 2 (streak bonus)
+    // Phase 3.1 (FEEL-05): one-award-per-swing guard
+    private swingTracker = new SwingTracker();
+
+    // Phase 3.1 (FEEL-06): set-piece trigger prompt state
+    private pendingTrigger: { zone: string; target: string } | null = null;
+    private triggerPrompt: Phaser.GameObjects.Text | null = null;
+    private triggerMarkers = new Map<string, Phaser.GameObjects.Image>();
 
     // Phase 3: shop/hospital modal flags (guards update() when overlays are shown)
     private shopOpen = false;
@@ -155,11 +177,16 @@ export class OverworldScene extends Scene {
         }
     };
 
-    // Phase 3 Slice 2: HOSPITAL_DISMISS carrier — UIScene dismiss emits it; we respawn at (96,96) (D-11)
+    // Phase 3 Slice 2: HOSPITAL_DISMISS carrier — UIScene dismiss emits it; we respawn at home (D-11)
+    // Phase 3.1 (FEEL-04): fade out → teleport → fade in, instead of an instant cross-map jump
     private onHospitalDismiss = (): void => {
         this.hospitalShowing = false;
-        this.player.sprite.setPosition(96, 96);
-        void SaveService.save(this.buildSaveState());
+        this.cameras.main.fadeOut(180, 26, 26, 46);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.player.sprite.setPosition(SPAWN_X, SPAWN_Y);
+            this.cameras.main.fadeIn(180, 26, 26, 46);
+            void SaveService.save(this.buildSaveState());
+        });
     };
 
     constructor() {
@@ -195,8 +222,8 @@ export class OverworldScene extends Scene {
             this.flags = saved.flags;
             this.journalUnlocked = saved.journalUnlocked ? [...saved.journalUnlocked] : [];
         }
-        const startX = saved?.position?.x ?? 96;
-        const startY = saved?.position?.y ?? 96;
+        const startX = saved?.position?.x ?? SPAWN_X;
+        const startY = saved?.position?.y ?? SPAWN_Y;
 
         // ── Tilemap: two layers, 16px tiles (Kenney Tiny Town) ────────────
         const TILE = 16;
@@ -259,6 +286,42 @@ export class OverworldScene extends Scene {
         // until the player steps out — preventing an auto-launch on the first tick.
         this.triggerSystem.armLoadPosition(startX, startY);
 
+        // ── Phase 3.1 (FEEL-06): visible set-piece markers + confirm prompt ──
+        // Set pieces are no longer entered by invisible walk-over hijack: each
+        // zone shows a bobbing marker, and standing in the zone shows a prompt.
+        // INTERACT (Space/Enter) or tapping the marker launches the set piece.
+        for (const def of MARKER_DEFS) {
+            const marker = this.add.image(def.x, def.y, def.texture)
+                .setDepth(4)
+                .setInteractive(
+                    new Phaser.Geom.Rectangle(-16, -16, 32, 32),
+                    Phaser.Geom.Rectangle.Contains,
+                );
+            this.tweens.add({
+                targets: marker, y: def.y - 3,
+                duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+            });
+            marker.on('pointerdown', () => {
+                if (this.pendingTrigger?.zone === def.zone) this.confirmTrigger();
+            });
+            this.triggerMarkers.set(def.zone, marker);
+        }
+        // A beaten boss never re-triggers — hide its marker too
+        if (this.flags['boss_01_defeated']) {
+            this.triggerMarkers.get('boss_trigger')?.setVisible(false);
+        }
+        this.triggerPrompt = this.add.text(0, 0, '', {
+            fontSize: '8px', color: '#f5c842',
+            fontFamily: '"Press Start 2P", monospace',
+            backgroundColor: '#1a1a2ecc', padding: { x: 4, y: 3 },
+            align: 'center',
+        }).setOrigin(0.5, 1).setDepth(6).setVisible(false);
+
+        // Fade back in whenever we return from a set piece (FEEL-04)
+        this.events.on(Phaser.Scenes.Events.WAKE, () => {
+            this.cameras.main.fadeIn(250, 26, 26, 46);
+        });
+
         // ── NPCs ───────────────────────────────────────────────────────────
         for (const def of NPC_DEFS) {
             const npc = new NPC(this, def.x, def.y, def.texture, def.npcId, def.dialogueKey);
@@ -302,21 +365,24 @@ export class OverworldScene extends Scene {
         );
 
         // ── Phase 3: Traversal gate barrier ────────────────────────────────
+        // Phase 3.1 (FEEL-05): the barrier is now a visible wooden barricade in
+        // the single fenced gap into the east pocket (the pocket's perimeter is
+        // sealed with fence deco tiles, so it can no longer be walked around).
         this.gateBarrier = this.add.rectangle(
             ECONOMY_DATA.gateBarrier.x, ECONOMY_DATA.gateBarrier.y,
             ECONOMY_DATA.gateBarrier.w, ECONOMY_DATA.gateBarrier.h,
-            0x000000, 0,
-        );
+            0x8a5a2a, 0.95,
+        ).setStrokeStyle(1, 0x4a2f14).setDepth(4);
         this.physics.add.existing(this.gateBarrier, true);
         this.physics.add.collider(this.player.sprite, this.gateBarrier);
-        // Gate sign — visible MVP text (Open Question 3: invisible body + sign)
+        // Gate sign — small tag above the barricade
         this.gateSignText = this.add.text(
-            ECONOMY_DATA.gateBarrier.x, ECONOMY_DATA.gateBarrier.y,
-            'ROAD CLOSED\nBUS PASS REQUIRED',
+            ECONOMY_DATA.gateBarrier.x, ECONOMY_DATA.gateBarrier.y - 22,
+            'BUS PASS\nREQUIRED',
             {
                 fontSize: '6px', color: '#ff4444',
                 fontFamily: '"Press Start 2P", monospace',
-                align: 'center',
+                align: 'center', backgroundColor: '#1a1a2ecc', padding: { x: 2, y: 2 },
             },
         ).setOrigin(0.5).setDepth(5);
         if (this.flags['upgrade_traversal']) {
@@ -475,29 +541,56 @@ export class OverworldScene extends Scene {
             }
         }
 
-        // ── Phase 3 Slice 3: Traversal reward zone (east of gate, D-16) ───────
-        // Award once when player enters the reward area (past x=320, y<200 region)
+        // ── Phase 3 Slice 3: Traversal reward zone (east pocket, D-16) ───────
+        // Phase 3.1: tightened to the fenced pocket itself (rows 5-8, cols 21+)
+        // so the one-shot stash can't fire from the open grass south of it.
         if (this.flags['upgrade_traversal'] && !this.flags['traversal_reward_collected']) {
             const px = this.player.sprite.x;
             const py = this.player.sprite.y;
-            // Reward zone: east of gate (x>340, y<200) — covers the previously-blocked area
-            if (px > 340 && py < 200) {
+            if (px > 336 && py < 144) {
                 this.awardTraversalReward();
             }
         }
 
-        // ── TriggerSystem zone check ───────────────────────────────────────
+        // ── TriggerSystem zone check (Phase 3.1 FEEL-06: prompt + confirm) ──
+        // Standing in a zone shows the marker prompt; the set piece launches
+        // only on INTERACT / marker tap — never by invisible walk-over hijack.
         const hit = this.triggerSystem.checkZones(
             this.player.sprite.x,
             this.player.sprite.y,
         );
         if (hit) {
-            this.triggerSystem.consume(hit.zone);
-            if (hit.target === 'PaperThrowScene') {
-                this.enterMiniGame('PaperThrowScene', { zone: hit.zone });
-            } else if (hit.target === 'BossScene') {
-                this.enterBoss();
+            if (this.pendingTrigger?.zone !== hit.zone) {
+                this.pendingTrigger = hit;
+                const def = MARKER_DEFS.find(d => d.zone === hit.zone);
+                if (def && this.triggerPrompt) {
+                    this.triggerPrompt
+                        .setText(t(def.promptKey))
+                        .setPosition(def.x, def.y - 14)
+                        .setVisible(true);
+                }
             }
+        } else if (this.pendingTrigger) {
+            this.pendingTrigger = null;
+            this.triggerPrompt?.setVisible(false);
+        }
+    }
+
+    /**
+     * Phase 3.1 (FEEL-06): confirmed set-piece entry — from INTERACT while inside
+     * a trigger zone, or tapping the zone's marker. Consumes the zone and fades
+     * into the target scene.
+     */
+    private confirmTrigger(): void {
+        const hit = this.pendingTrigger;
+        if (!hit || this.inHandoff) return;
+        this.pendingTrigger = null;
+        this.triggerPrompt?.setVisible(false);
+        this.triggerSystem.consume(hit.zone);
+        if (hit.target === 'PaperThrowScene') {
+            this.enterMiniGame('PaperThrowScene', { zone: hit.zone });
+        } else if (hit.target === 'BossScene') {
+            this.enterBoss();
         }
     }
 
@@ -511,8 +604,12 @@ export class OverworldScene extends Scene {
      */
     private enterMiniGame(sceneKey: string, data: object): void {
         this.inHandoff = true;
-        this.scene.sleep();
-        this.scene.launch(sceneKey, data);
+        // Phase 3.1 (FEEL-04): fade out, then hand off — no hard cut
+        this.cameras.main.fadeOut(250, 26, 26, 46);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.scene.sleep();
+            this.scene.launch(sceneKey, data);
+        });
 
         GameEvents.once(Events.MINIGAME_COMPLETE, (result: { score: number; perfect: number }) => {
             this.scene.stop(sceneKey);
@@ -544,8 +641,12 @@ export class OverworldScene extends Scene {
         this.flags['boss_zone_visited'] = true;
         void SaveService.save(this.buildSaveState());
 
-        this.scene.sleep();
-        this.scene.launch('BossScene');
+        // Phase 3.1 (FEEL-04): fade out, then hand off — no hard cut
+        this.cameras.main.fadeOut(250, 26, 26, 46);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.scene.sleep();
+            this.scene.launch('BossScene');
+        });
 
         GameEvents.once(Events.BOSS_DEFEATED, (result: { patienceBonus: number }) => {
             this.scene.stop('BossScene');
@@ -564,10 +665,14 @@ export class OverworldScene extends Scene {
             // Save checkpoint
             void SaveService.save(this.buildSaveState());
 
-            // Forward BOSS_DEFEATED to UIScene so it can show LEVEL_COMPLETE
-            // (UIScene already listens on GameEvents.on(Events.BOSS_DEFEATED))
-            // Re-emit so UIScene state machine picks it up after wake
-            GameEvents.emit(Events.BOSS_DEFEATED, result);
+            // Phase 3.1 (FEEL-05): hide the beaten boss's marker for this session
+            this.triggerMarkers.get('boss_trigger')?.setVisible(false);
+
+            // Phase 3.1 (FEEL-05): tell UIScene to show LEVEL_COMPLETE via a
+            // DEDICATED event. Re-emitting BOSS_DEFEATED here used to stack a
+            // second level-complete overlay on top of the first (UIScene heard
+            // both BossScene's original emit and this re-emit).
+            GameEvents.emit(Events.LEVEL_COMPLETE_SHOW, result);
         });
     }
 
@@ -578,6 +683,9 @@ export class OverworldScene extends Scene {
     private handleInteractOrWhack(): void {
         if (this.currentNpcInRange) {
             this.handleInteract();
+        } else if (this.pendingTrigger) {
+            // Phase 3.1 (FEEL-06): confirm set-piece entry while inside its zone
+            this.confirmTrigger();
         } else {
             InputBus.setAction(Action.WHACK, true);
         }
@@ -609,6 +717,9 @@ export class OverworldScene extends Scene {
         const px = this.player.sprite.x;
         const py = this.player.sprite.y;
         const facing = this.player.facing;
+
+        // Phase 3.1 (FEEL-05): new swing → clear the one-award-per-swing guard
+        this.swingTracker.beginSwing();
 
         // Activate the directional hitbox (150ms active window, using WhackOffsets seam)
         // upgrade_newspaper effect: pass enlarged flag so WhackSystem grows the hitbox (D-14)
@@ -651,12 +762,39 @@ export class OverworldScene extends Scene {
         if (!bushId) return;
         const bush = this.bushEntities.get(bushId);
         if (!bush || bush.isCleared()) return;
+        // Phase 3.1 (FEEL-05): one award per swing per bush — arcade overlap
+        // re-fires every frame the 150ms hitbox keeps intersecting the bush.
+        if (!this.swingTracker.registerHit(bushId)) return;
 
-        // On-hit white flash before hiding (UI-SPEC §2d)
+        // Clear SYNCHRONOUSLY (marks cleared + disables body) so no later frame
+        // of this overlap can double-award; the sprite stays visible for feedback.
+        bush.onWhacked();
+
+        // FEEL-04 juice: white flash + squash-pop tween, then hide; camera nudge
         sprite.setTint(0xffffff);
-        this.time.delayedCall(80, () => {
-            sprite.clearTint();
-            bush.onWhacked(); // hide + disable body
+        this.cameras.main.shake(60, 0.004);
+        this.tweens.add({
+            targets: sprite,
+            scaleX: 1.35, scaleY: 0.6, alpha: 0.4,
+            duration: 110, ease: 'Quad.easeOut',
+            onComplete: () => {
+                sprite.clearTint();
+                bush.hide();
+                sprite.setScale(1).setAlpha(1);
+            },
+        });
+
+        // FEEL-06: regrow after cooldown (staggered by a small deterministic
+        // offset per bush so a cleared field doesn't pop back all at once)
+        const stagger = (bushId.charCodeAt(bushId.length - 1) % 8) * 900;
+        this.time.delayedCall(BUSH_REGROW_MS + stagger, () => {
+            if (!bush.isCleared()) return;
+            bush.reset();
+            bush.sprite.setScale(0.2);
+            this.tweens.add({
+                targets: bush.sprite, scaleX: 1, scaleY: 1,
+                duration: 250, ease: 'Back.easeOut',
+            });
         });
 
         // Leaf particle burst (UI-SPEC §2b)
@@ -776,29 +914,27 @@ export class OverworldScene extends Scene {
 
     private setupDogPatrol(): void {
         if (!this.dogSprite) return;
-        // Dog toggles direction every half-period; patience gap at far end
-        this.dogTimer = this.time.addEvent({
-            delay: DOG_PERIOD / 2,
-            loop: true,
-            callback: () => {
-                this.dogDir *= -1;
-                if (this.dogDir < 0) {
-                    // Dog at far right — gap window open for GAP_MS
-                    this.dogGapActive = true;
-                    this.time.delayedCall(DOG_GAP_MS, () => {
-                        this.dogGapActive = false;
-                    });
-                }
-            },
-        });
-
-        // Smooth patrol movement via tweens
+        // Phase 3.1 (FEEL-05): the gap window is driven by the SAME tween that
+        // moves the dog (onYoyo fires exactly when it reaches the far end), so
+        // the patience window can never drift out of sync with the sprite.
+        // Previously a separate TimerEvent flipped the window on its own clock.
         this.tweens.add({
             targets: this.dogSprite,
             x: { from: DOG_MIN_X, to: DOG_MAX_X },
             duration: DOG_PERIOD / 2,
             repeat: -1,
             yoyo: true,
+            onYoyo: () => {
+                // Dog is at the far (max-X) end — patience gap opens
+                this.dogSprite?.setFlipX(true);
+                this.dogGapActive = true;
+                this.time.delayedCall(DOG_GAP_MS, () => {
+                    this.dogGapActive = false;
+                });
+            },
+            onRepeat: () => {
+                this.dogSprite?.setFlipX(false);
+            },
         });
     }
 
@@ -827,6 +963,8 @@ export class OverworldScene extends Scene {
      */
     private onDogBite(): void {
         AudioService.playSfx(this, 'dog_bite');
+        // FEEL-04: a bite lands with weight — brief strong shake
+        this.cameras.main.shake(120, 0.008);
         // Reset streak immediately (D-12) — pips clear via BUSH_WHACKED { streak: 0 }
         this.bushStreak = 0;
         GameEvents.emit(Events.BUSH_WHACKED, { streak: 0 });
@@ -873,6 +1011,7 @@ export class OverworldScene extends Scene {
     private removeGate(): void {
         if (this.gateBarrier) {
             (this.gateBarrier.body as Phaser.Physics.Arcade.StaticBody).enable = false;
+            this.gateBarrier.setVisible(false);  // Phase 3.1: barricade is visible art now
         }
         if (this.gateSignText) {
             this.gateSignText.setVisible(false);
@@ -934,7 +1073,6 @@ export class OverworldScene extends Scene {
         // Clear all blink timers (Pitfall 2)
         for (const timer of this.blinkTimers.values()) timer.remove();
         this.blinkTimers.clear();
-        if (this.dogTimer) { this.dogTimer.remove(); this.dogTimer = null; }
         // Remove only this scene's listeners — pass fn + context so we don't
         // strip other scenes' listeners for the same event (CR-03, WR-05 fix)
         GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);

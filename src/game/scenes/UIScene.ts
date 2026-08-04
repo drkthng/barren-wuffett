@@ -59,7 +59,6 @@ export class UIScene extends Scene {
     // Phase 3.1 (FEEL-01): screen-anchored touch controls live HERE, not in the
     // zoomed OverworldScene. Joystick handle is shared via registry key 'vjoy'.
     private _whackBtn: Phaser.GameObjects.Image | null = null;
-    private _whackBtnBorder: Phaser.GameObjects.Graphics | null = null;
     private _vjParts: Phaser.GameObjects.GameObject[] = [];
 
     // Stored as a class field so shutdown() can pass it to .off() precisely (CR-03 fix)
@@ -183,7 +182,7 @@ export class UIScene extends Scene {
         GameEvents.on(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
         GameEvents.on(Events.PAUSE_REQUESTED, this.onPauseRequested, this);
         GameEvents.on(Events.RESUME_REQUESTED, this.onResumeRequested, this);
-        GameEvents.on(Events.BOSS_DEFEATED, this.onBossDefeated, this);
+        GameEvents.on(Events.LEVEL_COMPLETE_SHOW, this.onLevelCompleteShow, this);
         // CR-03 fix: use stored handler reference so shutdown() can remove precisely
         GameEvents.on(Events.PATIENCE_BONUS, this.onPatienceBonus, this);
         // Phase 3: coin HUD + streak pips
@@ -246,10 +245,24 @@ export class UIScene extends Scene {
         }
     };
 
-    // Level complete — stub seam for Plan 03
-    private onBossDefeated = (): void => {
+    // Level complete — Phase 3.1 (FEEL-05): listens for LEVEL_COMPLETE_SHOW
+    // (emitted by OverworldScene AFTER it wakes from the boss handoff), with a
+    // re-entry guard, and pauses the overworld so nothing runs underneath.
+    // Previously this listened to raw BOSS_DEFEATED, which fired twice (BossScene
+    // + OverworldScene re-emit) and stacked two overlays over a live overworld.
+    private onLevelCompleteShow = (): void => {
+        if (this.uiState === 'LEVEL_COMPLETE') return;
         this.setState('LEVEL_COMPLETE');
-        this.showLevelComplete(); // plan 03 seam
+        // OverworldScene emits this right after calling scene.wake(), and wake is
+        // QUEUED — the scene may not be active yet on this tick. Defer one tick
+        // so the pause lands after the wake has been processed.
+        this.time.delayedCall(0, () => {
+            if (this.uiState === 'LEVEL_COMPLETE'
+                && this.scene.get('OverworldScene')?.scene.isActive()) {
+                this.scene.pause('OverworldScene');
+            }
+        });
+        this.showLevelComplete();
     };
 
     // ── Phase 3.1: touch controls (moved from the now-zoomed OverworldScene) ──
@@ -268,10 +281,6 @@ export class UIScene extends Scene {
                 new Phaser.Geom.Rectangle(-32, -32, 64, 64),
                 Phaser.Geom.Rectangle.Contains,
             );
-        const border = this.add.graphics().setDepth(20);
-        border.lineStyle(2, 0x00ff88, 1);
-        border.strokeRect(360 - 32, 750 - 32, 64, 64);
-
         whackBtn.on('pointerdown', () => {
             whackBtn.setAlpha(0.7).setScale(0.9);
             InputBus.setAction(Action.WHACK, true);
@@ -283,7 +292,6 @@ export class UIScene extends Scene {
             whackBtn.setAlpha(1).setScale(1);
         });
         this._whackBtn = whackBtn;
-        this._whackBtnBorder = border;
 
         // Joystick — touch devices only; custom base/thumb so visibility is ours
         if (this.sys.game.device.input.touch) {
@@ -311,7 +319,6 @@ export class UIScene extends Scene {
         const ow = this.scene.get('OverworldScene');
         const active = !!ow && ow.scene.isActive() && this.uiState === 'HUD';
         this._whackBtn?.setVisible(active);
-        this._whackBtnBorder?.setVisible(active);
         for (const p of this._vjParts) (p as Phaser.GameObjects.Shape).setVisible(active);
     }
 
@@ -608,7 +615,7 @@ export class UIScene extends Scene {
         GameEvents.off(Events.DIALOGUE_COMPLETE, this.onDialogueComplete, this);
         GameEvents.off(Events.PAUSE_REQUESTED,   this.onPauseRequested,   this);
         GameEvents.off(Events.RESUME_REQUESTED,  this.onResumeRequested,  this);
-        GameEvents.off(Events.BOSS_DEFEATED,     this.onBossDefeated,     this);
+        GameEvents.off(Events.LEVEL_COMPLETE_SHOW, this.onLevelCompleteShow, this);
         GameEvents.off(Events.PATIENCE_BONUS,    this.onPatienceBonus,    this);
         // Phase 3: remove COINS_CHANGED + BUSH_WHACKED handlers (CR-03 — no zombie listeners on restart)
         GameEvents.off(Events.COINS_CHANGED,     this.onCoinsChanged,     this);

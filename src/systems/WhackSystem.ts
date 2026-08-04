@@ -62,6 +62,10 @@ export class WhackSystem {
 
         const body = this._hitbox.body as Phaser.Physics.Arcade.StaticBody;
         body.enable = true;
+        // Phase 3.1 (FEEL-05): a StaticBody's size is frozen at construction —
+        // setSize on the GameObject alone never grew the physics body, making the
+        // 20-coin upgrade's "bigger whack" a no-op. Resize the BODY too.
+        body.setSize(baseW, baseH);
         body.reset(playerX + finalDx, playerY + finalDy); // sync static body position
 
         // Active window ~150ms (D-02: 120–180ms)
@@ -69,6 +73,7 @@ export class WhackSystem {
             body.enable = false;
             // Reset hitbox to base size after deactivation so next whack starts fresh
             this._hitbox.setSize(32, 24);
+            body.setSize(32, 24);
         });
     }
 

@@ -9,6 +9,7 @@
  */
 import { Scene } from 'phaser';
 import { InputBus, Action } from '../input/InputBus';
+import { normalizeVelocity } from '../systems/Movement';
 
 export class Player {
     readonly sprite: Phaser.Physics.Arcade.Sprite;
@@ -81,11 +82,12 @@ export class Player {
     }
 
     update(): void {
-        // Velocity logic unchanged (±80px/s via InputBus)
-        const vx = InputBus.isActive(Action.MOVE_LEFT)  ? -80
-                 : InputBus.isActive(Action.MOVE_RIGHT) ?  80 : 0;
-        const vy = InputBus.isActive(Action.MOVE_UP)    ? -80
-                 : InputBus.isActive(Action.MOVE_DOWN)  ?  80 : 0;
+        // ±80px/s via InputBus; diagonals normalized to the same speed (FEEL-05)
+        const rawVx = InputBus.isActive(Action.MOVE_LEFT)  ? -80
+                    : InputBus.isActive(Action.MOVE_RIGHT) ?  80 : 0;
+        const rawVy = InputBus.isActive(Action.MOVE_UP)    ? -80
+                    : InputBus.isActive(Action.MOVE_DOWN)  ?  80 : 0;
+        const { vx, vy } = normalizeVelocity(rawVx, rawVy);
         this.sprite.setVelocity(vx, vy);
 
         // Additive: play directional walk anim or show idle frame — velocity logic above is unchanged

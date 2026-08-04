@@ -33,24 +33,31 @@ export class BushEntity {
 
     /**
      * Called when the directional hitbox overlaps this bush.
-     * Hides the sprite and disables the physics body — does NOT destroy the sprite
-     * so reset() can regrow it on re-entry.
-     * Caller (OverworldScene) handles particles, SFX, and prize-pack roll.
+     * Phase 3.1 (FEEL-05): marks cleared + disables the body SYNCHRONOUSLY so the
+     * still-live overlap can never re-fire an award on later frames; the sprite
+     * stays visible so the caller can play the squash/flash before hide().
+     * Caller (OverworldScene) handles particles, SFX, tweens, and prize-pack roll.
      */
     onWhacked(): void {
         if (this._cleared) return;
         this._cleared = true;
-        this.sprite.setVisible(false);
         (this.sprite.body as Phaser.Physics.Arcade.Body).enable = false;
     }
 
+    /** Hide the sprite after the clear feedback finished (FEEL-04 squash tween). */
+    hide(): void {
+        this.sprite.setVisible(false);
+    }
+
     /**
-     * Called on level re-entry — bushes regrow (D-03).
+     * Regrow the bush (Phase 3.1: on a timer after clearing — D-03 soft farm; the
+     * deterministic pack + streak cap keep farming from being optimal).
      * Re-shows the sprite and re-enables the physics body; clears the cleared flag.
      */
     reset(): void {
         this._cleared = false;
         this.sprite.setVisible(true);
+        this.sprite.setScale(1).setAlpha(1);
         (this.sprite.body as Phaser.Physics.Arcade.Body).enable = true;
     }
 }

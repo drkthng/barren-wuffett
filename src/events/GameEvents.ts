@@ -26,6 +26,12 @@ export const Events = Object.freeze({
     SHOP_PURCHASE:        'SHOP_PURCHASE',
     SHOP_CLOSE:           'SHOP_CLOSE',
     STREAK_BONUS:         'STREAK_BONUS',
+    // Phase 3.1 (FEEL-05): OverworldScene emits this AFTER it has woken from the
+    // boss handoff; UIScene listens for THIS (not BOSS_DEFEATED) to show the
+    // level-complete screen exactly once. Previously UIScene reacted to the raw
+    // BOSS_DEFEATED which BossScene emitted AND OverworldScene re-emitted —
+    // stacking two level-complete overlays.
+    LEVEL_COMPLETE_SHOW:  'LEVEL_COMPLETE_SHOW',
 } as const);
 
 export type EventNames = typeof Events[keyof typeof Events];
