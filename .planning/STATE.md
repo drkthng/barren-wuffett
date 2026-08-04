@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 03.1 (Level 1 — Game Feel: Zelda Camera, Juice & Repair) — INSERTED 2026-08-04, in progress
-Plan: 1 of 2
-Status: Feel audit complete (`.planning/research/level-1-feel-audit.md`) — user found the game unimpressive; audit confirmed root causes: whole-map static camera, invisible Phase-3 art, silent audio, 5 economy-loop bugs. Phase 3.1 inserted before Phase 4 to repair.
-Last activity: 2026-08-04 -- Feel audit (headless playthrough + code map) + Phase 3.1 inserted (FEEL-01..06)
+Phase: 03.1 (Level 1 — Game Feel: Zelda Camera, Juice & Repair) — CODE COMPLETE (both plans), human phone UAT pending
+Plan: 2 of 2 — DONE (commits 6ad2e4d, 4ac171a on branch gsd/phase-03.1-level-1-game-feel-zelda-pass)
+Status: Zelda camera (zoom 3 + follow), all placeholder art/audio replaced (generated via tools/gen-assets.mjs), 5 economy-loop bugs fixed with regression tests (196 green), set pieces enter via marker + confirm prompt, bushes regrow, gate pocket fenced+sealed. Verified headless (Playwright): zero console errors, whack single-award, no trigger hijack, gate impassable until purchase.
+Last activity: 2026-08-04 -- Phase 3.1 executed end-to-end (audit → plans → code → verification)
 
-Progress: [███░░░░░░░] 33% (3/10 phases + 2 inserted complete)
+Progress: [████░░░░░░] 40% (4/10 phases; 3.1 awaiting human UAT)
 
 ## Performance Metrics
 
@@ -128,8 +128,7 @@ Stopped at: Phase 03 Plan 04 complete — shop overlay + upgrades + traversal ga
 
 Resume steps (next session):
 
-  1. Human SC-1..SC-5 verification on phone (human_verify_mode = end-of-phase): run `npm run dev -- --host`, open on phone/emulation, confirm all 5 success criteria pass (whack verb, coin snowball, dog hazard, shop upgrades, traversal gate + reward area — offline).
-  2. Phase 3 is COMPLETE after SC-1..SC-5 sign-off. Execute Phase 4 (Level 1 Set Pieces): paper-route glow-up + Mr. Market Mood Pendulum boss redesign.
+  1. Human UAT for Phase 3.1 on a real phone: `npm run dev -- --host`, play Level 1 — judge the Zelda-scale camera, whack feel (shake/squash/SFX), spawn bushes, marker+prompt set-piece entry, gate/pocket, BGM taste (generated placeholder — swap for a real CC0 track if it grates). Branch: gsd/phase-03.1-level-1-game-feel-zelda-pass (merge to main after sign-off).
+  2. Then Phase 4 (Level 1 Set Pieces): paper-route glow-up (characterful houses + results splash) + Mr. Market Mood Pendulum boss redesign — both current implementations are confirmed stubs worth fully replacing (see feel audit §A-4).
   Dev server: `npm run dev -- --host`. Public URL: https://barren-wuffett.pages.dev.
-  Note: Placeholder art (bush/newspaper/leaf/shop icons as 1px PNGs, OGG as stub headers) needs art pass before Phase verification.
-Resume file: .planning/phases/03-level-1-the-newspaper-verb-economy/03-04-SUMMARY.md (phase complete)
+Resume file: .planning/phases/03.1-level-1-game-feel-zelda-pass/03.1-02-SUMMARY.md

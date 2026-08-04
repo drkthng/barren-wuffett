@@ -168,8 +168,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03.1-01-PLAN.md — Camera + assets + audio: zoom-3 follow camera w/ deadzone, whack button → UIScene, physics-world bounds, generated real pixel art (bush/swing/button/icons/logo/monogram), generated real SFX (6 WAVs), Preloader/BushEntity wiring, art-assets test extension
-- [ ] 03.1-02-PLAN.md — Juice + repair: single-award whack guard, level-complete once+pause, bush relocation out of collision, StaticBody resize on upgrade, gate span fix, diagonal normalization, dog patrol/gap re-sync, bush regrow timer, visible trigger markers + confirm prompt, camera shake + squash + fades, regression tests
+- [x] 03.1-01-PLAN.md — Camera + assets + audio: zoom-3 follow camera w/ deadzone, whack button → UIScene, physics-world bounds, generated real pixel art (bush/swing/button/icons/logo/monogram), generated real SFX (6 WAVs) + BGM loop, Preloader/BushEntity wiring, art-assets test extension (commit 6ad2e4d)
+- [x] 03.1-02-PLAN.md — Juice + repair: single-award whack guard, level-complete once+pause, bush relocation out of collision + spawn practice bushes, StaticBody resize on upgrade, fenced+sealed gate pocket, diagonal normalization, dog patrol/gap re-sync, bush regrow timer, visible trigger markers + confirm prompt, camera shake + squash + fades, regression tests (commit 4ac171a)
 
 **UI hint**: yes
 
@@ -265,7 +265,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 3.1 → 4 → 5 → 6
 | 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
 | 3. Level 1 — The Newspaper Verb & Economy | 4/4 | Complete (human SC-1..5 superseded by feel audit → 3.1) | 2026-06-15 |
-| 3.1. Game Feel: Zelda Camera, Juice & Repair *(INSERTED)* | 0/2 | Not started | - |
+| 3.1. Game Feel: Zelda Camera, Juice & Repair *(INSERTED)* | 2/2 | Code complete — human phone UAT pending | 2026-08-04 |
 | 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |
