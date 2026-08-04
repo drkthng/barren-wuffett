@@ -2,7 +2,7 @@
 
 ## Overview
 
-Nine phases deliver Barren Wuffett v1.0, entertainment-first. A legally-safe scaffold comes first (so a public URL can exist without risk), then a fully offline-playable Level 1 (so nothing is built on an unproven game), then a cozy visual pass. Next, three phases deepen Level 1 until it's genuinely good — the rolled-up-newspaper whack economy, redesigned set-pieces (paper route + a non-linear Mr. Market boss), and a real young-Barren story — *before* any funnel exists. Only then do Levels 2-3 ship (reusing the proven ContentRegistry pattern), followed by the email funnel/backend, and finally public launch. The funnel is deliberately last: entertainment first, funnel second (user decision 2026-06-15). Each phase ends with a verifiable capability a human can test — not a technical milestone.
+Nine phases deliver Barren Wuffett v1.0, entertainment-first. A legally-safe scaffold comes first (so a public URL can exist without risk), then a fully offline-playable Level 1 (so nothing is built on an unproven game), then a cozy visual pass. Next, three phases deepen Level 1 until it's genuinely good — the rolled-up-newspaper whack economy, redesigned set-pieces (paper route + a non-linear Mr. Market boss), and a real young-Barren story — *before* any funnel exists. (Phase 3.1 was inserted after the 2026-08-04 feel audit: the economy layer shipped mechanically but with a board-game camera, placeholder art/audio, and five loop bugs — 3.1 makes Level 1 *feel* like Zelda before set pieces are built on top.) Only then do Levels 2-3 ship (reusing the proven ContentRegistry pattern), followed by the email funnel/backend, and finally public launch. The funnel is deliberately last: entertainment first, funnel second (user decision 2026-06-15). Each phase ends with a verifiable capability a human can test — not a technical milestone.
 
 ## Phases
 
@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Level 1 — Offline Playable** - Complete end-to-end playable Level 1 with overworld, mini-game, boss fight, local save, and share card — no backend required (completed 2026-06-12)
 - [x] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes (completed 2026-06-14)
 - [x] **Phase 3: Level 1 — The Newspaper Verb & Economy** - Rolled-up-newspaper whack verb, bush/chore coin economy with fair deterministic drops, dog hazard, and a shop of permanent upgrades — the explore→earn→spend loop (completed 2026-06-15, SC-1..SC-5 human verification pending)
+- [ ] **Phase 3.1: Level 1 — Game Feel: Zelda Camera, Juice & Repair** *(INSERTED 2026-08-04)* - Zoomed follow-camera (Zelda scale), real art for every placeholder (bushes/swing/button/icons/logo), real SFX, juice (shake/squash/fades), and repair of the five economy-loop bugs found in the feel audit — before Phase 4 builds set pieces on a broken base
 - [ ] **Phase 4: Level 1 — Set Pieces** - Paper-route mini-game glow-up (characterful houses + score splash) and the Mr. Market "Mood Pendulum" boss redesign (read greed/panic, not a linear menu)
 - [ ] **Phase 5: Level 1 — Story & Heart** - The 7-beat young-Barren story spine: new NPCs, cutscenes, Count-the-Caps + Pinball-Snowball hustle mini-games, and hidden Investment Journal collectible pages
 - [ ] **Phase 6: Levels 2-3** - Remaining two levels using the ContentRegistry/manifest pattern with no engine code changes, each with a boss + genre-accent mini-game
@@ -147,11 +148,36 @@ Plans:
 
 - [x] 03-04-PLAN.md — Slice 3 "shop + gate": SHOP overlay + 4 items + OWNED/affordability, felt upgrades (newspaper reach, helmet fee-waiver, traversal gate + reward area); end-of-phase human-check (L1E-04)
 
+### Phase 3.1: Level 1 — Game Feel: Zelda Camera, Juice & Repair (INSERTED)
+
+**Goal**: Level 1 finally *feels* like the intended Zelda-light adventure on a phone — a zoomed follow-camera turns the town into a multi-screen world, every placeholder asset is replaced with real pixel art and audible SFX, actions have juice (shake/squash/fades), and the five economy-loop bugs from the feel audit are fixed — so Phase 4 builds set pieces on a base that is fun to walk around in
+**Mode:** mvp
+**Depends on**: Phase 3 (the verb/economy layer this repairs). Inserted before Phase 4 per the 2026-08-04 feel audit.
+**Requirements**: FEEL-01, FEEL-02, FEEL-03, FEEL-04, FEEL-05, FEEL-06
+**Design**: .planning/research/level-1-feel-audit.md (root causes, file:line evidence), .planning/research/zelda-mystic-quest-patterns.md (§1 onboarding, §7 pacing)
+**Success Criteria** (what must be TRUE):
+
+  1. Opening Level 1 shows a Zelda-scale view (~10 tiles across, player ≈ 1/10 of screen width) and the camera follows the player through a town at least 3 screens wide — the whole map is never visible at once
+  2. No invisible interactables remain: bushes, swing animation, whack button, shop icons, and the menu logo all render as real pixel art; whackable bushes read differently from decorative ones; whacking one is audible (SFX) and crunchy (shake + leaf burst + squash)
+  3. One whack = exactly one prize roll (streak pips advance one at a time); the newspaper upgrade visibly enlarges the swing's coverage; every bush can be reached and whacked; the bus-pass gate genuinely blocks the east path until bought
+  4. Paper route and boss are entered via a visible in-world marker plus a confirm prompt (tap or interact) — never by invisible walk-over hijack — and all scene changes fade (including hospital respawn)
+  5. The full loop (explore → whack → earn → shop → gate → set pieces) is playable start-to-finish on a phone with audio, and bushes regrow so the 60-coin bus pass is reachable without exploits; 142+ tests stay green with new regression tests for each repaired bug
+
+**Plans**: 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 03.1-01-PLAN.md — Camera + assets + audio: zoom-3 follow camera w/ deadzone, whack button → UIScene, physics-world bounds, generated real pixel art (bush/swing/button/icons/logo/monogram), generated real SFX (6 WAVs), Preloader/BushEntity wiring, art-assets test extension
+- [ ] 03.1-02-PLAN.md — Juice + repair: single-award whack guard, level-complete once+pause, bush relocation out of collision, StaticBody resize on upgrade, gate span fix, diagonal normalization, dog patrol/gap re-sync, bush regrow timer, visible trigger markers + confirm prompt, camera shake + squash + fades, regression tests
+
+**UI hint**: yes
+
 ### Phase 4: Level 1 — Set Pieces
 
 **Goal**: As a player, I want to play a characterful paper-route mini-game that ends on a clear score screen and to beat a Mr. Market boss by reading his swinging greed and panic moods, so that Level 1's set pieces feel like real, fair challenges instead of a linear menu.
 **Mode:** mvp
-**Depends on**: Phase 3 (the newspaper-whack verb is reused by the boss)
+**Depends on**: Phase 3.1 (the whack verb reused by the boss must feel good first; set pieces are entered via the marker/prompt pattern from 3.1)
 **Requirements**: L1E-05, L1E-06
 **Design**: .planning/research/level-1-redesign-ideas.md, .planning/research/zelda-mystic-quest-patterns.md
 **Success Criteria** (what must be TRUE):
@@ -231,14 +257,15 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 3.1 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Legal Shell | 3/3 | Complete | 2026-06-12 (Geltungssatz confirmed 2026-06-15) |
 | 2. Level 1 — Offline Playable | 3/3 | Complete | 2026-06-12 |
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
-| 3. Level 1 — The Newspaper Verb & Economy | 3/4 | In Progress|  |
+| 3. Level 1 — The Newspaper Verb & Economy | 4/4 | Complete (human SC-1..5 superseded by feel audit → 3.1) | 2026-06-15 |
+| 3.1. Game Feel: Zelda Camera, Juice & Repair *(INSERTED)* | 0/2 | Not started | - |
 | 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |

@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 03 (Level 1 — The Newspaper Verb & Economy) — COMPLETE (all 4 plans)
-Plan: 4 of 4 — DONE
-Status: Phase 3 complete. Ready for Phase 4 (Level 1 Set Pieces)
-Last activity: 2026-06-23 -- Quick task 260623-f1i: fixed whack verb (InputBus.update no longer wipes the WHACK pulse) + regression test
+Phase: 03.1 (Level 1 — Game Feel: Zelda Camera, Juice & Repair) — INSERTED 2026-08-04, in progress
+Plan: 1 of 2
+Status: Feel audit complete (`.planning/research/level-1-feel-audit.md`) — user found the game unimpressive; audit confirmed root causes: whole-map static camera, invisible Phase-3 art, silent audio, 5 economy-loop bugs. Phase 3.1 inserted before Phase 4 to repair.
+Last activity: 2026-08-04 -- Feel audit (headless playthrough + code map) + Phase 3.1 inserted (FEEL-01..06)
 
-Progress: [███░░░░░░░] 33% (3/9 phases)
+Progress: [███░░░░░░░] 33% (3/10 phases + 2 inserted complete)
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [███░░░░░░░] 33% (3/9 phases)
 
 - Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted after Phase 2 on 2026-06-14 (URGENT) — replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0) before Phase 3 backend, so the funnel isn't built on a placeholder-looking game. Spike 001 VALIDATED the approach.
 - Roadmap rearranged 2026-06-15 (entertainment-first, user decision): the funnel/backend (old Phase 3) moved to Phase 7 — built only after the game is genuinely good. Level 1 expanded into 3 new phases: 3 (The Newspaper Verb & Economy), 4 (Set Pieces — paper-route glow-up + Mr. Market "Mood Pendulum" boss redesign, direction A), 5 (Story & Heart — 7-beat young-Barren spine + Investment Journal collectibles). Old Phase 4 split into Phase 6 (Levels 2-3) and Phase 8 (Launch). New requirements L1E-01..09. Design: .planning/research/level-1-redesign-ideas.md (+ zelda-mystic-quest-patterns.md, buffett-early-years-story.md).
+- Phase 3.1 (Game Feel: Zelda Camera, Juice & Repair) inserted 2026-08-04 after the feel audit (`.planning/research/level-1-feel-audit.md`): user played the game and was unimpressed; audit found (1) the whole 480×832 world renders on one static screen — no Zelda camera, (2) Phase 3's feature layer shipped with 1×1-pixel art and 44-byte silent SFX stubs, (3) five mechanical bugs (multi-award whack, double level-complete overlay, 8 bushes inside collision tiles, no-op newspaper-upgrade hitbox, walk-around-able gate) that passed CI because no test instantiates a live scene. New requirements FEEL-01..06. Phase 4 now depends on 3.1. PROCESS LESSON: phases must not be marked Complete while `human_needed` UAT items sit pending — the experiential gate was skipped three phases in a row; plans must contain an explicit asset-production step (art + audio), not stubs-for-later.
 
 ### Decisions
 

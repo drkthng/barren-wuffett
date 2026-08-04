@@ -39,6 +39,17 @@
 - [ ] **L1E-08**: New parody NPCs (Dottie, Donno, Barber Bristle, Old Penny) with distinct sprites + dialogue drive specific story beats; all parody-safe — no real names/brands/likenesses (Phase 5)
 - [ ] **L1E-09**: At least two story mini-games ship — Count-the-Caps and the Pinball Snowball (reinvest-for-passive-income compounding loop) — as isolated scenes; hidden Investment Journal collectible pages are scattered in Level 1 (content-only, no backend) and unlock a reward (Phase 5)
 
+### Game Feel (Phase 3.1 — inserted 2026-08-04, feel audit)
+
+> Source: `.planning/research/level-1-feel-audit.md` — root-cause audit of why the built game doesn't feel like the intended Zelda-light adventure
+
+- [ ] **FEEL-01**: The overworld plays at Zelda scale — camera zoomed to ~10 tiles across, following the player with a deadzone through a town that spans multiple screens; HUD/overlays unaffected; player cannot leave the map bounds
+- [ ] **FEEL-02**: Every interactive object renders as real pixel art — no 1×1/flat placeholder textures anywhere (bushes, swing animation, whack button, shop item icons, menu logo); whackable bushes are visually distinct from decorative ones
+- [ ] **FEEL-03**: The core loop is audible — real SFX for whack, coin, dog bite, purchase, hospital, streak; mini-game and boss scenes emit SFX; music/SFX toggles govern real audio
+- [ ] **FEEL-04**: Actions have juice — camera shake on whack hits, bush squash/pop, fade transitions between scenes (including a hospital fade instead of an instant teleport); no hard cuts
+- [ ] **FEEL-05**: The economy loop is mechanically correct — one whack = exactly one prize roll; the newspaper upgrade genuinely enlarges the hit area; all 14 bushes are reachable (none inside collision tiles); the traversal gate actually blocks; the level-complete screen shows exactly once and pauses the world; movement speed is direction-normalized
+- [ ] **FEEL-06**: Set pieces are entered intentionally — visible in-world markers with a confirm prompt (tap / interact key) replace invisible walk-over hijack zones; bushes regrow over time so the shop's big-ticket item is affordable without exploits
+
 ### Save & Progress
 
 - [x] **SAVE-01**: Player progress persists locally (IndexedDB) across refresh and return visits — no account needed to play
@@ -125,6 +136,12 @@
 | L1E-02 | Phase 3 | Complete |
 | L1E-03 | Phase 3 | Complete |
 | L1E-04 | Phase 3 | Complete |
+| FEEL-01 | Phase 3.1 | Pending |
+| FEEL-02 | Phase 3.1 | Pending |
+| FEEL-03 | Phase 3.1 | Pending |
+| FEEL-04 | Phase 3.1 | Pending |
+| FEEL-05 | Phase 3.1 | Pending |
+| FEEL-06 | Phase 3.1 | Pending |
 | L1E-05 | Phase 4 | Pending |
 | L1E-06 | Phase 4 | Pending |
 | L1E-07 | Phase 5 | Pending |
@@ -150,4 +167,5 @@
 | INFR-05 | Phase 1 | Complete |
 
 ---
-*Last updated: 2026-06-15 — entertainment-first rearrange: funnel → Phase 7; added L1E-01..09 (Level 1 expansion, Phases 3–5); marked ART-01 + INFR-01 complete; renumbered Levels 2-3 → Phase 6, Launch → Phase 8*
+*Last updated: 2026-08-04 — feel audit: added FEEL-01..06 (Phase 3.1 INSERTED — Zelda camera, real assets/audio, juice, economy-loop repair) per `.planning/research/level-1-feel-audit.md`*
+*Previous: 2026-06-15 — entertainment-first rearrange: funnel → Phase 7; added L1E-01..09 (Level 1 expansion, Phases 3–5); marked ART-01 + INFR-01 complete; renumbered Levels 2-3 → Phase 6, Launch → Phase 8*
