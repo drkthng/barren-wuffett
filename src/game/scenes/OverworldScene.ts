@@ -311,9 +311,9 @@ export class OverworldScene extends Scene {
             this.triggerMarkers.get('boss_trigger')?.setVisible(false);
         }
         this.triggerPrompt = this.add.text(0, 0, '', {
-            fontSize: '8px', color: '#f5c842',
+            fontSize: '6px', color: '#f5c842',
             fontFamily: '"Press Start 2P", monospace',
-            backgroundColor: '#1a1a2ecc', padding: { x: 4, y: 3 },
+            backgroundColor: '#1a1a2ecc', padding: { x: 3, y: 2 },
             align: 'center',
         }).setOrigin(0.5, 1).setDepth(6).setVisible(false);
 

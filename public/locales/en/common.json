@@ -82,6 +82,6 @@
     "shop.item.bus_pass.desc": "UNLOCKS EAST TOWN",
     "shop.item.snack.name": "SNACK",
     "shop.item.snack.desc": "RESTORES ENERGY",
-    "trigger.route": "PAPER ROUTE!  SPACE / TAP",
-    "trigger.boss": "MR. MARKET!  SPACE / TAP"
+    "trigger.route": "PAPER ROUTE!\nSPACE / TAP",
+    "trigger.boss": "MR. MARKET!\nSPACE / TAP"
 }
