@@ -137,6 +137,65 @@ describe('ART-02: character spritesheets exist and are not placeholders', () => 
 
 });
 
+// ── FEEL-02/03: Phase 3.1 — interactive-object art + SFX are real, never stubs ──
+//
+// Phase 3 shipped its entire feature layer with 1×1-pixel PNGs and 44-byte OGG
+// headers, and this suite didn't catch it because those files were not on the
+// checked list. Every interactive sprite is now asserted by EXACT dimensions
+// (a 1×1 placeholder can never pass) and every SFX by RIFF magic + real length.
+describe('FEEL-02: interactive sprites are real pixel art with exact dimensions', () => {
+
+    const sprites: Array<[string, number, number]> = [
+        ['bush',                   16,  16],
+        ['leaf_particle',           8,   8],
+        ['newspaper_swing',        96,  32],
+        ['ui_newspaper_button',    48,  48],
+        ['item_newspaper_upgrade', 16,  16],
+        ['item_helmet',            16,  16],
+        ['item_bus_pass',          16,  16],
+        ['item_snack',             16,  16],
+        ['bw_monogram',            16,  16],
+        ['marker_route',           16,  16],
+        ['marker_boss',            16,  16],
+        ['logo',                  320, 160],
+    ];
+
+    for (const [name, w, h] of sprites) {
+        it(`${name}.png is exactly ${w}×${h} (not a 1×1 placeholder)`, () => {
+            const p = resolve(__dirname, `../public/assets/images/${name}.png`);
+            expect(existsSync(p), `${name}.png missing`).toBe(true);
+            const dims = getPngDimensions(p);
+            expect(dims.width,  `${name}.png width`).toBe(w);
+            expect(dims.height, `${name}.png height`).toBe(h);
+        });
+    }
+
+});
+
+describe('FEEL-03: SFX + BGM are real decodable audio, never stub headers', () => {
+
+    const sfx = [
+        'sfx_whack', 'sfx_coin_ding', 'sfx_dog_bite',
+        'sfx_purchase', 'sfx_hospital', 'sfx_streak_bonus',
+        'bgm_overworld',
+    ];
+
+    for (const name of sfx) {
+        it(`${name}.wav exists, has RIFF/WAVE magic, and carries > 1KB of samples`, () => {
+            const p = resolve(__dirname, `../public/assets/audio/${name}.wav`);
+            expect(existsSync(p), `${name}.wav missing`).toBe(true);
+            expect(statSync(p).size).toBeGreaterThan(1024);
+            const buf = Buffer.alloc(12);
+            const fd = openSync(p, 'r');
+            readSync(fd, buf, 0, 12, 0);
+            closeSync(fd);
+            expect(buf.toString('ascii', 0, 4)).toBe('RIFF');
+            expect(buf.toString('ascii', 8, 12)).toBe('WAVE');
+        });
+    }
+
+});
+
 // ── ART-03: Provenance manifest exists ───────────────────────────────────────
 
 describe('ART-03: provenance manifest exists', () => {

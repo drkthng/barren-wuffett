@@ -225,7 +225,22 @@ export class OverworldScene extends Scene {
         // Camera bounds — world pixel size is same as before (480×832) but formula changes
         // GROUND_DATA[0].length * 16 = 30 * 16 = 480; GROUND_DATA.length * 16 = 52 * 16 = 832
         this.cameras.main.setBounds(0, 0, GROUND_DATA[0].length * TILE, GROUND_DATA.length * TILE);
-        this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
+        this.cameras.main.startFollow(this.player.sprite, true, 0.12, 0.12);
+
+        // Phase 3.1 (FEEL-01): Zelda-scale camera. Zoom 3 shows ~10 tiles across
+        // (160×285 world px on the 480×854 canvas) so the town spans ~3×3 screens
+        // and the camera genuinely scrolls. Deadzone keeps micro-jitter off the
+        // camera; all HUD/touch UI lives in UIScene (own camera, unzoomed).
+        this.cameras.main.setZoom(3);
+        this.cameras.main.setDeadzone(40, 30);
+
+        // Physics world must match the tilemap. Without this the world stays at the
+        // default canvas size (480×854 > map height 832) and setCollideWorldBounds
+        // lets the player walk 22px past the map's bottom edge (FEEL-05).
+        this.physics.world.setBounds(0, 0, GROUND_DATA[0].length * TILE, GROUND_DATA.length * TILE);
+
+        // Fade in from black — no hard cut into the world (FEEL-04)
+        this.cameras.main.fadeIn(400, 26, 26, 46);
 
         // ── TriggerSystem (Plan 02-02) ─────────────────────────────────────
         this.triggerSystem = new TriggerSystem();
@@ -323,49 +338,11 @@ export class OverworldScene extends Scene {
             .setDisplaySize(32, 16).setDepth(3);
         this.setupDogPatrol();
 
-        // ── VirtualJoystick (touch devices only) ──────────────────────────
-        // Dynamic import is intentionally fire-and-forget here. The joystick is
-        // purely additive — if it resolves after a few frames the player has
-        // keyboard fallback via WASD/arrows. The critical async create() race
-        // (update() running before this.player is set) is fully fixed by moving
-        // SaveService.load() to init().  The joystick import only controls
-        // touch input, so a brief delay is acceptable.
-        if (this.sys.game.device.input.touch) {
-            void import('phaser4-rex-plugins/plugins/virtualjoystick.js').then((VJModule) => {
-                const VJClass = VJModule.default ?? VJModule;
-                const vj = new VJClass(this, {
-                    x: 120, y: 750, radius: 80, dir: '8dir', forceMin: 16,
-                }) as { up: boolean; down: boolean; left: boolean; right: boolean };
-                this.joystick = vj;
-            });
-
-            // ── Phase 3: Touch whack button (right-thumb zone) ─────────────
-            // UI-SPEC §1: 64×64 interactive zone at (360,750); visual 48×48 sprite
-            const whackBtn = this.add.image(360, 750, 'ui_newspaper_button')
-                .setDisplaySize(48, 48)
-                .setDepth(10)
-                .setInteractive(
-                    new Phaser.Geom.Rectangle(-32, -32, 64, 64),
-                    Phaser.Geom.Rectangle.Contains,
-                );
-            // 2px #00ff88 stroke on the outer zone area (signals active interactive element)
-            const whackBtnBorder = this.add.graphics().setDepth(10);
-            whackBtnBorder.lineStyle(2, 0x00ff88, 1);
-            whackBtnBorder.strokeRect(360 - 32, 750 - 32, 64, 64);
-
-            whackBtn.on('pointerdown', () => {
-                whackBtn.setAlpha(0.7).setScale(0.9);
-                InputBus.setAction(Action.WHACK, true);
-            });
-            whackBtn.on('pointerup',  () => {
-                whackBtn.setAlpha(1).setScale(1);
-                InputBus.setAction(Action.WHACK, false);
-            });
-            whackBtn.on('pointerout', () => {
-                whackBtn.setAlpha(1).setScale(1);
-                InputBus.setAction(Action.WHACK, false);
-            });
-        }
+        // ── Touch controls (joystick + whack button) ──────────────────────
+        // Phase 3.1 (FEEL-01): moved to UIScene. This scene's camera is zoomed 3×,
+        // so screen-anchored controls can no longer live here — UIScene owns them
+        // and shares the joystick handle via the game registry ('vjoy'). update()
+        // lazily picks the handle up once the async plugin import resolves.
 
         // ── Keyboard ──────────────────────────────────────────────────────
         if (this.input.keyboard) {
@@ -397,6 +374,18 @@ export class OverworldScene extends Scene {
         // ── Launch UIScene parallel overlay ────────────────────────────────
         this.scene.launch('UIScene');
 
+        // ── Phase 3.1 (FEEL-03): overworld BGM loop ───────────────────────
+        // Gated on the music toggle; added once (sound manager is game-global,
+        // so guard against duplicates on scene restart). Stopped in shutdown().
+        if (AudioService.getMusicEnabled() && this.cache.audio.exists('bgm_overworld')) {
+            const existing = this.sound.get('bgm_overworld');
+            if (!existing) {
+                this.sound.add('bgm_overworld', { loop: true, volume: 0.5 }).play();
+            } else if (!existing.isPlaying) {
+                existing.play();
+            }
+        }
+
         // ── Autosave on game hidden (tab switch / phone lock) ─────────────
         // Stored as a class field so shutdown() can remove it precisely (WR-05 fix)
         this.game.events.on(Phaser.Core.Events.HIDDEN, this._onHidden, this);
@@ -416,6 +405,12 @@ export class OverworldScene extends Scene {
         // nothing reads this.player/coins/flags before buildWorld() runs (CR-01).
         if (!this._ready) return;
         if (this.inDialogue || this.inHandoff || this.shopOpen || this.hospitalShowing) return;
+
+        // Phase 3.1: joystick lives in UIScene now — pick up the shared handle
+        // once the async rex-plugin import over there has resolved (FEEL-01)
+        if (!this.joystick) {
+            this.joystick = (this.registry.get('vjoy') as typeof this.joystick) ?? null;
+        }
 
         // Build merged cursor stub (WASD + arrow keys)
         const mergedCursors = this.buildMergedCursors();
@@ -950,5 +945,9 @@ export class OverworldScene extends Scene {
         GameEvents.off(Events.SHOP_CLOSE,    this.onShopClose,    this);
         this.game.events.off(Phaser.Core.Events.HIDDEN, this._onHidden, this);
         this.input.off('pointerdown');
+        // Phase 3.1: stop the BGM when leaving the overworld for good (quit to
+        // menu / level complete). The sound manager is game-global — without this
+        // the loop keeps playing over the MainMenu.
+        this.sound.get('bgm_overworld')?.stop();
     }
 }

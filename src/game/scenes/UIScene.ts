@@ -16,6 +16,7 @@
  */
 import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
+import { InputBus, Action } from '../../input/InputBus';
 import { GameEvents, Events } from '../../events/GameEvents';
 import { HUD } from '../../ui/HUD';
 import { HospitalOverlay } from '../../ui/HospitalOverlay';
@@ -54,6 +55,12 @@ export class UIScene extends Scene {
     private shopOverlay!: ShopOverlay;
     private escKey: Phaser.Input.Keyboard.Key | null = null;
     private uiState: UIState = 'HUD';
+
+    // Phase 3.1 (FEEL-01): screen-anchored touch controls live HERE, not in the
+    // zoomed OverworldScene. Joystick handle is shared via registry key 'vjoy'.
+    private _whackBtn: Phaser.GameObjects.Image | null = null;
+    private _whackBtnBorder: Phaser.GameObjects.Graphics | null = null;
+    private _vjParts: Phaser.GameObjects.GameObject[] = [];
 
     // Stored as a class field so shutdown() can pass it to .off() precisely (CR-03 fix)
     private onPatienceBonus = (amount: number): void => {
@@ -158,6 +165,9 @@ export class UIScene extends Scene {
         // ── Phase 3 Slice 3: Shop overlay ─────────────────────────────────
         this.shopOverlay = new ShopOverlay(this);
 
+        // ── Phase 3.1 (FEEL-01): touch controls — joystick + whack button ──
+        this.buildTouchControls();
+
         // ── ESC keyboard shortcut: close shop when in SHOP state ─────────
         if (this.input.keyboard) {
             this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
@@ -241,6 +251,69 @@ export class UIScene extends Scene {
         this.setState('LEVEL_COMPLETE');
         this.showLevelComplete(); // plan 03 seam
     };
+
+    // ── Phase 3.1: touch controls (moved from the now-zoomed OverworldScene) ──
+    //
+    // UIScene renders with an unzoomed camera, so screen coordinates hold.
+    // The whack button is created for ALL input modes (desktop players can click
+    // it too — previously there was no visible whack control on desktop at all).
+    // The joystick stays touch-only. update() hides both whenever the overworld
+    // is not actively running (mini-game, boss, dialogue, pause, overlays).
+    private buildTouchControls(): void {
+        // Whack button — UI-SPEC §1: 48×48 sprite at (360,750), 64×64 hit zone
+        const whackBtn = this.add.image(360, 750, 'ui_newspaper_button')
+            .setDisplaySize(48, 48)
+            .setDepth(20)
+            .setInteractive(
+                new Phaser.Geom.Rectangle(-32, -32, 64, 64),
+                Phaser.Geom.Rectangle.Contains,
+            );
+        const border = this.add.graphics().setDepth(20);
+        border.lineStyle(2, 0x00ff88, 1);
+        border.strokeRect(360 - 32, 750 - 32, 64, 64);
+
+        whackBtn.on('pointerdown', () => {
+            whackBtn.setAlpha(0.7).setScale(0.9);
+            InputBus.setAction(Action.WHACK, true);
+        });
+        whackBtn.on('pointerup',  () => {
+            whackBtn.setAlpha(1).setScale(1);
+        });
+        whackBtn.on('pointerout', () => {
+            whackBtn.setAlpha(1).setScale(1);
+        });
+        this._whackBtn = whackBtn;
+        this._whackBtnBorder = border;
+
+        // Joystick — touch devices only; custom base/thumb so visibility is ours
+        if (this.sys.game.device.input.touch) {
+            void import('phaser4-rex-plugins/plugins/virtualjoystick.js').then((VJModule) => {
+                if (!this.sys || !this.sys.isActive()) return;
+                const VJClass = (VJModule as { default?: unknown }).default ?? VJModule;
+                const base  = this.add.circle(0, 0, 56, 0x16213e, 0.5).setStrokeStyle(2, 0x3a4a6e).setDepth(20);
+                const thumb = this.add.circle(0, 0, 24, 0xe8e8e8, 0.75).setDepth(21);
+                const Ctor = VJClass as new (scene: Scene, cfg: object) => object;
+                const vj = new Ctor(this, {
+                    x: 120, y: 750, radius: 56, base, thumb, dir: '8dir', forceMin: 16,
+                });
+                this._vjParts = [base, thumb];
+                // Shared handle: OverworldScene.update() polls this via registry
+                this.registry.set('vjoy', vj);
+            });
+        }
+    }
+
+    /**
+     * Hide the touch controls whenever the overworld is not the live gameplay
+     * surface (asleep during mini-game/boss, paused during dialogue/shop/etc.).
+     */
+    update(): void {
+        const ow = this.scene.get('OverworldScene');
+        const active = !!ow && ow.scene.isActive() && this.uiState === 'HUD';
+        this._whackBtn?.setVisible(active);
+        this._whackBtnBorder?.setVisible(active);
+        for (const p of this._vjParts) (p as Phaser.GameObjects.Shape).setVisible(active);
+    }
 
     // ── Pause overlay build ────────────────────────────────────────────────
 
