@@ -123,12 +123,13 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-15T20:14:00Z
-Stopped at: Phase 03 Plan 04 complete — shop overlay + upgrades + traversal gate (Phase 3 L1E-01..04 done)
+Last session: 2026-08-05
+Stopped at: Phases 3.1 + 4 code-complete and verified; game served at localhost:8080 for user UAT; session cleared
 
 Resume steps (next session):
 
-  1. Human UAT for Phase 3.1 on a real phone: `npm run dev -- --host`, play Level 1 — judge the Zelda-scale camera, whack feel (shake/squash/SFX), spawn bushes, marker+prompt set-piece entry, gate/pocket, BGM taste (generated placeholder — swap for a real CC0 track if it grates). Branch: gsd/phase-03.1-level-1-game-feel-zelda-pass (merge to main after sign-off).
-  2. Then Phase 4 (Level 1 Set Pieces): paper-route glow-up (characterful houses + results splash) + Mr. Market Mood Pendulum boss redesign — both current implementations are confirmed stubs worth fully replacing (see feel audit §A-4).
-  Dev server: `npm run dev -- --host`. Public URL: https://barren-wuffett.pages.dev.
-Resume file: .planning/phases/03.1-level-1-game-feel-zelda-pass/03.1-02-SUMMARY.md
+  1. Collect user UAT verdicts for Phases 3.1 + 4 (they were playing the build at http://localhost:8080 — production preview, detached process; restart with `npx vite preview --config vite/config.prod.mjs --port 8080` or `npm run dev -- --host` for phone testing). Key questions: boss feel (approach timing / lure density / 3 hits), whack feel, generated SFX/BGM taste.
+  2. After sign-off: merge branch `gsd/phase-04-level-1-set-pieces` (contains 3.1 + 4, stacked on `gsd/phase-03.1-level-1-game-feel-zelda-pass`) into main. Do NOT deploy to the public URL without explicit user approval.
+  3. Then Phase 5 (Story & Heart): 7-beat young-Barren spine, NPCs (Dottie/Donno/Barber Bristle/Old Penny), Count-the-Caps + Pinball-Snowball mini-games, hidden Journal pages. Design: .planning/research/buffett-early-years-story.md. Work method that's proven here: plan artifacts → build → headless Playwright verification (window.__BW_GAME__ probes) → screenshots to user → atomic commits.
+  Public URL: https://barren-wuffett.pages.dev (still the OLD pre-3.1 build — not yet redeployed).
+Resume file: .planning/phases/04-level-1-set-pieces/04-02-SUMMARY.md
