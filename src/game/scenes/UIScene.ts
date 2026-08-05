@@ -254,14 +254,9 @@ export class UIScene extends Scene {
         if (this.uiState === 'LEVEL_COMPLETE') return;
         this.setState('LEVEL_COMPLETE');
         // OverworldScene emits this right after calling scene.wake(), and wake is
-        // QUEUED — the scene may not be active yet on this tick. Defer one tick
-        // so the pause lands after the wake has been processed.
-        this.time.delayedCall(0, () => {
-            if (this.uiState === 'LEVEL_COMPLETE'
-                && this.scene.get('OverworldScene')?.scene.isActive()) {
-                this.scene.pause('OverworldScene');
-            }
-        });
+        // QUEUED — the scene may not be active yet on this tick, so pausing here
+        // can silently miss. update() below pauses it as soon as it comes active
+        // (verified: a one-shot deferred pause still raced the wake).
         this.showLevelComplete();
     };
 
@@ -312,14 +307,26 @@ export class UIScene extends Scene {
     }
 
     /**
-     * Hide the touch controls whenever the overworld is not the live gameplay
-     * surface (asleep during mini-game/boss, paused during dialogue/shop/etc.).
+     * Show the touch controls only while a surface that consumes them is live:
+     * the overworld, or the BossScene (Phase 4: the Mood Pendulum fight reuses
+     * movement + whack — same controls, no new mid-fight inputs). Hidden during
+     * the mini-game, dialogue, shop, hospital, pause, and level-complete.
      */
     update(): void {
         const ow = this.scene.get('OverworldScene');
-        const active = !!ow && ow.scene.isActive() && this.uiState === 'HUD';
+        const boss = this.scene.get('BossScene');
+        const surfaceLive = (!!ow && ow.scene.isActive()) || (!!boss && boss.scene.isActive());
+        const active = surfaceLive && this.uiState === 'HUD';
         this._whackBtn?.setVisible(active);
         for (const p of this._vjParts) (p as Phaser.GameObjects.Shape).setVisible(active);
+
+        // LEVEL_COMPLETE must fully freeze the overworld beneath the overlay.
+        // The wake queued by the boss handoff can complete AFTER the state
+        // switch, so keep pausing until it lands (idempotent — isActive goes
+        // false once paused).
+        if (this.uiState === 'LEVEL_COMPLETE' && ow?.scene.isActive()) {
+            this.scene.pause('OverworldScene');
+        }
     }
 
     // ── Pause overlay build ────────────────────────────────────────────────

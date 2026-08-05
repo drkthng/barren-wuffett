@@ -166,6 +166,7 @@ describe('FEEL-02: interactive sprites are real pixel art with exact dimensions'
         ['house_05',               48,  64],
         ['neighbor',               16,  16],
         ['paper_throw',            12,   8],
+        ['heart',                  16,  16],
     ];
 
     for (const [name, w, h] of sprites) {

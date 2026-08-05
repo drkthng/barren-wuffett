@@ -39,9 +39,9 @@ describe('FEEL-05: level-complete fires exactly once', () => {
         expect(uiSrc).not.toMatch(/GameEvents\.on\(\s*Events\.BOSS_DEFEATED/);
     });
 
-    it('UIScene pauses the overworld under the level-complete overlay', () => {
-        const handler = uiSrc.slice(uiSrc.indexOf('onLevelCompleteShow'));
-        expect(handler).toMatch(/pause\('OverworldScene'\)/);
+    it('UIScene pauses the overworld under the level-complete overlay (update-loop retry — a one-shot pause races the queued wake)', () => {
+        const updateBody = uiSrc.slice(uiSrc.indexOf('update(): void'));
+        expect(updateBody).toMatch(/uiState === 'LEVEL_COMPLETE'[\s\S]{0,200}pause\('OverworldScene'\)/);
     });
 
 });

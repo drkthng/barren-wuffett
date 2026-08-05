@@ -494,6 +494,26 @@ sprite(join(IMG, 'neighbor.png'), [
     '................',
 ], { o: '#2a2320', h: '#6b4a2a', s: '#e8b88a', e: '#2a2320', p: '#3a4a6e', m: '#c06a5a', c: '#c9564a', d: '#5a3a1a' });
 
+// Composure heart — 16×16 (boss fight HP, Phase 4 L1E-06)
+sprite(join(IMG, 'heart.png'), [
+    '................',
+    '..ooo....ooo....',
+    '.orrro..orrro...',
+    'orrhrrooorrrro..',
+    'orhhrrrrrrrrro..',
+    'orrrrrrrrrrrro..',
+    'orrrrrrrrrrrro..',
+    '.orrrrrrrrrro...',
+    '..orrrrrrrro....',
+    '...orrrrrro.....',
+    '....orrrro......',
+    '.....orro.......',
+    '......oo........',
+    '................',
+    '................',
+    '................',
+], { o: '#5a1520', r: '#e0393e', h: '#ff8a8a' });
+
 // Thrown paper — 12×8 rolled newspaper (side view)
 sprite(join(IMG, 'paper_throw.png'), [
     '............',

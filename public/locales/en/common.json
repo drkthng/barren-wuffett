@@ -94,5 +94,16 @@
     "results.coins": "COINS EARNED",
     "results.grade": "GRADE",
     "results.newBest": "NEW BEST!",
-    "results.continue": "TAP TO CONTINUE"
+    "results.continue": "TAP TO CONTINUE",
+    "boss.howto": "READ HIS MOOD!\nWHEN HE IS GREEDY, DODGE\nHIS SHINY DEALS.\nWHEN HE PANICS —\nMOVE IN AND WHACK!",
+    "boss.meter.greed": "GREED",
+    "boss.meter.panic": "PANIC",
+    "boss.strikeNow": "SELL-OFF! WHACK HIM NOW!",
+    "boss.boughtHigh": "BOUGHT HIGH!",
+    "boss.hitLanded": "BOUGHT LOW!",
+    "boss.shakenOut": "SHAKEN OUT!",
+    "boss.shakenLesson": "YOU CHASED THE SHINY DEALS.\nPATIENCE BEATS FOMO.",
+    "boss.win": "MARKET CORRECTED!",
+    "boss.composure": "COMPOSURE",
+    "boss.hits": "HITS"
 }

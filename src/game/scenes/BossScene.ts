@@ -1,457 +1,528 @@
 /**
- * BossScene — Mr. Market two-phase patience boss fight (GAME-06 climax)
+ * BossScene — Mr. Market "Mood Pendulum" (Phase 4 rebuild, L1E-06, Direction A)
  *
- * Responsibilities:
- *   - Full-canvas phase-tint Rectangle (0xff4444 greed / 0x4444ff panic, alpha 0.15)
- *   - Mr. Market sprite + name/phase labels
- *   - 5-tick state bar + 3-segment patience meter
- *   - Speech bubble with boss offer text from level-01.json
- *   - Greed phase: DECLINE button — 3 declines → PATIENCE MAXED! → Panic phase
- *   - Panic phase: 3s countdown + BUY LOW! button; hit in time → BOSS_DEFEATED
- *   - Miss outcome: TOO SLOW! → reset to Greed, no permanent fail
- *   - shutdown(): remove timers + this.input.off (Pitfall 2)
+ * The fight is a MOOD READ, not a menu:
+ *   - A visible GREED↔PANIC meter swings continuously (MoodPendulum seam).
+ *   - GREED: Mr. Market inflates, glows green, and hurls FOMO coin lures that
+ *     home toward the player — lure contact costs 1 composure. Whacking him
+ *     now is "buying high" and ALSO costs composure.
+ *   - PANIC: the strike window — move in close and WHACK (same verb, same
+ *     controls as the overworld: joystick/WASD + whack button/J/Space).
+ *     3 landed hits win; each hit makes the pendulum swing faster.
+ *   - Composure 0 is never a death screen: "SHAKEN OUT!" lesson → fresh retry.
  *
- * Pattern: PATTERNS.md BossScene.ts + RESEARCH Game Design Boss Fight
- * UI-SPEC: Component 4 (Boss Scene UI)
- * Pitfall 1: results only via BOSS_DEFEATED event — no sync read of this scene
- * Pitfall 2: shutdown() input cleanup
+ * Contracts preserved:
+ *   - Win → prepareShareCard(wisdom) then BOSS_DEFEATED { patienceBonus }
+ *     (bonus = composure remaining, 1-3 — same magnitude as before).
+ *   - init() resets all mutable state; shutdown() removes timers/listeners.
+ *   - UIScene shows the joystick + whack button while this scene runs.
  */
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { GameEvents, Events } from '../../events/GameEvents';
+import { InputBus, Action } from '../../input/InputBus';
+import { MoodPendulum } from '../../systems/MoodPendulum';
+import type { MoodState } from '../../systems/MoodPendulum';
+import { AudioService } from '../../services/AudioService';
 import { t } from '../../services/i18n';
 import { prepareShareCard } from '../../services/ShareService';
-// Static import eliminates the async create() data race (CR-02 fix):
-// Phaser does not await async create(); if we used a dynamic import()
-// here, update() could fire before dialogueData was populated.
 import dialogueDataRaw from '../../data/dialogue/en/level-01.json';
 
-const TOTAL_DECLINES   = 3;   // declines needed to fill patience meter + trigger panic
-const PANIC_DURATION_S = 3;   // seconds for the panic-phase timer
+const HITS_TO_WIN     = 3;
+const MAX_COMPOSURE   = 3;
+const STRIKE_RANGE    = 80;    // px from boss center for a whack to reach him
+const LURE_SPEED      = 150;   // px/s toward the player
+const LURE_INTERVAL   = 850;   // ms between lures while greedy
+const LURE_LIFE_MS    = 4000;
+const WHACK_COOLDOWN  = 350;
+const IFRAME_MS       = 900;
+// 120 px/s: a full-arena sprint (≈300px) fits inside one 8s-period panic
+// window (~2.7s) — anticipating the swing is better, but never mandatory
+const PLAYER_SPEED    = 120;
 
-type Phase = 'intro' | 'greed' | 'panic' | 'done';
+const BOSS_X = 240;
+const BOSS_Y = 250;
 
-// Boss offer lines from level-01.json — keys to load dynamically
 const GREED_KEYS = ['boss_greed_01', 'boss_greed_02', 'boss_greed_03'] as const;
 
+type Phase = 'intro' | 'fight' | 'shaken' | 'done';
+
 export class BossScene extends Scene {
-    // Phase state
     private phase: Phase = 'intro';
-    private declinesCount = 0;
-    private greedOfferIndex = 0;
+    private pendulum!: MoodPendulum;
+    private prevMoodState: MoodState = 'neutral';
+    private hits = 0;
+    private composure = MAX_COMPOSURE;
+    private whackCooldown = false;
+    private invincibleUntil = 0;
+    private tauntIndex = 0;
 
-    // Tint rectangle
+    // Display
     private tintRect!: Phaser.GameObjects.Rectangle;
-
-    // Boss sprite — stored as a class field so phase transitions can swap textures
     private bossSprite!: Phaser.GameObjects.Image;
+    private player!: Phaser.Physics.Arcade.Sprite;
+    private meterKnob!: Phaser.GameObjects.Rectangle;
+    private strikeText!: Phaser.GameObjects.Text;
+    private tauntText!: Phaser.GameObjects.Text;
+    private hearts: Phaser.GameObjects.Image[] = [];
+    private hitPips: Phaser.GameObjects.Rectangle[] = [];
+    private lures: Phaser.Physics.Arcade.Image[] = [];
 
-    // Boss sprite + labels (bossSprite / nameText are display-only — stored in displayObjects)
-    private displayObjects: Phaser.GameObjects.GameObject[] = [];
-    private phaseLabel!:    Phaser.GameObjects.Text;
+    // Input
+    private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
+    private wasd: Record<'up' | 'down' | 'left' | 'right', Phaser.Input.Keyboard.Key> | null = null;
+    private joystick: { up: boolean; down: boolean; left: boolean; right: boolean } | null = null;
 
-    // State bar (5 ticks) + patience meter (3 segments)
-    private stateTicks:      Phaser.GameObjects.Rectangle[] = [];
-    private patienceSegments: Phaser.GameObjects.Rectangle[] = [];
+    // Timers
+    private lureTimer: Phaser.Time.TimerEvent | null = null;
+    private tauntTimer: Phaser.Time.TimerEvent | null = null;
 
-    // Speech bubble + offer text (bubbleRect is display-only — stored in displayObjects)
-    private offerText!:     Phaser.GameObjects.Text;
-
-    // Hint text (first encounter)
-    private hintText!:      Phaser.GameObjects.Text;
-    private hintShown = false;
-    private hintTimer: Phaser.Time.TimerEvent | null = null;
-
-    // Greed DECLINE button
-    private declineButton!:  Phaser.GameObjects.Rectangle;
-    private declineLabel!:   Phaser.GameObjects.Text;
-
-    // Panic phase objects
-    private timerText!:      Phaser.GameObjects.Text;
-    private acceptButton!:   Phaser.GameObjects.Rectangle;
-    private acceptLabel!:    Phaser.GameObjects.Text;
-    private panicCountdown = PANIC_DURATION_S;
-    private panicTimer: Phaser.Time.TimerEvent | null = null;
-
-    // Flash text (patience maxed, too slow, win)
-    private flashText!: Phaser.GameObjects.Text;
-
-    // Loaded dialogue data
     private dialogueData: Record<string, unknown> = {};
 
     constructor() {
         super('BossScene');
     }
 
-    /**
-     * Phaser reuses scene instances across stop/launch cycles — reset all
-     * mutable fight state here so re-entering the boss starts a fresh fight
-     * (same bug class as PaperThrowScene's countdown soft-lock).
-     */
     init(): void {
-        this.phase            = 'intro';
-        this.declinesCount    = 0;
-        this.greedOfferIndex  = 0;
-        this.hintShown        = false;
-        this.panicCountdown   = PANIC_DURATION_S;
-        this.hintTimer        = null;
-        this.panicTimer       = null;
-        this.stateTicks       = [];
-        this.patienceSegments = [];
-        this.displayObjects   = [];
+        this.phase           = 'intro';
+        this.pendulum        = new MoodPendulum();
+        this.prevMoodState   = 'neutral';
+        this.hits            = 0;
+        this.composure       = MAX_COMPOSURE;
+        this.whackCooldown   = false;
+        this.invincibleUntil = 0;
+        this.tauntIndex      = 0;
+        this.hearts          = [];
+        this.hitPips         = [];
+        this.lures           = [];
+        this.joystick        = null;
+        this.lureTimer       = null;
+        this.tauntTimer      = null;
     }
 
     create(): void {
-        const cx = this.scale.width  / 2;  // 240
-
-        // ── Load boss dialogue data (statically imported — CR-02 fix) ──────
+        const cx = this.scale.width / 2;
         this.dialogueData = dialogueDataRaw as Record<string, unknown>;
 
-        // ── Full-canvas phase tint (depth 0, behind all sprites) ──────────
-        this.tintRect = this.add.rectangle(0, 0, 480, 854, 0xff4444)
-            .setOrigin(0, 0)
-            .setAlpha(0)
-            .setDepth(0);
-        // Tween to 0.15 on create (greed phase intro)
-        this.tweens.add({ targets: this.tintRect, alpha: 0.15, duration: 500 });
+        // ── Arena backdrop ────────────────────────────────────────────────
+        this.add.rectangle(0, 0, 480, 854, 0x1a1a2e).setOrigin(0, 0).setDepth(0);
+        this.tintRect = this.add.rectangle(0, 0, 480, 854, 0x44aa66)
+            .setOrigin(0, 0).setAlpha(0.08).setDepth(0);
+        // trading floor
+        this.add.rectangle(0, 320, 480, 500, 0x23233c).setOrigin(0, 0).setDepth(0);
+        for (let y = 380; y < 820; y += 60) {
+            this.add.rectangle(0, y, 480, 1, 0x2e2e4e).setOrigin(0, 0).setDepth(0);
+        }
 
-        // ── Mr. Market boss sprite ─────────────────────────────────────────
-        // Initial texture is the GREED pose; panic pose swapped via setTexture on phase transition.
-        // add.image supports setTexture() without upgrading to add.sprite (RESEARCH Pitfall 6a).
-        this.bossSprite = this.add.image(cx, 380, 'boss_mr_market_greed')
-            .setDisplaySize(64, 96)
-            .setDepth(2);
-        this.displayObjects.push(this.bossSprite);
-
-        // ── Name label ─────────────────────────────────────────────────────
-        this.displayObjects.push(
-            this.add.text(cx, 48, t('boss.mrMarket.name'), {
-                fontSize:   '16px',
-                color:      '#e8e8e8',
-                fontFamily: '"Press Start 2P", monospace',
-            }).setOrigin(0.5).setDepth(5)
-        );
-
-        // ── Phase label ────────────────────────────────────────────────────
-        this.phaseLabel = this.add.text(cx, 72, t('boss.phase.greed'), {
-            fontSize:   '8px',
-            color:      '#ff4444',
+        // ── Mr. Market ────────────────────────────────────────────────────
+        this.bossSprite = this.add.image(BOSS_X, BOSS_Y, 'boss_mr_market_greed')
+            .setDisplaySize(64, 96).setDepth(3);
+        this.add.text(cx, 44, t('boss.mrMarket.name'), {
+            fontSize: '16px', color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
         }).setOrigin(0.5).setDepth(5);
 
-        // ── State bar (5 ticks at y=80) ────────────────────────────────────
-        const tickW = 16, tickH = 12, tickGap = 4;
-        const barWidth = TOTAL_DECLINES * (tickW + tickGap) - tickGap;
-        const barStartX = cx - barWidth / 2;
-        for (let i = 0; i < TOTAL_DECLINES; i++) {
-            const tick = this.add.rectangle(
-                barStartX + i * (tickW + tickGap) + tickW / 2,
-                96, tickW, tickH, 0xff4444
-            ).setStrokeStyle(1, 0xe8e8e8).setDepth(5);
-            this.stateTicks.push(tick);
-        }
-
-        // ── Patience meter label + 3 segments ─────────────────────────────
-        this.add.text(cx - 48, 108, t('boss.patienceMeter'), {
-            fontSize:   '8px',
-            color:      '#e8e8e8',
+        // Taunt bubble
+        this.tauntText = this.add.text(cx, 170, '', {
+            fontSize: '8px', color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0, 0.5).setDepth(5);
-
-        const segW = 16, segH = 8, segGap = 2;
-        for (let i = 0; i < TOTAL_DECLINES; i++) {
-            const seg = this.add.rectangle(
-                216 + i * (segW + segGap) + segW / 2,
-                108, segW, segH, 0x16213e
-            ).setStrokeStyle(1, 0x00ff88).setDepth(5);
-            this.patienceSegments.push(seg);
-        }
-
-        // ── Speech bubble ──────────────────────────────────────────────────
-        this.displayObjects.push(
-            this.add.rectangle(cx, 320, 280, 48, 0x16213e, 1)
-                .setStrokeStyle(2, 0xe8e8e8).setDepth(4)
-        );
-
-        this.offerText = this.add.text(cx, 320, '', {
-            fontSize:   '8px',
-            color:      '#e8e8e8',
-            fontFamily: '"Press Start 2P", monospace',
-            wordWrap:   { width: 260, useAdvancedWrap: true },
-            align:      'center',
+            backgroundColor: '#16213e', padding: { x: 6, y: 4 },
+            wordWrap: { width: 300, useAdvancedWrap: true }, align: 'center',
         }).setOrigin(0.5).setDepth(5);
 
-        // ── Hint text (first encounter) ────────────────────────────────────
-        this.hintText = this.add.text(cx, 120, t('boss.hint.decline'), {
-            fontSize:   '8px',
-            color:      '#00ff88',
+        // ── Mood meter ────────────────────────────────────────────────────
+        this.buildMoodMeter(cx);
+
+        // ── Composure hearts + hit pips ───────────────────────────────────
+        this.add.text(16, 96, t('boss.composure'), {
+            fontSize: '6px', color: '#8a92b8',
             fontFamily: '"Press Start 2P", monospace',
+        }).setDepth(5);
+        for (let i = 0; i < MAX_COMPOSURE; i++) {
+            this.hearts.push(this.add.image(24 + i * 22, 120, 'heart').setScale(1.2).setDepth(5));
+        }
+        this.add.text(464, 96, t('boss.hits'), {
+            fontSize: '6px', color: '#8a92b8',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(1, 0).setDepth(5);
+        for (let i = 0; i < HITS_TO_WIN; i++) {
+            this.hitPips.push(
+                this.add.rectangle(464 - (HITS_TO_WIN - 1 - i) * 22, 120, 16, 12, 0x16213e)
+                    .setStrokeStyle(1, 0x00ff88).setDepth(5),
+            );
+        }
+
+        // ── Strike callout ────────────────────────────────────────────────
+        this.strikeText = this.add.text(cx, 360, t('boss.strikeNow'), {
+            fontSize: '8px', color: '#ff4444',
+            fontFamily: '"Press Start 2P", monospace',
+            backgroundColor: '#1a1a2ecc', padding: { x: 4, y: 3 },
         }).setOrigin(0.5).setDepth(6).setVisible(false);
 
-        // ── DECLINE button (Greed phase, y=700) ───────────────────────────
-        this.declineButton = this.add.rectangle(cx, 700, 240, 56, 0x16213e)
-            .setStrokeStyle(2, 0x00ff88)
-            .setDepth(5)
-            .setInteractive({ useHandCursor: true });
+        // ── Player (physics; the arena is its own world) ──────────────────
+        this.physics.world.setBounds(24, 330, 432, 470);
+        this.player = this.physics.add.sprite(cx, 640, 'player_sheet', 2);
+        this.player.setCollideWorldBounds(true).setDepth(4);
 
-        this.declineLabel = this.add.text(cx, 700, t('boss.decline'), {
-            fontSize:   '16px',
-            color:      '#00ff88',
+        // ── Keyboard ──────────────────────────────────────────────────────
+        if (this.input.keyboard) {
+            this.cursors = this.input.keyboard.createCursorKeys();
+            this.wasd = {
+                up:    this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                down:  this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+                left:  this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+                right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+            };
+            const whack = () => InputBus.setAction(Action.WHACK, true);
+            this.input.keyboard.on('keydown-J', whack);
+            this.input.keyboard.on('keydown-SPACE', whack);
+            this.input.keyboard.on('keydown-ENTER', whack);
+        }
+
+        // ── Intro overlay ─────────────────────────────────────────────────
+        const introPanel = this.add.rectangle(0, 0, 480, 854, 0x1a1a2e, 0.92)
+            .setOrigin(0, 0).setDepth(10);
+        const introTitle = this.add.text(cx, 300, t('boss.mrMarket.name'), {
+            fontSize: '24px', color: '#ff4444',
             fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setDepth(6);
-
-        this.declineButton.on('pointerdown', this.handleDecline, this);
-
-        // ── Panic phase — timer text + ACCEPT (BUY LOW!) button ───────────
-        this.timerText = this.add.text(cx, 680, t('boss.timer').replace('{n}', String(PANIC_DURATION_S)), {
-            fontSize:   '8px',
-            color:      '#ff4444',
+        }).setOrigin(0.5).setDepth(11);
+        const introHow = this.add.text(cx, 400, t('boss.howto'), {
+            fontSize: '8px', color: '#e8e8e8',
             fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setDepth(6).setVisible(false);
+            align: 'center', lineSpacing: 8,
+        }).setOrigin(0.5).setDepth(11);
+        this.time.delayedCall(2600, () => {
+            introPanel.setVisible(false);
+            introTitle.setVisible(false);
+            introHow.setVisible(false);
+            this.beginFight();
+        });
 
-        this.acceptButton = this.add.rectangle(cx, 700, 240, 56, 0x16213e)
-            .setStrokeStyle(2, 0x4444ff)
-            .setDepth(5)
-            .setVisible(false)
-            .setInteractive({ useHandCursor: true });
-
-        this.acceptLabel = this.add.text(cx, 700, t('boss.accept'), {
-            fontSize:   '16px',
-            color:      '#00ff88',
-            fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setDepth(6).setVisible(false);
-
-        this.acceptButton.on('pointerdown', this.handleAccept, this);
-
-        // ── Flash text (patience maxed, win, too slow) ────────────────────
-        this.flashText = this.add.text(cx, 427, '', {
-            fontSize:   '16px',
-            color:      '#00ff88',
-            fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setDepth(10).setVisible(false);
-
-        // ── Start intro then greed phase ──────────────────────────────────
-        // Brief 1s pause to let the tint tween settle, then begin
-        this.time.delayedCall(1000, () => this.beginGreedPhase());
+        this.cameras.main.fadeIn(300, 26, 26, 46);
     }
 
-    // ── Greed Phase ──────────────────────────────────────────────────────
+    private buildMoodMeter(cx: number): void {
+        const METER_X = 70, METER_W = 340, METER_Y = 130;
+        this.add.rectangle(cx, METER_Y, METER_W, 18, 0x16213e)
+            .setStrokeStyle(2, 0xe8e8e8).setDepth(5);
+        // strike zone (right end = panic side)
+        const zoneW = METER_W * 0.16;
+        this.add.rectangle(METER_X + METER_W - zoneW / 2, METER_Y, zoneW, 14, 0xff4444, 0.35).setDepth(5);
+        // labels sit UNDER the meter ends (clear of the composure/hits HUD)
+        this.add.text(METER_X, METER_Y + 16, t('boss.meter.greed'), {
+            fontSize: '6px', color: '#00ff88',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(0, 0).setDepth(5);
+        this.add.text(METER_X + METER_W, METER_Y + 16, t('boss.meter.panic'), {
+            fontSize: '6px', color: '#ff4444',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(1, 0).setDepth(5);
+        this.meterKnob = this.add.rectangle(cx, METER_Y, 10, 26, 0xf5c842)
+            .setStrokeStyle(1, 0x1a1a2e).setDepth(6);
+        this.meterKnob.setData('meterX', METER_X);
+        this.meterKnob.setData('meterW', METER_W);
+    }
 
-    private beginGreedPhase(): void {
-        this.phase             = 'greed';
-        this.declinesCount     = 0;
-        this.greedOfferIndex   = 0;
+    // ── Fight loop ────────────────────────────────────────────────────────
 
-        // Restore greed pose (handles re-entry after TOO SLOW! reset from panic)
-        if (this.bossSprite) this.bossSprite.setTexture('boss_mr_market_greed');
+    private beginFight(): void {
+        this.phase = 'fight';
+        this.showTaunt();
+        this.tauntTimer = this.time.addEvent({
+            delay: 3500, loop: true, callback: () => this.showTaunt(),
+        });
+        this.lureTimer = this.time.addEvent({
+            delay: LURE_INTERVAL, loop: true, callback: () => this.spawnLure(),
+        });
+    }
 
-        // Reset tint to greed (0xff4444)
-        this.tweens.add({ targets: this.tintRect, fillColor: 0xff4444, alpha: 0.15, duration: 500 });
-        this.tintRect.setFillStyle(0xff4444);
+    private showTaunt(): void {
+        if (this.phase !== 'fight') return;
+        const state = this.pendulum.state;
+        const key = state === 'panic'
+            ? 'boss_panic_01'
+            : GREED_KEYS[this.tauntIndex++ % GREED_KEYS.length];
+        const entry = this.dialogueData[key] as Array<{ text: string }> | undefined;
+        this.tauntText.setText(Array.isArray(entry) && entry.length ? entry[0].text : '');
+    }
 
-        // Reset phase label color + text
-        this.phaseLabel.setText(t('boss.phase.greed')).setColor('#ff4444');
-        this.tweens.add({ targets: this.phaseLabel, scaleX: 1.3, scaleY: 1.3, duration: 150, yoyo: true });
+    update(_time: number, delta: number): void {
+        if (this.phase !== 'fight') {
+            this.player?.setVelocity(0, 0);
+            return;
+        }
 
-        // Reset state bar ticks (all filled red = greed)
-        for (const tick of this.stateTicks) tick.setFillStyle(0xff4444);
+        this.pendulum.tick(delta);
+        this.updateMoodPresentation();
 
-        // Reset patience segments (all empty)
-        for (const seg of this.patienceSegments) seg.setFillStyle(0x16213e);
+        // ── Movement (same controls as the overworld) ─────────────────────
+        if (!this.joystick) {
+            this.joystick = (this.registry.get('vjoy') as typeof this.joystick) ?? null;
+        }
+        InputBus.update(this.joystick, this.buildMergedCursors());
+        const vx = (InputBus.isActive(Action.MOVE_LEFT) ? -1 : 0) + (InputBus.isActive(Action.MOVE_RIGHT) ? 1 : 0);
+        const vy = (InputBus.isActive(Action.MOVE_UP) ? -1 : 0) + (InputBus.isActive(Action.MOVE_DOWN) ? 1 : 0);
+        const norm = vx !== 0 && vy !== 0 ? Math.SQRT1_2 : 1;
+        this.player.setVelocity(vx * PLAYER_SPEED * norm, vy * PLAYER_SPEED * norm);
+        if (vx !== 0 || vy !== 0) {
+            const dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'left' : 'right') : (vy < 0 ? 'up' : 'down');
+            this.player.anims.play(`player_${dir}`, true);
+        } else {
+            this.player.anims.stop();
+            this.player.setFrame(2); // idle facing up (boss is above)
+        }
 
-        // Show DECLINE button; hide panic UI
-        this.declineButton.setVisible(true);
-        this.declineLabel.setVisible(true);
-        this.timerText.setVisible(false);
-        this.acceptButton.setVisible(false);
-        this.acceptLabel.setVisible(false);
+        // ── Whack poll ────────────────────────────────────────────────────
+        if (InputBus.isActive(Action.WHACK)) {
+            InputBus.setAction(Action.WHACK, false);
+            this.tryWhack();
+        }
 
-        // Show first offer
-        this.showOffer(0);
+        // ── Lure contact ──────────────────────────────────────────────────
+        const now = this.time.now;
+        for (const lure of [...this.lures]) {
+            if (!lure.active) continue;
+            const d = Phaser.Math.Distance.Between(lure.x, lure.y, this.player.x, this.player.y);
+            if (d < 24 && now >= this.invincibleUntil) {
+                this.destroyLure(lure, true);
+                this.loseComposure(t('boss.boughtHigh'));
+            }
+        }
+    }
 
-        // Show first-encounter hint
-        if (!this.hintShown) {
-            this.hintShown = true;
-            this.hintText.setVisible(true);
-            this.hintTimer = this.time.delayedCall(3000, () => {
-                this.hintText.setVisible(false);
+    private updateMoodPresentation(): void {
+        const mood = this.pendulum.mood;
+        const state = this.pendulum.state;
+
+        // meter knob position
+        const mx = this.meterKnob.getData('meterX') as number;
+        const mw = this.meterKnob.getData('meterW') as number;
+        this.meterKnob.x = mx + ((mood + 1) / 2) * mw;
+
+        // backdrop tint drifts with mood (green greed ↔ red panic)
+        this.tintRect.setFillStyle(mood < 0 ? 0x44aa66 : 0xaa4444);
+        this.tintRect.setAlpha(0.05 + Math.abs(mood) * 0.08);
+
+        if (state !== this.prevMoodState) {
+            this.prevMoodState = state;
+            this.strikeText.setVisible(state === 'panic');
+            // baseline scale is 2 (32×48 texture shown at 64×96)
+            if (state === 'panic') {
+                this.bossSprite.setTexture('boss_mr_market_panic').setTint(0xffb0b0);
+                this.tweens.add({ targets: this.bossSprite, scaleX: 1.6, scaleY: 1.6, duration: 250 });
+                this.showTaunt();
+            } else if (state === 'greed') {
+                this.bossSprite.setTexture('boss_mr_market_greed').setTint(0xb8ffc8);
+                this.tweens.add({ targets: this.bossSprite, scaleX: 2.6, scaleY: 2.6, duration: 250 });
+                this.showTaunt();
+            } else {
+                this.bossSprite.clearTint();
+                this.tweens.add({ targets: this.bossSprite, scaleX: 2, scaleY: 2, duration: 250 });
+            }
+        }
+        // nervous jitter grows with panic
+        if (state === 'panic') {
+            this.bossSprite.x = BOSS_X + Math.sin(this.time.now / 40) * 3;
+        } else {
+            this.bossSprite.x = BOSS_X;
+        }
+    }
+
+    // ── Whacking ──────────────────────────────────────────────────────────
+
+    private tryWhack(): void {
+        if (this.whackCooldown) return;
+        this.whackCooldown = true;
+        this.time.delayedCall(WHACK_COOLDOWN, () => { this.whackCooldown = false; });
+
+        // swing overlay toward the boss
+        const angle = Math.atan2(BOSS_Y - this.player.y, BOSS_X - this.player.x);
+        const swing = this.add.sprite(
+            this.player.x + Math.cos(angle) * 22,
+            this.player.y + Math.sin(angle) * 22,
+            'newspaper_swing',
+        ).setFlipX(Math.cos(angle) < 0).setDepth(5);
+        swing.play('newspaper_swing_anim');
+        swing.on('animationcomplete', () => swing.destroy());
+        AudioService.playSfx(this, 'whack');
+
+        const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, BOSS_X, BOSS_Y + 20);
+        if (dist > STRIKE_RANGE) return;   // whiff — no reach
+
+        if (this.pendulum.canStrike()) {
+            this.landHit();
+        } else if (this.pendulum.state === 'greed') {
+            // bought high — punished
+            this.loseComposure(t('boss.boughtHigh'));
+        }
+        // neutral: bounces off, nothing happens
+    }
+
+    private landHit(): void {
+        this.hits += 1;
+        AudioService.playSfx(this, 'boss_hit');
+        this.cameras.main.shake(100, 0.008);
+        this.hitPips[this.hits - 1]?.setFillStyle(0x00ff88);
+        this.floatLabel(BOSS_X, BOSS_Y - 60, t('boss.hitLanded'), '#00ff88');
+        // white impact flash — Phaser 4 splits tint color and mode
+        this.bossSprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        this.time.delayedCall(90, () => {
+            this.bossSprite.setTintMode(Phaser.TintModes.MULTIPLY);
+            if (this.pendulum.state === 'panic') this.bossSprite.setTint(0xffb0b0);
+            else this.bossSprite.clearTint();
+        });
+        this.pendulum.speedUp();
+        if (this.hits >= HITS_TO_WIN) this.win();
+    }
+
+    private loseComposure(label: string): void {
+        if (this.time.now < this.invincibleUntil || this.phase !== 'fight') return;
+        this.invincibleUntil = this.time.now + IFRAME_MS;
+        this.composure -= 1;
+        AudioService.playSfx(this, 'hurt');
+        this.cameras.main.shake(120, 0.006);
+        this.hearts[this.composure]?.setAlpha(0.2);
+        this.floatLabel(this.player.x, this.player.y - 30, label, '#ff4444');
+        this.tweens.add({ targets: this.player, alpha: 0.2, duration: 90, yoyo: true, repeat: 4 });
+        if (this.composure <= 0) this.shakenOut();
+    }
+
+    // ── FOMO lures ────────────────────────────────────────────────────────
+
+    private spawnLure(): void {
+        if (this.phase !== 'fight' || this.pendulum.state !== 'greed') return;
+        const lure = this.physics.add.image(
+            BOSS_X + (this.lures.length % 2 === 0 ? -30 : 30), BOSS_Y + 30, 'coin');
+        lure.setScale(1.6).setDepth(3).setTint(0xffe28a);
+        (lure.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+        const angle = Math.atan2(this.player.y - lure.y, this.player.x - lure.x);
+        lure.setVelocity(Math.cos(angle) * LURE_SPEED, Math.sin(angle) * LURE_SPEED);
+        // shiny pulse — irresistible-looking
+        this.tweens.add({ targets: lure, scaleX: 2, scaleY: 2, duration: 240, yoyo: true, repeat: -1 });
+        this.lures.push(lure);
+        this.time.delayedCall(LURE_LIFE_MS, () => this.destroyLure(lure, false));
+    }
+
+    private destroyLure(lure: Phaser.Physics.Arcade.Image, popped: boolean): void {
+        if (!lure.active) return;
+        this.lures = this.lures.filter(l => l !== lure);
+        if (popped) {
+            lure.destroy();
+        } else {
+            this.tweens.add({
+                targets: lure, alpha: 0, duration: 200,
+                onComplete: () => lure.destroy(),
             });
         }
     }
 
-    private showOffer(index: number): void {
-        const key = GREED_KEYS[index] as string;
-        const entry = this.dialogueData[key] as Array<{ portrait: string; text: string }> | undefined;
-        const text  = Array.isArray(entry) && entry.length > 0 ? entry[0].text : key;
-        this.offerText.setText(text);
+    private clearLures(): void {
+        for (const lure of [...this.lures]) { if (lure.active) lure.destroy(); }
+        this.lures = [];
     }
 
-    private handleDecline(): void {
-        if (this.phase !== 'greed') return;
+    // ── Outcomes ──────────────────────────────────────────────────────────
 
-        // Dismiss hint on first decline
-        if (this.hintText.visible) {
-            this.hintText.setVisible(false);
-            if (this.hintTimer) { this.hintTimer.remove(); this.hintTimer = null; }
-        }
+    private shakenOut(): void {
+        this.phase = 'shaken';
+        this.clearLures();
+        this.player.setVelocity(0, 0);
 
-        // Button press feedback (scale down)
-        this.tweens.add({
-            targets: [this.declineButton, this.declineLabel],
-            scaleX: 0.95, scaleY: 0.95,
-            duration: 100,
-            yoyo: true,
-        });
-
-        this.declinesCount += 1;
-
-        // Deplete one state tick (right-to-left)
-        const tickIndex = TOTAL_DECLINES - this.declinesCount;
-        if (tickIndex >= 0) this.stateTicks[tickIndex]?.setFillStyle(0x16213e);
-
-        // Fill one patience segment (left-to-right)
-        const segIndex = this.declinesCount - 1;
-        if (segIndex < this.patienceSegments.length) {
-            this.patienceSegments[segIndex]?.setFillStyle(0x00ff88);
-        }
-
-        if (this.declinesCount >= TOTAL_DECLINES) {
-            // All declines done — transition to panic
-            this.declineButton.disableInteractive();
-            this.showFlash(t('boss.patienceFull'), '#00ff88', 1000, () => this.beginPanicPhase());
-        } else {
-            // Advance to next offer
-            this.greedOfferIndex = Math.min(this.greedOfferIndex + 1, GREED_KEYS.length - 1);
-            this.showOffer(this.greedOfferIndex);
-        }
-    }
-
-    // ── Panic Phase ──────────────────────────────────────────────────────
-
-    private beginPanicPhase(): void {
-        this.phase = 'panic';
-        this.panicCountdown = PANIC_DURATION_S;
-
-        // Swap tint to panic (0x4444ff)
-        this.tintRect.setFillStyle(0x4444ff);
-        this.tweens.add({ targets: this.tintRect, alpha: 0.15, duration: 500 });
-
-        // Swap boss sprite to panic pose (add.image supports setTexture without upgrading to add.sprite)
-        this.bossSprite.setTexture('boss_mr_market_panic');
-
-        // Update phase label
-        this.phaseLabel.setText(t('boss.phase.panic')).setColor('#4444ff');
-        this.tweens.add({ targets: this.phaseLabel, scaleX: 1.3, scaleY: 1.3, duration: 150, yoyo: true });
-
-        // Show panic offer text
-        const panicEntry = this.dialogueData['boss_panic_01'] as Array<{ portrait: string; text: string }> | undefined;
-        const panicText  = Array.isArray(panicEntry) && panicEntry.length > 0 ? panicEntry[0].text : 'boss_panic_01';
-        this.offerText.setText(panicText);
-
-        // Hide DECLINE; show BUY LOW! + timer
-        this.declineButton.setVisible(false);
-        this.declineLabel.setVisible(false);
-        this.timerText.setVisible(true).setText(t('boss.timer').replace('{n}', String(this.panicCountdown)));
-        this.acceptButton.setVisible(true).setInteractive({ useHandCursor: true });
-        this.acceptLabel.setVisible(true);
-
-        // Start 3s countdown.
-        // CR-06 fix: Phaser repeat:N fires N+1 times (first trigger + N repeats).
-        // Using repeat:PANIC_DURATION_S-1 fires exactly PANIC_DURATION_S times.
-        this.panicTimer = this.time.addEvent({
-            delay: 1000,
-            repeat: PANIC_DURATION_S - 1,
-            callback: () => {
-                this.panicCountdown -= 1;
-                this.timerText.setText(t('boss.timer').replace('{n}', String(Math.max(0, this.panicCountdown))));
-                if (this.panicCountdown <= 0) {
-                    this.handlePanicExpiry();
-                }
-            },
-        });
-    }
-
-    private handleAccept(): void {
-        if (this.phase !== 'panic') return;
-
-        // Cancel panic timer
-        if (this.panicTimer) { this.panicTimer.remove(); this.panicTimer = null; }
-
-        this.phase = 'done';
-
-        // BUY LOW! win flash then emit BOSS_DEFEATED
-        const winFlash = this.add.text(this.scale.width / 2, 427, t('boss.winFlash'), {
-            fontSize:   '24px',
-            color:      '#00ff88',
+        const cx = this.scale.width / 2;
+        const panel = this.add.rectangle(0, 0, 480, 854, 0x1a1a2e, 0.9).setOrigin(0, 0).setDepth(10);
+        const title = this.add.text(cx, 380, t('boss.shakenOut'), {
+            fontSize: '24px', color: '#ff4444',
             fontFamily: '"Press Start 2P", monospace',
-        }).setOrigin(0.5).setDepth(10);
+        }).setOrigin(0.5).setDepth(11);
+        const lesson = this.add.text(cx, 440, t('boss.shakenLesson'), {
+            fontSize: '8px', color: '#e8e8e8',
+            fontFamily: '"Press Start 2P", monospace',
+            align: 'center', lineSpacing: 6,
+        }).setOrigin(0.5).setDepth(11);
 
-        this.tweens.add({ targets: winFlash, alpha: 0, duration: 1000, delay: 500,
-            onComplete: () => winFlash.destroy(),
+        this.time.delayedCall(2200, () => {
+            panel.destroy(); title.destroy(); lesson.destroy();
+            // fresh, fair retry — no coin loss, full composure, slow pendulum
+            this.hits = 0;
+            this.composure = MAX_COMPOSURE;
+            this.pendulum = new MoodPendulum();
+            this.prevMoodState = 'neutral';
+            for (const h of this.hearts) h.setAlpha(1);
+            for (const p of this.hitPips) p.setFillStyle(0x16213e);
+            this.player.setPosition(cx, 640);
+            this.phase = 'fight';
+        });
+    }
+
+    private win(): void {
+        this.phase = 'done';
+        this.clearLures();
+        if (this.lureTimer)  { this.lureTimer.remove();  this.lureTimer = null; }
+        if (this.tauntTimer) { this.tauntTimer.remove(); this.tauntTimer = null; }
+        this.player.setVelocity(0, 0);
+        this.strikeText.setVisible(false);
+
+        AudioService.playSfx(this, 'win');
+        this.cameras.main.shake(200, 0.006);
+
+        // the market corrects: Mr. Market deflates
+        this.bossSprite.clearTint();
+        this.tweens.add({
+            targets: this.bossSprite,
+            scaleX: 1.2, scaleY: 1.4, y: BOSS_Y + 40, angle: 8,
+            duration: 900, ease: 'Quad.easeIn',
         });
 
-        // patienceBonus = number of declines completed (max TOTAL_DECLINES)
-        const patienceBonus = this.declinesCount;
+        const winFlash = this.add.text(this.scale.width / 2, 427, t('boss.win'), {
+            fontSize: '24px', color: '#00ff88',
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(0.5).setDepth(10).setScale(0);
+        this.tweens.add({ targets: winFlash, scaleX: 1, scaleY: 1, duration: 300, ease: 'Back.easeOut' });
 
-        // PRE-GENERATE the share card Blob NOW (RESEARCH Pitfall 4).
-        // The Blob must be cached before the SHARE WISDOM button appears so that
-        // the tap handler can call navigator.share() in the user-gesture call stack
-        // with no preceding await — iOS requires share() be called synchronously in
-        // the gesture call stack (no async gap between tap and share()).
-        // We pass the wisdom quote string from the dialogue data.
+        // Pre-generate the share card Blob NOW (iOS: navigator.share must run in
+        // the tap's call stack later — the Blob has to be cached before that).
         const wisdomQuote = typeof this.dialogueData['boss_01_wisdom_quote'] === 'string'
             ? (this.dialogueData['boss_01_wisdom_quote'] as string)
             : '';
-        // Fire-and-forget: prepareShareCard caches the Blob internally in ShareService.
-        // No await here — the 1s delayedCall gives enough time for the async cache to fill
-        // before the SHARE WISDOM button is tapped (the level-complete screen takes ~2s to appear).
         void prepareShareCard(this.game, wisdomQuote);
 
-        this.time.delayedCall(1000, () => {
+        // patienceBonus = composure kept (1-3) — patience literally paid
+        const patienceBonus = Math.max(1, this.composure);
+        this.time.delayedCall(1400, () => {
             GameEvents.emit(Events.BOSS_DEFEATED, { patienceBonus });
         });
     }
 
-    private handlePanicExpiry(): void {
-        if (this.phase !== 'panic') return;
-        if (this.panicTimer) { this.panicTimer.remove(); this.panicTimer = null; }
+    // ── Helpers ───────────────────────────────────────────────────────────
 
-        // Hide panic button
-        this.acceptButton.disableInteractive();
-        this.timerText.setVisible(false);
-
-        // Screen flash (#ff4444 alpha 0.4 for 200ms)
-        const screenFlash = this.add.rectangle(0, 0, 480, 854, 0xff4444)
-            .setOrigin(0, 0).setAlpha(0.4).setDepth(9);
-        this.time.delayedCall(200, () => screenFlash.destroy());
-
-        // TOO SLOW! message for 2 seconds, then reset
-        this.showFlash(t('boss.tooSlow'), '#ff4444', 2000, () => {
-            // Re-enable DECLINE button and reset to Greed phase
-            this.declineButton.setInteractive({ useHandCursor: true });
-            this.beginGreedPhase();
+    private floatLabel(x: number, y: number, text: string, color: string): void {
+        const label = this.add.text(x, y, text, {
+            fontSize: '10px', color,
+            fontFamily: '"Press Start 2P", monospace',
+        }).setOrigin(0.5).setDepth(8);
+        this.tweens.add({
+            targets: label, y: y - 30, alpha: 0, duration: 800, ease: 'Quad.easeOut',
+            onComplete: () => label.destroy(),
         });
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-
-    private showFlash(text: string, color: string, duration: number, onDone: () => void): void {
-        const cx = this.scale.width / 2;
-        this.flashText.setText(text).setColor(color).setVisible(true);
-        // Bounce flash text to center
-        this.flashText.setPosition(cx, 427);
-        this.time.delayedCall(duration, () => {
-            this.flashText.setVisible(false);
-            onDone();
-        });
+    private buildMergedCursors(): Phaser.Types.Input.Keyboard.CursorKeys | null {
+        if (!this.cursors) return null;
+        if (!this.wasd) return this.cursors;
+        return {
+            up:    { isDown: this.cursors.up.isDown    || this.wasd.up.isDown    } as Phaser.Input.Keyboard.Key,
+            down:  { isDown: this.cursors.down.isDown  || this.wasd.down.isDown  } as Phaser.Input.Keyboard.Key,
+            left:  { isDown: this.cursors.left.isDown  || this.wasd.left.isDown  } as Phaser.Input.Keyboard.Key,
+            right: { isDown: this.cursors.right.isDown || this.wasd.right.isDown } as Phaser.Input.Keyboard.Key,
+            shift: this.cursors.shift,
+            space: this.cursors.space,
+        };
     }
 
     shutdown(): void {
-        // Remove all timers (Pitfall 2)
-        if (this.panicTimer)  { this.panicTimer.remove();  this.panicTimer = null; }
-        if (this.hintTimer)   { this.hintTimer.remove();   this.hintTimer = null; }
-        // Remove all pointer listeners
+        if (this.lureTimer)  { this.lureTimer.remove();  this.lureTimer = null; }
+        if (this.tauntTimer) { this.tauntTimer.remove(); this.tauntTimer = null; }
+        this.clearLures();
+        this.input.keyboard?.removeAllListeners();
         this.input.off('pointerdown');
-        if (this.declineButton) this.declineButton.removeAllListeners();
-        if (this.acceptButton)  this.acceptButton.removeAllListeners();
     }
 }
