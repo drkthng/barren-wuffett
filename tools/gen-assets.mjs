@@ -397,6 +397,115 @@ sprite(join(IMG, 'marker_boss.png'), [
     c.write(join(IMG, 'logo.png'));
 }
 
+// ── Phase 4 (L1E-05): characterful route houses — 48×64, procedurally drawn ──
+// Standard geometry so the scene can place the neighbor at the same spot for
+// every house: door center x=24, door bottom y=58 (5 distinct looks otherwise).
+function drawHouse(path, cfg) {
+    const c = canvas(48, 64);
+    const OUT = hex('#2a2320');
+    const wall = hex(cfg.wall), wallD = hex(cfg.wallShade);
+    const roof = hex(cfg.roof), roofD = hex(cfg.roofShade);
+    const trim = hex(cfg.trim), glass = hex('#9fd8e8'), glassD = hex('#5a9ab0');
+    const doorC = hex(cfg.door);
+
+    // Walls: x 4..43, y roofBase..58
+    const roofBase = cfg.flatRoof ? 18 : 24;
+    for (let y = roofBase; y <= 58; y++) for (let x = 4; x <= 43; x++) {
+        c.set(x, y, (y % 8 < 4) === ((x % 16) < 8) && cfg.pattern ? wallD : wall);
+    }
+    // Wall outline
+    for (let y = roofBase; y <= 58; y++) { c.set(4, y, OUT); c.set(43, y, OUT); }
+    for (let x = 4; x <= 43; x++) c.set(x, 58, OUT);
+
+    if (cfg.flatRoof) {
+        // Flat roof with parapet
+        c.rect(2, 14, 44, 4, roof);
+        for (let x = 2; x <= 45; x++) { c.set(x, 13, OUT); c.set(x, 18, OUT); }
+        c.set(2, 14, OUT); c.set(45, 14, OUT);
+    } else {
+        // Pitched roof: apex (23/24, 8) down to eaves (0/47, 24)
+        for (let y = 8; y <= 24; y++) {
+            const half = Math.floor(((y - 8) / 16) * 24);
+            for (let x = 23 - half; x <= 24 + half; x++) {
+                c.set(x, y, (x < 24 - half + 3) ? roofD : roof);
+            }
+            c.set(23 - half, y, OUT); c.set(24 + half, y, OUT);
+        }
+        for (let x = 0; x <= 47; x++) c.set(x, 24, OUT);
+    }
+    // Chimney on some houses
+    if (cfg.chimney) { c.rect(34, 6, 6, 12, wallD); c.rect(33, 5, 8, 2, OUT); }
+
+    // Door: center x=24 → x 19..29, y 42..57, with frame + knob + step
+    c.rect(18, 41, 13, 1, OUT);
+    c.rect(18, 41, 1, 17, OUT); c.rect(30, 41, 1, 17, OUT);
+    c.rect(19, 42, 11, 16, doorC);
+    c.set(27, 50, hex('#f5c842')); // knob
+    c.rect(17, 58, 15, 2, hex('#8a8478'));  // step
+    // Windows: one each side of the door
+    for (const wx of [8, 35]) {
+        c.rect(wx - 1, 33, 8, 8, OUT);
+        c.rect(wx, 34, 6, 6, glass);
+        c.set(wx + 1, 35, glassD); c.set(wx + 4, 38, glassD);
+        c.rect(wx - 1, 36, 8, 1, OUT); c.rect(wx + 2, 33, 1, 8, OUT);
+        if (cfg.flowerBox) c.rect(wx - 1, 41, 8, 2, hex('#c0392b'));
+    }
+    // Upper window (pitched roofs only)
+    if (!cfg.flatRoof && cfg.atticWindow) {
+        c.rect(21, 14, 6, 6, OUT); c.rect(22, 15, 4, 4, glass);
+    }
+    // Mailbox on a post (right of the step) or porch awning
+    if (cfg.mailbox) {
+        c.rect(38, 50, 2, 8, hex('#6b4a2a'));
+        c.rect(35, 46, 8, 5, hex(cfg.mailboxColor ?? '#c0392b'));
+        c.rect(35, 46, 8, 1, OUT); c.rect(35, 50, 8, 1, OUT);
+        c.set(42, 47, hex('#f5c842'));
+    } else {
+        // Porch awning over the door
+        c.rect(15, 38, 19, 3, trim);
+        c.rect(15, 38, 19, 1, OUT);
+        c.rect(16, 41, 1, 4, OUT); c.rect(32, 41, 1, 4, OUT);
+    }
+    c.write(path);
+}
+drawHouse(join(IMG, 'house_01.png'), { wall: '#c65b4a', wallShade: '#a84836', roof: '#7a4a6a', roofShade: '#5e3852', trim: '#f4ecd8', door: '#5a3a1a', mailbox: true, mailboxColor: '#2e6fa8', pattern: true, chimney: true });
+drawHouse(join(IMG, 'house_02.png'), { wall: '#6a9ac4', wallShade: '#527ba0', roof: '#3a4a6e', roofShade: '#2c3854', trim: '#f4ecd8', door: '#7a3020', mailbox: false, atticWindow: true });
+drawHouse(join(IMG, 'house_03.png'), { wall: '#8fbf6a', wallShade: '#71a050', roof: '#6b4a2a', roofShade: '#523822', trim: '#f4ecd8', door: '#3a2a5a', mailbox: true, flowerBox: true });
+drawHouse(join(IMG, 'house_04.png'), { wall: '#e8d8a8', wallShade: '#c8b888', roof: '#c0392b', roofShade: '#96281c', trim: '#5a3a1a', door: '#2e6fa8', mailbox: false, atticWindow: true, chimney: true });
+drawHouse(join(IMG, 'house_05.png'), { wall: '#9a9aa8', wallShade: '#7c7c8a', roof: '#4a4a58', roofShade: '#38384a', trim: '#f5c842', door: '#6b1f1f', mailbox: true, flatRoof: true, pattern: true });
+
+// Neighbor at the door — 16×16 little townsperson
+sprite(join(IMG, 'neighbor.png'), [
+    '....oooo........',
+    '...ohhhho.......',
+    '..ohhhhhho......',
+    '..ossssssso.....',
+    '..osespseso.....',
+    '..ossssssso.....',
+    '...osmmso.......',
+    '..occccccco.....',
+    '.ochccccchco....',
+    '.ochccccchco....',
+    '..occccccco.....',
+    '...opppppo......',
+    '...oppoppo......',
+    '...oppoppo......',
+    '..oddo..oddo....',
+    '................',
+], { o: '#2a2320', h: '#6b4a2a', s: '#e8b88a', e: '#2a2320', p: '#3a4a6e', m: '#c06a5a', c: '#c9564a', d: '#5a3a1a' });
+
+// Thrown paper — 12×8 rolled newspaper (side view)
+sprite(join(IMG, 'paper_throw.png'), [
+    '............',
+    '..oooooooo..',
+    '.owwwwwwwwo.',
+    'owiwwwwwiwwo',
+    'owwwwiwwwwo.',
+    '.owwwwwwwo..',
+    '..ooooooo...',
+    '............',
+], { o: '#5a5548', w: '#f5f0e1', i: '#8a8478' });
+
 // ═════════════════════════════════════════════════════════════════════════════
 // SFX — synthesized WAVs (22050 Hz mono 16-bit)
 // ═════════════════════════════════════════════════════════════════════════════
@@ -500,6 +609,48 @@ writeWav(join(AUD, 'sfx_streak_bonus.wav'), concat(
     tone({ freq: 1046.5, dur: 0.1, vol: 0.3, decay: 2 }),
     mix(tone({ freq: 1318.51, dur: 0.3, vol: 0.22, decay: 4 }),
         tone({ freq: 1567.98, dur: 0.3, vol: 0.18, decay: 4 })),
+));
+
+// ── Phase 4 SFX ──────────────────────────────────────────────────────────────
+// throw: rising whoosh (noise swelling then decaying)
+{
+    const n = Math.floor(0.16 * RATE);
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+        const tt = i / n;
+        const env = tt < 0.35 ? tt / 0.35 : Math.exp(-6 * (tt - 0.35));
+        out[i] = (rand() * 2 - 1) * 0.35 * env;
+    }
+    writeWav(join(AUD, 'sfx_throw.wav'), out);
+}
+// thunk: porch thud — low sine + tiny click
+writeWav(join(AUD, 'sfx_thunk.wav'), mix(
+    tone({ freq: 110, freqEnd: 70, dur: 0.09, vol: 0.55, wave: 'sine', decay: 8 }),
+    noiseBurst({ dur: 0.03, vol: 0.25, decay: 14 }),
+));
+// miss: soft deflating blip
+writeWav(join(AUD, 'sfx_miss.wav'), tone({ freq: 420, freqEnd: 180, dur: 0.14, vol: 0.22, wave: 'triangle', decay: 5 }));
+// hurt: sharp downward zap (lure contact / bought high)
+writeWav(join(AUD, 'sfx_hurt.wav'), mix(
+    tone({ freq: 640, freqEnd: 140, dur: 0.13, vol: 0.4, wave: 'square', decay: 6 }),
+    noiseBurst({ dur: 0.07, vol: 0.2, decay: 9 }),
+));
+// boss_hit: whack thud + cash-register double ding
+writeWav(join(AUD, 'sfx_boss_hit.wav'), concat(
+    mix(noiseBurst({ dur: 0.07, vol: 0.5, decay: 9 }),
+        tone({ freq: 150, freqEnd: 80, dur: 0.07, vol: 0.5, wave: 'sine', decay: 7 })),
+    tone({ freq: 1318.51, dur: 0.06, vol: 0.3, decay: 3 }),
+    tone({ freq: 1760, dur: 0.12, vol: 0.3, decay: 5 }),
+));
+// win: ascending fanfare + chord
+writeWav(join(AUD, 'sfx_win.wav'), concat(
+    tone({ freq: 523.25, dur: 0.09, vol: 0.3, decay: 2 }),
+    tone({ freq: 659.25, dur: 0.09, vol: 0.3, decay: 2 }),
+    tone({ freq: 783.99, dur: 0.09, vol: 0.3, decay: 2 }),
+    tone({ freq: 1046.5, dur: 0.11, vol: 0.32, decay: 2 }),
+    mix(tone({ freq: 1046.5, dur: 0.45, vol: 0.2, decay: 3 }),
+        tone({ freq: 1318.51, dur: 0.45, vol: 0.18, decay: 3 }),
+        tone({ freq: 1567.98, dur: 0.45, vol: 0.15, decay: 3 })),
 ));
 
 // bgm: gentle 4-bar C-pentatonic loop @ 100bpm, soft triangle lead + low root.

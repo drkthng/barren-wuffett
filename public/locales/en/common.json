@@ -44,7 +44,7 @@
     "minigame.score": "DELIVERIES: {n}/5",
     "minigame.timer": "{n}s",
     "minigame.paperThrow.title": "PAPER ROUTE!",
-    "minigame.paperThrow.instructions": "TAP WHEN THE NEIGHBOR IS AT THEIR DOOR!",
+    "minigame.paperThrow.instructions": "A NEIGHBOR STEPS OUT ON A PORCH.\nTAP THAT HOUSE (OR PRESS 1-5)\nTO THROW A PAPER!\n\n10 PAPERS. 8 DELIVERIES.\nDO NOT WASTE THEM.",
     "minigame.ready": "STARTING IN {n}...",
     "minigame.throwNow": "TAP!",
     "minigame.perfect": "PERFECT!",
@@ -83,5 +83,16 @@
     "shop.item.snack.name": "SNACK",
     "shop.item.snack.desc": "RESTORES ENERGY",
     "trigger.route": "PAPER ROUTE!\nSPACE / TAP",
-    "trigger.boss": "MR. MARKET!\nSPACE / TAP"
+    "trigger.boss": "MR. MARKET!\nSPACE / TAP",
+    "minigame.papers": "PAPERS: {n}",
+    "minigame.delivered": "DONE: {n}/{max}",
+    "minigame.wasted": "WASTED!",
+    "results.title": "ROUTE COMPLETE!",
+    "results.delivered": "DELIVERED",
+    "results.accuracy": "ACCURACY",
+    "results.perfect": "PERFECT THROWS",
+    "results.coins": "COINS EARNED",
+    "results.grade": "GRADE",
+    "results.newBest": "NEW BEST!",
+    "results.continue": "TAP TO CONTINUE"
 }

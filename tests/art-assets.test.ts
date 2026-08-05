@@ -158,6 +158,14 @@ describe('FEEL-02: interactive sprites are real pixel art with exact dimensions'
         ['marker_route',           16,  16],
         ['marker_boss',            16,  16],
         ['logo',                  320, 160],
+        // Phase 4 (L1E-05): characterful route houses + neighbor + paper
+        ['house_01',               48,  64],
+        ['house_02',               48,  64],
+        ['house_03',               48,  64],
+        ['house_04',               48,  64],
+        ['house_05',               48,  64],
+        ['neighbor',               16,  16],
+        ['paper_throw',            12,   8],
     ];
 
     for (const [name, w, h] of sprites) {
@@ -178,6 +186,9 @@ describe('FEEL-03: SFX + BGM are real decodable audio, never stub headers', () =
         'sfx_whack', 'sfx_coin_ding', 'sfx_dog_bite',
         'sfx_purchase', 'sfx_hospital', 'sfx_streak_bonus',
         'bgm_overworld',
+        // Phase 4: set-piece SFX
+        'sfx_throw', 'sfx_thunk', 'sfx_miss',
+        'sfx_hurt', 'sfx_boss_hit', 'sfx_win',
     ];
 
     for (const name of sfx) {

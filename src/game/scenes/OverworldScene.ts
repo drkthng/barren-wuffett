@@ -99,6 +99,8 @@ export class OverworldScene extends Scene {
     private coins = 0;
     private flags: Record<string, boolean> = {};
     private journalUnlocked: string[] = [];
+    // Phase 4 (L1E-05): per-mini-game bests, persisted in SaveState v2
+    private bestScores: Record<string, number> = {};
     private interactKey: Phaser.Input.Keyboard.Key | null = null;
     private pauseKey: Phaser.Input.Keyboard.Key | null = null;
     private currentNpcInRange: NPC | null = null;
@@ -221,6 +223,7 @@ export class OverworldScene extends Scene {
             this.coins = saved.coins;
             this.flags = saved.flags;
             this.journalUnlocked = saved.journalUnlocked ? [...saved.journalUnlocked] : [];
+            this.bestScores = saved.bestScores ? { ...saved.bestScores } : {};
         }
         const startX = saved?.position?.x ?? SPAWN_X;
         const startY = saved?.position?.y ?? SPAWN_Y;
@@ -588,7 +591,11 @@ export class OverworldScene extends Scene {
         this.triggerPrompt?.setVisible(false);
         this.triggerSystem.consume(hit.zone);
         if (hit.target === 'PaperThrowScene') {
-            this.enterMiniGame('PaperThrowScene', { zone: hit.zone });
+            // Phase 4 (L1E-05): pass the saved best so the scene can show NEW BEST!
+            this.enterMiniGame('PaperThrowScene', {
+                zone: hit.zone,
+                bestScore: this.bestScores['paper_route'] ?? 0,
+            });
         } else if (hit.target === 'BossScene') {
             this.enterBoss();
         }
@@ -611,13 +618,19 @@ export class OverworldScene extends Scene {
             this.scene.launch(sceneKey, data);
         });
 
-        GameEvents.once(Events.MINIGAME_COMPLETE, (result: { score: number; perfect: number }) => {
+        GameEvents.once(Events.MINIGAME_COMPLETE, (result: { score: number; perfect: number; delivered?: number }) => {
             this.scene.stop(sceneKey);
             this.scene.wake();
             this.inHandoff = false;
 
             // Apply coin reward via injectable helper — emits COINS_CHANGED so HUD updates
             this.coins = awardMinigameCoins(this.coins, result, (n) => GameEvents.emit(Events.COINS_CHANGED, n));
+
+            // Phase 4 (L1E-05): record the route best (papers delivered in one run)
+            const delivered = result.delivered ?? result.score;
+            if (delivered > (this.bestScores['paper_route'] ?? 0)) {
+                this.bestScores['paper_route'] = delivered;
+            }
 
             // Re-allow re-entry after returning from mini-game
             this.triggerSystem.release('minigame_trigger');
@@ -1045,13 +1058,14 @@ export class OverworldScene extends Scene {
     /** Build current save state from scene fields. */
     buildSaveState(): SaveState {
         return {
-            version:         1,
+            version:         2,
             updatedAt:       Date.now(),
             level:           'level-01',
             position:        { x: this.player.sprite.x, y: this.player.sprite.y },
             flags:           { ...this.flags },
             coins:           this.coins,
             journalUnlocked: [...this.journalUnlocked],
+            bestScores:      { ...this.bestScores },
         };
     }
 

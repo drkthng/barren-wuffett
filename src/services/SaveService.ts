@@ -19,7 +19,9 @@ import { createStore, get, set } from 'idb-keyval';
 // createStore(dbName, storeName) confirmed correct for idb-keyval v6.2.5
 const store = createStore('bw-saves', 'saves');
 
-export const SAVE_VERSION = 1;
+// v2 (Phase 4, L1E-05): adds bestScores — per-mini-game best results
+// (e.g. bestScores['paper_route'] = most papers delivered in one run).
+export const SAVE_VERSION = 2;
 
 export interface SaveState {
     version: number;
@@ -29,6 +31,7 @@ export interface SaveState {
     flags: Record<string, boolean>;
     coins: number;
     journalUnlocked: string[];
+    bestScores: Record<string, number>;
 }
 
 /** Forward-migrate an older save to the current SAVE_VERSION shape. */
@@ -41,6 +44,7 @@ function migrate(raw: Partial<SaveState>): SaveState {
         flags:            raw.flags            ?? {},
         coins:            raw.coins            ?? 0,
         journalUnlocked:  raw.journalUnlocked  ?? [],
+        bestScores:       raw.bestScores       ?? {},   // v1 → v2
     };
 }
 

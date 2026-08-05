@@ -61,6 +61,7 @@ describe('SaveService — save then load (same session)', () => {
             flags:            { npc_grandpa_met: true },
             coins:            15,
             journalUnlocked:  [],
+            bestScores:      {},
         };
         await SaveService.save(state);
         const loaded = await SaveService.load();
@@ -103,6 +104,54 @@ describe('SaveService — schema migration (v0 → v1)', () => {
     });
 });
 
+describe('SaveService — schema migration (v1 → v2, Phase 4 bestScores)', () => {
+    beforeEach(() => {
+        vi.resetModules();
+        installFakeIndexedDB();
+    });
+    afterEach(() => vi.resetModules());
+
+    it('a v1 save (no bestScores) migrates to v2 with bestScores = {}', async () => {
+        const { createStore, set } = await import('idb-keyval');
+        const oldStore = createStore('bw-saves', 'saves');
+        await set('slot_1', {
+            version:         1,
+            updatedAt:       123,
+            level:           'level-01',
+            position:        { x: 96, y: 128 },
+            flags:           { upgrade_helmet: true },
+            coins:           40,
+            journalUnlocked: ['journal_01_patience'],
+        }, oldStore);
+
+        const { SaveService, SAVE_VERSION } = await import('../src/services/SaveService.js');
+        const loaded = await SaveService.load();
+        expect(SAVE_VERSION).toBe(2);
+        expect(loaded?.version).toBe(2);
+        expect(loaded?.bestScores).toEqual({});
+        // v1 data survives untouched
+        expect(loaded?.coins).toBe(40);
+        expect(loaded?.flags).toEqual({ upgrade_helmet: true });
+        expect(loaded?.journalUnlocked).toEqual(['journal_01_patience']);
+    });
+
+    it('bestScores round-trips through save()/load()', async () => {
+        const { SaveService } = await import('../src/services/SaveService.js');
+        await SaveService.save({
+            version:         0,
+            updatedAt:       0,
+            level:           'level-01',
+            position:        { x: 96, y: 128 },
+            flags:           {},
+            coins:           0,
+            journalUnlocked: [],
+            bestScores:      { paper_route: 7 },
+        });
+        const loaded = await SaveService.load();
+        expect(loaded?.bestScores).toEqual({ paper_route: 7 });
+    });
+});
+
 describe('SaveService — CR-08 regression: journalUnlocked persists through save/load', () => {
     beforeEach(() => {
         vi.resetModules();
@@ -120,6 +169,7 @@ describe('SaveService — CR-08 regression: journalUnlocked persists through sav
             flags:           { boss_01_defeated: true },
             coins:           30,
             journalUnlocked: ['journal_01_patience'],
+            bestScores:      {},
         };
         await SaveService.save(state);
         const loaded = await SaveService.load();
@@ -136,6 +186,7 @@ describe('SaveService — CR-08 regression: journalUnlocked persists through sav
             flags:           {},
             coins:           0,
             journalUnlocked: [],
+            bestScores:      {},
         };
         await SaveService.save(state);
         const loaded = await SaveService.load();
@@ -184,6 +235,7 @@ describe('SaveService — Phase 3 upgrade flags (L1E-04)', () => {
             },
             coins:           42,
             journalUnlocked: [],
+            bestScores:      {},
         };
         await SaveService.save(state);
         const loaded = await SaveService.load();
@@ -207,6 +259,7 @@ describe('SaveService — Phase 3 upgrade flags (L1E-04)', () => {
             flags:           {},  // snack never written — verifies applyPurchase contract
             coins:           5,
             journalUnlocked: [],
+            bestScores:      {},
         };
         await SaveService.save(state);
         const loaded = await SaveService.load();
