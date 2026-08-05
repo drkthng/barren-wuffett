@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 03.1 (Level 1 — Game Feel: Zelda Camera, Juice & Repair) — CODE COMPLETE (both plans), human phone UAT pending
-Plan: 2 of 2 — DONE (commits 6ad2e4d, 4ac171a on branch gsd/phase-03.1-level-1-game-feel-zelda-pass)
-Status: Zelda camera (zoom 3 + follow), all placeholder art/audio replaced (generated via tools/gen-assets.mjs), 5 economy-loop bugs fixed with regression tests (196 green), set pieces enter via marker + confirm prompt, bushes regrow, gate pocket fenced+sealed. Verified headless (Playwright): zero console errors, whack single-award, no trigger hijack, gate impassable until purchase.
-Last activity: 2026-08-04 -- Phase 3.1 executed end-to-end (audit → plans → code → verification)
+Phase: 04 (Level 1 — Set Pieces) — CODE COMPLETE (both plans), human phone UAT pending (together with 3.1)
+Plan: 2 of 2 — DONE (commits e4b8487, f102f07 on branch gsd/phase-04-level-1-set-pieces, stacked on 3.1's branch)
+Status: Paper route rebuilt (5 characterful generated houses, real aiming via tap-house/1-5 keys, 10-papers-for-8 accuracy stakes, results splash with grade + NEW BEST via SaveState v2 bestScores). Mr. Market rebuilt as the Mood Pendulum (visible greed↔panic meter, FOMO lures, whack-in-panic strike windows, composure + SHAKEN OUT fair retry, same controls as overworld). 227 tests green; both set pieces verified headless end-to-end incl. the win → LEVEL_COMPLETE flow with the overworld properly paused.
+Last activity: 2026-08-05 -- Phase 4 executed end-to-end (plans → code → headless verification)
 
-Progress: [████░░░░░░] 40% (4/10 phases; 3.1 awaiting human UAT)
+Progress: [█████░░░░░] 50% (5/10 phases; 3.1 + 4 awaiting human UAT)
 
 ## Performance Metrics
 

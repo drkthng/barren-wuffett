@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Visual Pass — Cozy Pixel Art (Level 1)** *(INSERTED)* - Replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0), auto-tiled terrain, and animated character/NPC/boss sprites — no mechanics changes (completed 2026-06-14)
 - [x] **Phase 3: Level 1 — The Newspaper Verb & Economy** - Rolled-up-newspaper whack verb, bush/chore coin economy with fair deterministic drops, dog hazard, and a shop of permanent upgrades — the explore→earn→spend loop (completed 2026-06-15, SC-1..SC-5 human verification pending)
 - [ ] **Phase 3.1: Level 1 — Game Feel: Zelda Camera, Juice & Repair** *(INSERTED 2026-08-04)* - Zoomed follow-camera (Zelda scale), real art for every placeholder (bushes/swing/button/icons/logo), real SFX, juice (shake/squash/fades), and repair of the five economy-loop bugs found in the feel audit — before Phase 4 builds set pieces on a broken base
-- [ ] **Phase 4: Level 1 — Set Pieces** - Paper-route mini-game glow-up (characterful houses + score splash) and the Mr. Market "Mood Pendulum" boss redesign (read greed/panic, not a linear menu)
+- [x] **Phase 4: Level 1 — Set Pieces** - Paper-route mini-game glow-up (characterful houses + score splash) and the Mr. Market "Mood Pendulum" boss redesign (read greed/panic, not a linear menu) (code complete 2026-08-05; human phone UAT pending with 3.1)
 - [ ] **Phase 5: Level 1 — Story & Heart** - The 7-beat young-Barren story spine: new NPCs, cutscenes, Count-the-Caps + Pinball-Snowball hustle mini-games, and hidden Investment Journal collectible pages
 - [ ] **Phase 6: Levels 2-3** - Remaining two levels using the ContentRegistry/manifest pattern with no engine code changes, each with a boss + genre-accent mini-game
 - [ ] **Phase 7: Funnel & Backend** - Supabase cloud-save, Brevo double opt-in, GDPR consent, Investment Journal wiring, and cookieless analytics — end-to-end tested (moved to the end: entertainment first, funnel second)
@@ -188,7 +188,17 @@ Plans:
   4. The boss is non-linear and fair — telegraphed, readable, survivable, recoverable on a miss — and winning rewards reading his mood (buy-fear / sell-greed) over a fixed sequence
   5. Defeating the boss flows into the existing Level Complete / share-card path with the Barren victory art
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+**Wave 1**
+
+- [x] 04-01-PLAN.md — Paper-route glow-up: 5 generated characterful houses, real aiming (tap house / keys 1-5), limited papers, RouteScoring seam, results splash + NEW BEST via SaveState v2 bestScores (commit e4b8487)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [x] 04-02-PLAN.md — Mood Pendulum boss: MoodPendulum pure seam, arena movement + whack (same controls), FOMO lures, strike windows, composure + SHAKEN OUT retry, win → existing share/level-complete flow (commit f102f07)
+
 **UI hint**: yes
 
 ### Phase 5: Level 1 — Story & Heart
@@ -266,7 +276,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 3.1 → 4 → 5 → 6
 | 2.1. Visual Pass — Cozy Pixel Art *(INSERTED)* | 3/3 | Complete | 2026-06-14 |
 | 3. Level 1 — The Newspaper Verb & Economy | 4/4 | Complete (human SC-1..5 superseded by feel audit → 3.1) | 2026-06-15 |
 | 3.1. Game Feel: Zelda Camera, Juice & Repair *(INSERTED)* | 2/2 | Code complete — human phone UAT pending | 2026-08-04 |
-| 4. Level 1 — Set Pieces | 0/TBD | Not started | - |
+| 4. Level 1 — Set Pieces | 2/2 | Code complete — human phone UAT pending | 2026-08-05 |
 | 5. Level 1 — Story & Heart | 0/TBD | Not started | - |
 | 6. Levels 2-3 | 0/TBD | Not started | - |
 | 7. Funnel & Backend | 0/TBD | Not started | - |

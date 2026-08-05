@@ -33,8 +33,8 @@
 - [x] **L1E-02**: Whackables drop coins/items via a fair deterministic 8-slot prize-pack (no long droughts); the first bush always drops a coin; a HUD "snowball" coin counter tracks the running total (Phase 3)
 - [x] **L1E-03**: The patrolling dog is a non-lethal hazard — contact causes knockback + brief i-frames + a "hospital" respawn with a small coin fee and loss of the bush-whacking streak bonus; never a death screen (Phase 3)
 - [x] **L1E-04**: A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock that gates a new town area, a cheap consumable); each purchase is felt for the rest of Level 1, no forced grinding (Phase 3)
-- [ ] **L1E-05**: The paper-route mini-game is restyled with characterful house targets and ends on an explicit results splash (papers delivered, accuracy %, coins, grade, NEW BEST) (Phase 4)
-- [ ] **L1E-06**: Mr. Market is redesigned as the "Mood Pendulum" boss — a visible greed↔panic meter, damaging FOMO lures, and a strike-window on panic; non-linear, readable, fair; reuses the newspaper-whack verb with no new mid-fight controls (Phase 4)
+- [x] **L1E-05**: The paper-route mini-game is restyled with characterful house targets and ends on an explicit results splash (papers delivered, accuracy %, coins, grade, NEW BEST) (Phase 4)
+- [x] **L1E-06**: Mr. Market is redesigned as the "Mood Pendulum" boss — a visible greed↔panic meter, damaging FOMO lures, and a strike-window on panic; non-linear, readable, fair; reuses the newspaper-whack verb with no new mid-fight controls (Phase 4)
 - [ ] **L1E-07**: Level 1 plays a multi-beat young-Barren story spine (The Spark → first stock) delivered via skippable, i18n-ready cutscenes/dialogue that give the boss motivation (Phase 5)
 - [ ] **L1E-08**: New parody NPCs (Dottie, Donno, Barber Bristle, Old Penny) with distinct sprites + dialogue drive specific story beats; all parody-safe — no real names/brands/likenesses (Phase 5)
 - [ ] **L1E-09**: At least two story mini-games ship — Count-the-Caps and the Pinball Snowball (reinvest-for-passive-income compounding loop) — as isolated scenes; hidden Investment Journal collectible pages are scattered in Level 1 (content-only, no backend) and unlock a reward (Phase 5)
@@ -43,12 +43,12 @@
 
 > Source: `.planning/research/level-1-feel-audit.md` — root-cause audit of why the built game doesn't feel like the intended Zelda-light adventure
 
-- [ ] **FEEL-01**: The overworld plays at Zelda scale — camera zoomed to ~10 tiles across, following the player with a deadzone through a town that spans multiple screens; HUD/overlays unaffected; player cannot leave the map bounds
-- [ ] **FEEL-02**: Every interactive object renders as real pixel art — no 1×1/flat placeholder textures anywhere (bushes, swing animation, whack button, shop item icons, menu logo); whackable bushes are visually distinct from decorative ones
-- [ ] **FEEL-03**: The core loop is audible — real SFX for whack, coin, dog bite, purchase, hospital, streak; mini-game and boss scenes emit SFX; music/SFX toggles govern real audio
-- [ ] **FEEL-04**: Actions have juice — camera shake on whack hits, bush squash/pop, fade transitions between scenes (including a hospital fade instead of an instant teleport); no hard cuts
-- [ ] **FEEL-05**: The economy loop is mechanically correct — one whack = exactly one prize roll; the newspaper upgrade genuinely enlarges the hit area; all 14 bushes are reachable (none inside collision tiles); the traversal gate actually blocks; the level-complete screen shows exactly once and pauses the world; movement speed is direction-normalized
-- [ ] **FEEL-06**: Set pieces are entered intentionally — visible in-world markers with a confirm prompt (tap / interact key) replace invisible walk-over hijack zones; bushes regrow over time so the shop's big-ticket item is affordable without exploits
+- [x] **FEEL-01**: The overworld plays at Zelda scale — camera zoomed to ~10 tiles across, following the player with a deadzone through a town that spans multiple screens; HUD/overlays unaffected; player cannot leave the map bounds
+- [x] **FEEL-02**: Every interactive object renders as real pixel art — no 1×1/flat placeholder textures anywhere (bushes, swing animation, whack button, shop item icons, menu logo); whackable bushes are visually distinct from decorative ones
+- [x] **FEEL-03**: The core loop is audible — real SFX for whack, coin, dog bite, purchase, hospital, streak; mini-game and boss scenes emit SFX; music/SFX toggles govern real audio
+- [x] **FEEL-04**: Actions have juice — camera shake on whack hits, bush squash/pop, fade transitions between scenes (including a hospital fade instead of an instant teleport); no hard cuts
+- [x] **FEEL-05**: The economy loop is mechanically correct — one whack = exactly one prize roll; the newspaper upgrade genuinely enlarges the hit area; all 14 bushes are reachable (none inside collision tiles); the traversal gate actually blocks; the level-complete screen shows exactly once and pauses the world; movement speed is direction-normalized
+- [x] **FEEL-06**: Set pieces are entered intentionally — visible in-world markers with a confirm prompt (tap / interact key) replace invisible walk-over hijack zones; bushes regrow over time so the shop's big-ticket item is affordable without exploits
 
 ### Save & Progress
 
@@ -136,14 +136,14 @@
 | L1E-02 | Phase 3 | Complete |
 | L1E-03 | Phase 3 | Complete |
 | L1E-04 | Phase 3 | Complete |
-| FEEL-01 | Phase 3.1 | Pending |
-| FEEL-02 | Phase 3.1 | Pending |
-| FEEL-03 | Phase 3.1 | Pending |
-| FEEL-04 | Phase 3.1 | Pending |
-| FEEL-05 | Phase 3.1 | Pending |
-| FEEL-06 | Phase 3.1 | Pending |
-| L1E-05 | Phase 4 | Pending |
-| L1E-06 | Phase 4 | Pending |
+| FEEL-01 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| FEEL-02 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| FEEL-03 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| FEEL-04 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| FEEL-05 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| FEEL-06 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
+| L1E-05 | Phase 4 | Complete (2026-08-05, human UAT pending) |
+| L1E-06 | Phase 4 | Complete (2026-08-05, human UAT pending) |
 | L1E-07 | Phase 5 | Pending |
 | L1E-08 | Phase 5 | Pending |
 | L1E-09 | Phase 5 | Pending |
