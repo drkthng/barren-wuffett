@@ -2,6 +2,15 @@ import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 import { AudioService } from '../../services/AudioService';
 
+/**
+ * Hit area of w × h centred on a Text's own bounds. Phaser hit areas live in the object's
+ * LOCAL top-left space (not origin-relative); the old (-width/2, -22) form shifted every zone
+ * up-left by half its size, so taps on the right half of a label — or just below it — missed.
+ */
+function paddedHitArea(t: Phaser.GameObjects.Text, w: number, h = 44): Phaser.Geom.Rectangle {
+    return new Phaser.Geom.Rectangle((t.width - w) / 2, (t.height - h) / 2, w, h);
+}
+
 export class Settings extends Scene {
     constructor() {
         super('Settings');
@@ -57,12 +66,7 @@ export class Settings extends Scene {
         }).setOrigin(0.5);
 
         impressumText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -impressumText.width / 2,
-                -22,
-                Math.max(impressumText.width, 44),
-                44
-            ),
+            paddedHitArea(impressumText, Math.max(impressumText.width, 44)),
             Phaser.Geom.Rectangle.Contains
         );
         impressumText.on('pointerdown', () => {
@@ -76,12 +80,7 @@ export class Settings extends Scene {
         }).setOrigin(0.5);
 
         datenschutzText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -datenschutzText.width / 2,
-                -22,
-                Math.max(datenschutzText.width, 44),
-                44
-            ),
+            paddedHitArea(datenschutzText, Math.max(datenschutzText.width, 44)),
             Phaser.Geom.Rectangle.Contains
         );
         datenschutzText.on('pointerdown', () => {
@@ -96,12 +95,7 @@ export class Settings extends Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         backText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -backText.width / 2,
-                -22,
-                Math.max(backText.width, 80),
-                44
-            ),
+            paddedHitArea(backText, Math.max(backText.width, 80)),
             Phaser.Geom.Rectangle.Contains
         );
         backText.on('pointerdown', () => {
