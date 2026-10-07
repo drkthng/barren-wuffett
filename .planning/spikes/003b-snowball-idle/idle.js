@@ -13,7 +13,7 @@ import * as E from './econ.js';
 import { SPRITES, dataURL } from '../002-old-barren-cast/cast.js';
 import { ICONS } from './icons.js';
 
-const HANDLE = '@yourhandle';
+const HANDLE = '@Wolfhartvest';
 const GAME_URL = 'https://barren-wuffett.pages.dev';
 const EPOCH = Date.UTC(2026, 9, 1);
 const params = new URLSearchParams(location.search);

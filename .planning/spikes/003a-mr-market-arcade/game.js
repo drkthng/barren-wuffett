@@ -17,7 +17,7 @@ import { SPRITES, renderCanvas, dataURL } from '../002-old-barren-cast/cast.js';
 import { ITEMS } from './items.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const HANDLE = '@yourhandle';               // creator credit — swap for the real handle
+const HANDLE = '@Wolfhartvest';             // creator credit (share text + made-by lines)
 const GAME_URL = 'https://barren-wuffett.pages.dev';
 const YEARS = 60;                           // one career = 60 "years" = 60 s of game time
 const START_VALUE = 10_000;
