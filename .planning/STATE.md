@@ -1,17 +1,16 @@
 ---
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Phase 03 Plan 04 complete — shop overlay + upgrades + traversal gate (Phase 3 L1E-01..04 done)
-last_updated: "2026-06-15T20:14:00Z"
-last_activity: 2026-06-15 -- Phase 03 Plan 04 complete
+gsd_state_version: "1.0"
+milestone: v2.0
+milestone_name: The Barren Wuffett Hub
+status: planning
+last_updated: "2026-10-07T17:51:19.132Z"
+last_activity: 2026-10-07
 progress:
-  total_phases: 9
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
-  percent: 44
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-11)
 
 ## Current Position
 
-Phase: 04 (Level 1 — Set Pieces) — CODE COMPLETE (both plans), human phone UAT pending (together with 3.1)
-Plan: 2 of 2 — DONE (commits e4b8487, f102f07 on branch gsd/phase-04-level-1-set-pieces, stacked on 3.1's branch)
-Status: Paper route rebuilt (5 characterful generated houses, real aiming via tap-house/1-5 keys, 10-papers-for-8 accuracy stakes, results splash with grade + NEW BEST via SaveState v2 bestScores). Mr. Market rebuilt as the Mood Pendulum (visible greed↔panic meter, FOMO lures, whack-in-panic strike windows, composure + SHAKEN OUT fair retry, same controls as overworld). 227 tests green; both set pieces verified headless end-to-end incl. the win → LEVEL_COMPLETE flow with the overworld properly paused.
-Last activity: 2026-08-05 -- Phase 4 executed end-to-end (plans → code → headless verification)
-
-Progress: [█████░░░░░] 50% (5/10 phases; 3.1 + 4 awaiting human UAT)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-07 — Milestone v2.0 started
 
 ## Performance Metrics
 
