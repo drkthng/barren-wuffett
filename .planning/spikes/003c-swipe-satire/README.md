@@ -4,7 +4,7 @@ idea: replayable-barren-pivot
 name: swipe-satire
 type: comparison
 validates: "Given a phone, when you swipe yes/no through career cards as Barren, then the jokes land, a run lasts 2-4 min, the meters create real dilemmas, and endings feel collectible and shareable"
-verdict: PENDING
+verdict: VALIDATED
 related: [002, 003a, 003b]
 tags: [swipe, reigns-like, dom, satire, writing, endings, share, mobile]
 ---
@@ -61,7 +61,9 @@ Title "BARREN, CEO" → TAKE THE JOB. Four pixel meters that fill like liquid; t
 
 ## Results
 
-**PENDING — technically validated; humour/feel decided at the phone checkpoint.**
+**VALIDATED — phone checkpoint passed (2026-10-06, Android Chrome).** The user played all four directions and loves every one. Plan: ONE Barren Wuffett mini-game hub site, with releases staggered as A → B → C and the adventure (D) kept.
+
+**Role: the third release** in the hub, once polished.
 
 Verified: drag reveal (hint dots appear exactly under the touched meters) and swipe commit (PASS); careers end in varied, sensible endings; Chairman Emeritus reachable (~half of thoughtful runs); endings persist across careers; no console errors; readable on a 412-px phone.
 
@@ -73,6 +75,8 @@ Made it to 96 — CHAIRMAN EMERITUS 🏆
 Ending: CHAIRMAN EMERITUS · 1/9 endings found
 made by @yourhandle
 ```
+
+(Captured before the real handle existed. `HANDLE` is now `@Wolfhartvest`.)
 
 Open questions: is it funny to people who don't follow finance; are 33 cards enough before repeats feel stale (Reigns ships hundreds — this format is a writing treadmill, which suits a creator who writes); does the share line need a hook beyond the ending name.
 

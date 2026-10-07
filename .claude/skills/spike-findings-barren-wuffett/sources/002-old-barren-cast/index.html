@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spike 002 — Old Barren cast</title>
+<style>
+  :root { --bg: #15131c; --card: #221f2c; --ink: #ece9f3; --dim: #9a95ab; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, sans-serif; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { color: var(--dim); margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .card { background: var(--card); border-radius: 10px; padding: 12px; }
+  .card h2 { font-size: 13px; margin: 0 0 8px; color: var(--dim); font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .light { background: #e9e4d8; border-radius: 6px; padding: 6px; }
+  .dark { background: #0d0c12; border-radius: 6px; padding: 6px; }
+  img { image-rendering: pixelated; display: block; }
+  .phone { width: 390px; max-width: 100%; margin: 18px 0; background: #2b2738; border-radius: 22px; padding: 14px; }
+  .phone .stage { background: linear-gradient(#6aa5d8, #a8d3ef 60%, #7cbf6a 60%); border-radius: 12px; height: 330px; position: relative; overflow: hidden; }
+  .phone .card2 { background: #f3ead6; color: #2a2232; border-radius: 14px; padding: 14px; margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+  .phone .card2 b { display: block; font-size: 15px; }
+</style>
+</head>
+<body>
+<h1>Spike 002 — the old-Barren cast (code-drawn pixel art)</h1>
+<p class="sub">Every sprite below is generated from shapes in <code>cast.js</code> — no external art. Portraits are 32×32, the arcade body is 20×28.</p>
+
+<div class="phone" id="phone">
+  <div class="stage" id="stage"></div>
+  <div class="card2" id="card2"></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script type="module">
+import { SPRITES, dataURL } from './cast.js';
+
+const LABELS = {
+  barren: 'Barren — grin (hero)', barrenSmile: 'Barren — calm', barrenWorried: 'Barren — uh-oh',
+  charlie: 'Charlie — sidekick', marketNeutral: 'Mr. Market — neutral', marketGreed: 'Mr. Market — GREED',
+  marketPanic: 'Mr. Market — PANIC', cryptoBro: 'Crypto bro', banker: 'Banker', reporter: 'Reporter',
+  barrenIdle: 'Arcade Barren — idle', barrenWalkA: 'Arcade — walk A', barrenWalkB: 'Arcade — walk B',
+  barrenOops: 'Arcade — oops', cherryFizz: 'Cherry Fizz can',
+};
+
+const img = (name, scale) => { const i = new Image(); i.src = dataURL(SPRITES[name], scale); i.alt = name; return i; };
+
+const grid = document.getElementById('grid');
+for (const name of Object.keys(SPRITES)) {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<h2>${LABELS[name] ?? name}</h2>`;
+  const row = document.createElement('div'); row.className = 'row';
+  const big = SPRITES[name].w >= 30 ? 5 : 6;
+  const l = document.createElement('div'); l.className = 'light'; l.append(img(name, big));
+  const d = document.createElement('div'); d.className = 'dark'; d.append(img(name, 2));
+  const one = document.createElement('div'); one.className = 'dark'; one.append(img(name, 1));
+  row.append(l, d, one); card.append(row); grid.append(card);
+}
+
+// phone-size preview: Mr. Market looming over arcade Barren + a swipe-style card
+const stage = document.getElementById('stage');
+const mm = img('marketGreed', 5); Object.assign(mm.style, { position: 'absolute', left: '125px', top: '10px' });
+const bb = img('barrenWalkA', 4); Object.assign(bb.style, { position: 'absolute', left: '150px', top: '210px' });
+const fz = img('cherryFizz', 3); Object.assign(fz.style, { position: 'absolute', left: '60px', top: '120px' });
+stage.append(mm, bb, fz);
+const c2 = document.getElementById('card2');
+c2.append(img('charlie', 3));
+const t = document.createElement('div');
+t.innerHTML = '<b>Charlie</b>"Barren, the crypto kid wants a meeting. I already said no for you."';
+c2.append(t);
+window.__CAST_READY__ = true;
+</script>
+</body>
+</html>

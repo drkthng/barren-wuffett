@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Barren Wuffett vs. Mr. Market — Spike 003a</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet" />
+<!-- Phaser 4.1.0 UMD (spike convention: CDN, no bundling) -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@4.1.0/dist/phaser.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #14121b; overflow: hidden; touch-action: none; }
+  #game { position: fixed; inset: 0; }
+  canvas { image-rendering: pixelated; }
+  .overlay {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(20, 18, 27, 0.92); z-index: 10; padding: 16px; box-sizing: border-box;
+    font-family: 'Pixelify Sans', system-ui, sans-serif; color: #f3eee2;
+  }
+  .overlay.show { display: flex; }
+  .panel { width: 100%; max-width: 400px; text-align: center; }
+  .panel h1 { font-family: 'Press Start 2P', monospace; font-size: 20px; line-height: 1.5; margin: 6px 0; color: #ffd166; }
+  .panel h2 { font-family: 'Press Start 2P', monospace; font-size: 12px; line-height: 1.6; margin: 4px 0 12px; color: #f3eee2; }
+  .panel img { image-rendering: pixelated; }
+  .vs { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 6px; }
+  .vs span { font-family: 'Press Start 2P', monospace; font-size: 14px; color: #ff6b6b; }
+  .daily { font-size: 15px; color: #a9a3bd; margin-bottom: 14px; }
+  .how { text-align: left; background: #221f2c; border-radius: 12px; padding: 10px 12px; margin: 0 auto 16px; font-size: 16px; line-height: 1.35; }
+  .how div { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+  .how span { flex: 1; margin-left: 4px; }
+  .how img { height: 26px; }
+  .btn {
+    display: block; width: 100%; margin: 8px 0; padding: 14px 10px; border: 0; border-radius: 12px; cursor: pointer;
+    font-family: 'Press Start 2P', monospace; font-size: 14px; background: #ffd166; color: #1c1824;
+    box-shadow: 0 4px 0 #b8862a;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b8862a; }
+  .btn.alt { background: #3a3550; color: #f3eee2; box-shadow: 0 4px 0 #24202f; }
+  .credit { margin-top: 14px; font-size: 14px; color: #a9a3bd; }
+  .credit a { color: #a9a3bd; }
+  .big { font-family: 'Press Start 2P', monospace; font-size: 26px; color: #ffffff; margin: 6px 0; }
+  .rank { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #ffd166; margin: 6px 0 10px; line-height: 1.6; }
+  .decades { font-size: 26px; letter-spacing: 3px; margin: 4px 0; }
+  .stats { font-size: 16px; color: #d8d2e6; margin: 6px 0 12px; }
+  .podium { display: flex; align-items: flex-end; justify-content: center; gap: 4px; margin: 4px 0; }
+  .podium img { height: 112px; }
+  .ball { width: 150px; height: 150px; margin: 4px auto; border-radius: 50%; border: 4px solid #1c1824;
+          background: radial-gradient(circle at 35% 30%, #ffffff 0 45%, #dfe9f7 46% 100%); position: relative; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #ffd166; color: #1c1824;
+           font: 14px 'Press Start 2P', monospace; padding: 10px 14px; border-radius: 10px; z-index: 20; display: none; }
+  #about p { font-size: 16px; line-height: 1.4; text-align: left; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+
+<div class="overlay show" id="title">
+  <div class="panel">
+    <div class="vs"><img id="t-barren" alt="Barren" /><span>VS</span><img id="t-market" alt="Mr. Market" /></div>
+    <h1>BARREN WUFFETT<br/>vs. MR. MARKET</h1>
+    <div class="daily" id="t-daily"></div>
+    <div class="how">
+      <div><img id="i-bill" /><img id="i-shop" /><span>When he <b>PANICS</b>, catch the bargains.</span></div>
+      <div><img id="i-bubble" /><img id="i-rocket" /><img id="i-coin" /><span>When he's <b>GREEDY</b>, dodge the shiny junk.</span></div>
+      <div><img id="i-knife" /><span>Never catch a falling knife.</span></div>
+      <div><img id="i-fizz" /><img id="i-charlie" /><span>Cherry Fizz = slow-mo. Charlie says "No" for you.</span></div>
+    </div>
+    <button class="btn" id="play">TAP TO PLAY</button>
+    <div class="credit">Drag anywhere (or ← →) to move · made by <span class="handle"></span> · <a href="#" id="about-link">about</a></div>
+  </div>
+</div>
+
+<div class="overlay" id="end">
+  <div class="panel">
+    <h2 id="e-title">BARREN RETIRES</h2>
+    <div class="podium"><img id="e-barren" alt="" /><div class="ball" id="e-ball"></div></div>
+    <div class="big" id="e-value"></div>
+    <div class="rank" id="e-rank"></div>
+    <div class="decades" id="e-decades"></div>
+    <div class="stats" id="e-stats"></div>
+    <button class="btn" id="share">SHARE</button>
+    <button class="btn alt" id="again">PLAY AGAIN</button>
+    <div class="credit">Same market for everyone today · made by <span class="handle"></span> · <a href="#" id="export">export log</a></div>
+  </div>
+</div>
+
+<div class="overlay" id="about">
+  <div class="panel">
+    <h2>ABOUT</h2>
+    <p>Barren Wuffett is a loving parody game about patience, compounding and a very moody Mr. Market. It is not affiliated with any real person or company, and nothing in it is investment advice.</p>
+    <p>Made by <span class="handle"></span>. More from the maker: <a href="https://www.compoundingknowledge.com" target="_blank" rel="noopener">compoundingknowledge.com</a></p>
+    <button class="btn alt" id="about-close">BACK</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./game.js"></script>
+</body>
+</html>

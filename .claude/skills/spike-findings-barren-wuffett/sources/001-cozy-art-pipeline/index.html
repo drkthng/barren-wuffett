@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Cozy Art Spike — Barren Wuffett</title>
+  <!-- Phaser 4.1.0 UMD (matches project engine). CC0 art: Kenney Tiny Town. -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@4.1.0/dist/phaser.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #2b2b33; overflow: hidden; }
+    #game { width: 100vw; height: 100vh; }
+    canvas { image-rendering: pixelated; }
+    #cap {
+      position: fixed; left: 8px; top: 6px; z-index: 10;
+      font: 12px/1.4 system-ui, sans-serif; color: #fff;
+      text-shadow: 0 1px 2px #000; pointer-events: none; opacity: .85;
+    }
+  </style>
+</head>
+<body>
+  <div id="cap">Cozy-art spike (polished) · world = Kenney Tiny Town (CC0) · auto-tiled paths · character = stand-in<br/>Arrows / WASD — or tap the on-screen pad — to walk.</div>
+  <div id="game"></div>
+  <script>
+    const TILE = 16;
+    const W = 44, H = 32;
+    const SPEED = 72;
+
+    // ---- Kenney Tiny Town indices (12-col packed sheet) ----
+    const GRASS = [0, 1, 2];
+    // rounded dirt patch (auto-tile 3x3): TL TC TR / ML MC MR / BL BC BR
+    const DIRT = {
+      tl: 12, tc: 13, tr: 14, ml: 24, mc: 25, mr: 26, bl: 36, bc: 37, br: 38,
+    };
+    const T = {
+      treeGreenSmall: 4, treeOrangeSmall: 3, bush: 5, mushroom: 29, pebbles: 43,
+      bigGreen: [7, 8, 19, 20],   // tl,tr,bl,br  (lush 2x2)
+      bigOrange: [10, 11, 22, 23],
+      redHouse:  [[52,53,54],[64,65,66],[84,85,86]],
+      greyHouse: [[48,49,50],[60,61,62],[88,89,90]],
+      fenceL: 44, fenceM: 45, fenceR: 46, sign: 83,
+    };
+
+    function buildMaps() {
+      // 1) dirt boolean grid: roads + a plaza/clearing
+      const dirt = Array.from({ length: H }, () => Array(W).fill(false));
+      const setDirtRect = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++)
+          if (y >= 0 && y < H && x >= 0 && x < W) dirt[y][x] = true;
+      };
+      setDirtRect(0, 17, W - 1, 18);     // horizontal road (2 rows)
+      setDirtRect(22, 18, 23, H - 1);    // vertical branch (2 cols)
+      setDirtRect(5, 6, 11, 10);         // plaza / clearing near red house
+
+      // 2) auto-tile the dirt against grass (8-neighbour rounded mapping)
+      const ground = [], deco = [];
+      const isD = (x, y) => x >= 0 && y >= 0 && x < W && y < H && dirt[y][x];
+      for (let y = 0; y < H; y++) {
+        const g = [], d = [];
+        for (let x = 0; x < W; x++) {
+          if (!dirt[y][x]) {
+            const r = Math.random();
+            g.push(r < 0.07 ? GRASS[1] : r < 0.11 ? GRASS[2] : GRASS[0]);
+          } else {
+            const top = !isD(x, y - 1), bot = !isD(x, y + 1),
+                  lef = !isD(x - 1, y), rig = !isD(x + 1, y);
+            let t = DIRT.mc;
+            if (top && lef) t = DIRT.tl; else if (top && rig) t = DIRT.tr;
+            else if (bot && lef) t = DIRT.bl; else if (bot && rig) t = DIRT.br;
+            else if (top) t = DIRT.tc; else if (bot) t = DIRT.bc;
+            else if (lef) t = DIRT.ml; else if (rig) t = DIRT.mr;
+            g.push(t);
+          }
+          d.push(-1);
+        }
+        ground.push(g); deco.push(d);
+      }
+
+      const free = (x, y, w = 1, h = 1) => {
+        for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) {
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) return false;
+          if (deco[yy][xx] !== -1 || dirt[yy][xx]) return false;
+        }
+        return true;
+      };
+      const house = (x, y, def) => {
+        if (!free(x, y, 3, 3)) return;
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) deco[y + r][x + c] = def[r][c];
+      };
+      const bigTree = (x, y, q) => {
+        if (!free(x, y, 2, 2)) return;
+        deco[y][x] = q[0]; deco[y][x + 1] = q[1]; deco[y + 1][x] = q[2]; deco[y + 1][x + 1] = q[3];
+      };
+
+      // 3) deliberate set pieces
+      house(6, 11, T.redHouse);
+      house(31, 7, T.greyHouse);
+      house(15, 23, T.greyHouse);
+      house(34, 22, T.redHouse);
+      // fence + sign by the red house
+      deco[10][6] = T.fenceL; for (let x = 7; x < 11; x++) deco[10][x] = T.fenceM; deco[10][11] = T.fenceR;
+      if (free(13, 11)) deco[11][13] = T.sign;
+      // leafy tree groves (lush)
+      [[2, 3], [3, 26], [38, 3], [40, 27], [25, 4], [9, 27], [19, 6], [28, 26]].forEach(([x, y]) => bigTree(x, y, T.bigGreen));
+      [[5, 27], [36, 14], [12, 4]].forEach(([x, y]) => bigTree(x, y, T.bigOrange));
+
+      // 4) scatter — favour lush bushes; small trees sparingly; light detail
+      const scatter = (idx, n) => {
+        let p = 0, guard = 0;
+        while (p < n && guard++ < n * 60) {
+          const x = 1 + Math.floor(Math.random() * (W - 2));
+          const y = 1 + Math.floor(Math.random() * (H - 2));
+          if (free(x, y)) { deco[y][x] = idx; p++; }
+        }
+      };
+      scatter(T.bush, 30);
+      scatter(T.treeGreenSmall, 10);
+      scatter(T.treeOrangeSmall, 4);
+      scatter(T.mushroom, 6);
+      scatter(T.pebbles, 6);
+
+      return { ground, deco };
+    }
+
+    class Town extends Phaser.Scene {
+      preload() {
+        this.load.image('tt', 'assets/tiny-town/Tilemap/tilemap_packed.png');
+        this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
+      }
+      create() {
+        const { ground, deco } = buildMaps();
+        const gMap = this.make.tilemap({ data: ground, tileWidth: TILE, tileHeight: TILE });
+        gMap.createLayer(0, gMap.addTilesetImage('tt', 'tt', TILE, TILE, 0, 0), 0, 0);
+        const dMap = this.make.tilemap({ data: deco, tileWidth: TILE, tileHeight: TILE });
+        const dLayer = dMap.createLayer(0, dMap.addTilesetImage('tt', 'tt', TILE, TILE, 0, 0), 0, 0);
+        dLayer.setCollisionByExclusion([-1]);
+
+        const mk = (key, s, e) => this.anims.create({
+          key, frames: this.anims.generateFrameNumbers('player', { start: s, end: e }), frameRate: 6, repeat: -1,
+        });
+        mk('down', 0, 1); mk('up', 2, 3); mk('left', 4, 5); mk('right', 6, 7);
+
+        this.player = this.physics.add.sprite(20 * TILE, 12 * TILE, 'player', 0);
+        this.player.body.setSize(8, 6).setOffset(4, 10);
+        this.physics.add.collider(this.player, dLayer);
+
+        const worldW = W * TILE, worldH = H * TILE;
+        this.physics.world.setBounds(0, 0, worldW, worldH);
+        this.player.setCollideWorldBounds(true);
+        const cam = this.cameras.main;
+        cam.setBounds(0, 0, worldW, worldH);
+        cam.startFollow(this.player, true, 0.15, 0.15);
+        cam.roundPixels = true;
+
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
+        this.touch = { x: 0, y: 0 };
+        this.buildPad();
+        this.facing = 'down';
+      }
+      buildPad() {
+        const mkBtn = (x, y, label, dx, dy) => {
+          const b = this.add.rectangle(x, y, 30, 30, 0x000000, 0.35).setScrollFactor(0).setDepth(100).setInteractive();
+          this.add.text(x, y, label, { fontSize: '16px', color: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+          b.on('pointerdown', () => { this.touch.x = dx; this.touch.y = dy; });
+          const clr = () => { if (dx) this.touch.x = 0; if (dy) this.touch.y = 0; };
+          b.on('pointerup', clr); b.on('pointerout', clr);
+        };
+        const bx = 44, by = this.scale.height - 70;
+        mkBtn(bx, by - 26, '▲', 0, -1); mkBtn(bx, by + 26, '▼', 0, 1);
+        mkBtn(bx - 30, by, '◀', -1, 0); mkBtn(bx + 30, by, '▶', 1, 0);
+      }
+      update() {
+        const k = this.keys;
+        let vx = (k.A.isDown || k.LEFT.isDown ? -1 : 0) + (k.D.isDown || k.RIGHT.isDown ? 1 : 0);
+        let vy = (k.W.isDown || k.UP.isDown ? -1 : 0) + (k.S.isDown || k.DOWN.isDown ? 1 : 0);
+        vx += this.touch.x; vy += this.touch.y;
+        vx = Phaser.Math.Clamp(vx, -1, 1); vy = Phaser.Math.Clamp(vy, -1, 1);
+        const len = Math.hypot(vx, vy) || 1;
+        this.player.setVelocity((vx / len) * SPEED, (vy / len) * SPEED);
+        if (vx === 0 && vy === 0) {
+          this.player.anims.stop();
+          this.player.setFrame({ down: 0, up: 2, left: 4, right: 6 }[this.facing]);
+        } else {
+          if (Math.abs(vx) > Math.abs(vy)) this.facing = vx < 0 ? 'left' : 'right';
+          else this.facing = vy < 0 ? 'up' : 'down';
+          this.player.anims.play(this.facing, true);
+        }
+      }
+    }
+
+    new Phaser.Game({
+      type: Phaser.AUTO, parent: 'game', width: 384, height: 256,
+      pixelArt: true, antialias: false, roundPixels: true, backgroundColor: '#6abe57',
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
+      scene: [Town],
+    });
+  </script>
+</body>
+</html>

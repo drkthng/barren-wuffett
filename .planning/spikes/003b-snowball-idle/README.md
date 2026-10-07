@@ -4,7 +4,7 @@ idea: replayable-barren-pivot
 name: snowball-idle
 type: comparison
 validates: "Given a phone, when you reinvest from a gum stand toward an empire while Mr. Market makes irrational offers, then the first 3 minutes feel rewarding, compounding is felt, and a finished life gives a shareable result"
-verdict: PENDING
+verdict: VALIDATED
 related: [002, 003a, 003c]
 tags: [idle, incremental, dom, compounding, daily-seed, share, narration, mobile]
 ---
@@ -62,7 +62,9 @@ Title → "START AT AGE 6". A sticky header: Barren's bubble, AGE, NET WORTH, ca
 
 ## Results
 
-**PENDING — technically validated; fun/feel decided at the phone checkpoint.**
+**VALIDATED — phone checkpoint passed (2026-10-06, Android Chrome).** The user played all four directions and loves every one. Plan: ONE Barren Wuffett mini-game hub site, with releases staggered as A → B → C and the adventure (D) kept.
+
+**Role: the second release** in the hub, once polished.
 
 Verified: seeded daily life deterministic (PASS ×2); autopilot life completes ($79.7–83.2B, ORACLE, first million at 28–30); patience-vs-spending emerges from the economy; no console errors; readable on a 412-px phone.
 
@@ -75,6 +77,8 @@ Gum stand → $79.7B by age 90 · THE ORACLE OF OHAMA
 bought 3 of 3 crashes · refused 3 buyouts · no Fizzcoin
 made by @yourhandle
 ```
+
+(Captured before the real handle existed. `HANDLE` is now `@Wolfhartvest`.)
 
 Open questions: is 5 minutes the right life length (idle fans may want longer + prestige "pass the snowball on"); is the business list too long by age 70; does the narrator carry enough humour.
 

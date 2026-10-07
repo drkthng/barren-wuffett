@@ -4,7 +4,7 @@ idea: replayable-barren-pivot
 name: mr-market-arcade
 type: comparison
 validates: "Given a phone, when you drag Barren under Mr. Market for a 60 s run (catch panic bargains, dodge greedy FOMO junk), then it's fun within 10 s, the snowball visibly compounds, the same date gives the same market, and the end screen produces a share line with the creator's handle"
-verdict: PENDING
+verdict: VALIDATED
 related: [002, 003b, 003c]
 tags: [arcade, phaser, daily-seed, share, compounding, mood-pendulum, mobile]
 ---
@@ -62,7 +62,9 @@ Title: Barren vs. greedy Mr. Market, "Daily Market #N", a four-line how-to with 
 
 ## Results
 
-**PENDING — technically validated; fun/feel decided at the phone checkpoint.**
+**VALIDATED — phone checkpoint passed (2026-10-06, Android Chrome).** The user played all four directions and loves every one. Plan: ONE Barren Wuffett mini-game hub site, with releases staggered as A → B → C and the adventure (D) kept.
+
+**Role: the WINNER of the comparison — it launches first** (the user's call).
 
 Verified: deterministic daily market (PASS ×2); a real skill gradient (~100–10,000× value between strategies) so scores mean something; no console errors; readable on a 412-px phone; desktop works (centred column, arrow keys).
 
@@ -75,6 +77,8 @@ Snowball $540M · 19.9%/yr · VALUE INVESTOR
 47 bargains · 2 bubbles · 2 🔪
 made by @yourhandle
 ```
+
+(Captured before the real handle existed. `HANDLE` is now `@Wolfhartvest`.)
 
 Open questions for the user: is 60 s the right length; is reading item *types* (vs. just the mood) fun or busy; does the snowball-behind-Barren read; do the jokes land without the how-to?
 

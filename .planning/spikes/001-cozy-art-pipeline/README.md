@@ -1,5 +1,6 @@
 ---
 spike: 001
+idea: cozy-visual-pass
 name: cozy-art-pipeline
 type: standard
 validates: "Given one cohesive free pixel-art pack, when wired into a Phaser tilemap + 4-direction animated character, then Level 1 reads as a real cozy 16-bit town and the pack->tileset->anim pipeline is proven in <1h"

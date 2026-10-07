@@ -23,11 +23,12 @@ Pivot exploration after the 2026-10-06 assessment: the Zelda-light story adventu
 **Requirements:**
 
 - **Fun first.** Entertainment is the product; growing the creator's X following already counts as a win.
-- **Credit, not funnel:** a visible "made by @handle" on title/end screens, the @handle in the share text, and the website in an About screen. The handle is the placeholder `@yourhandle` in one config constant until the user supplies it.
+- **Credit, not funnel:** a visible "made by @handle" on title/end screens, the @handle in the share text, and the website in an About screen. The handle is **`@Wolfhartvest`** (given 2026-10-07), kept in one config constant; the website is compoundingknowledge.com (About screen only).
 - **No email capture, no backend, no eToro / wikifolio / portfolio links inside the game.** Barren never endorses or points to anything (parody + endorsement is PITFALLS #4; UWG §5a(4) means subtle must not mean hidden).
 - **The face is the iconic OLD Barren** — white swept-back hair, big thick glasses, suit, Cherry Fizz — with Charlie as sidekick and Mr. Market (greed ↔ panic) as the villain. Parody names only; no real names, likeness, voice or brand marks.
 - **Mobile portrait first, static hosting only (€0).**
 - **Compare by feel on a phone:** all spikes reachable from one LAN hub URL, with the current adventure build (D) linked as the baseline.
+- **One hub site, staggered releases** (user verdict 2026-10-06, after playing all four on Android Chrome: loves every direction). Ship ONE Barren Wuffett mini-game hub site. Launch **A (arcade) first**, then add **B (idle)** and **C (swipe)** as each is polished. Each release is a new X post. **Keep the adventure (D)** in the hub.
 
 ## Spikes
 
@@ -35,6 +36,6 @@ Pivot exploration after the 2026-10-06 assessment: the Zelda-light story adventu
 |---|------|------|------|-----------|---------|------|
 | 001 | cozy-visual-pass | cozy-art-pipeline | standard | One CC0 pack → cozy Phaser town + 4-dir character; pipeline feasible <1h | ✓ VALIDATED | art, phaser, tilemap, pixel-art, cc0, kenney |
 | 002 | replayable-barren-pivot | old-barren-cast | standard | Code-drawn pixel cast (old Barren, Charlie, Mr. Market greed/panic, extras) reads as a loving parody at phone size, no likeness/brands | ✓ VALIDATED | art, pixel-art, characters, procedural, parody |
-| 003a | replayable-barren-pivot | mr-market-arcade | comparison | 60 s one-thumb arcade: catch panic bargains / dodge greedy junk, compounding snowball, deterministic daily market, share line with @handle | ◆ PENDING (feel) | arcade, phaser, daily-seed, share, compounding |
-| 003b | replayable-barren-pivot | snowball-idle | comparison | 5-minute compounding idle life (gum stand → empire), seeded Mr. Market offers, narrated by old Barren, share line with @handle | ◆ PENDING (feel) | idle, incremental, dom, compounding, daily-seed, share |
-| 003c | replayable-barren-pivot | swipe-satire | comparison | Reigns-style swipe career as Barren: 33 joke cards, 4 two-sided meters, 9 collectible endings, share line with @handle | ◆ PENDING (feel) | swipe, reigns-like, dom, satire, endings, share |
+| 003a | replayable-barren-pivot | mr-market-arcade | comparison | 60 s one-thumb arcade: catch panic bargains / dodge greedy junk, compounding snowball, deterministic daily market, share line with @handle | ✓ VALIDATED — WINNER, launches first | arcade, phaser, daily-seed, share, compounding |
+| 003b | replayable-barren-pivot | snowball-idle | comparison | 5-minute compounding idle life (gum stand → empire), seeded Mr. Market offers, narrated by old Barren, share line with @handle | ✓ VALIDATED — second release | idle, incremental, dom, compounding, daily-seed, share |
+| 003c | replayable-barren-pivot | swipe-satire | comparison | Reigns-style swipe career as Barren: 33 joke cards, 4 two-sided meters, 9 collectible endings, share line with @handle | ✓ VALIDATED — third release | swipe, reigns-like, dom, satire, endings, share |
