@@ -113,13 +113,53 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by the roadmapper) | | |
+| INFR-06 | Phase 5 | Pending |
+| INFR-07 | Phase 5 | Pending |
+| INFR-08 | Phase 5 | Pending |
+| INFR-09 | Phase 5 | Pending |
+| INFR-10 | Phase 6 | Pending |
+| SHELL-01 | Phase 5 | Pending |
+| SHELL-02 | Phase 5 | Pending |
+| SHELL-03 | Phase 5 | Pending |
+| SHELL-04 | Phase 5 | Pending |
+| SHELL-05 | Phase 5 | Pending |
+| SHELL-06 | Phase 5 | Pending |
+| SHELL-07 | Phase 5 | Pending |
+| HUB-01 | Phase 5 | Pending |
+| HUB-02 | Phase 5 | Pending |
+| HUB-03 | Phase 5 | Pending |
+| HUB-04 | Phase 5 | Pending |
+| HUB-05 | Phase 5 | Pending |
+| HUB-06 | Phase 5 | Pending |
+| HUB-07 | Phase 5 | Pending |
+| ARC-01 | Phase 6 | Pending |
+| ARC-02 | Phase 6 | Pending |
+| ARC-03 | Phase 6 | Pending |
+| ARC-04 | Phase 6 | Pending |
+| ARC-05 | Phase 6 | Pending |
+| ARC-06 | Phase 6 | Pending |
+| IDLE-01 | Phase 7 | Pending |
+| IDLE-02 | Phase 7 | Pending |
+| IDLE-03 | Phase 7 | Pending |
+| IDLE-04 | Phase 7 | Pending |
+| CEO-01 | Phase 8 | Pending |
+| CEO-02 | Phase 8 | Pending |
+| CEO-03 | Phase 8 | Pending |
+| CEO-04 | Phase 8 | Pending |
+| CEO-05 | Phase 8 | Pending |
+| VIRL-03 | Phase 6 | Pending |
+| VIRL-04 | Phase 6 | Pending |
+| VIRL-05 | Phase 6 | Pending |
+| MEAS-01 | Phase 5 | Pending |
+| LEGL-05 | Phase 5 | Pending |
+| LEGL-06 | Phase 6 | Pending |
+| LEGL-07 | Phase 5 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 41 total
-- Mapped to phases: 0
-- Unmapped: 41 ⚠️
+- Mapped to phases: 41
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-07*
-*Last updated: 2026-10-07 after v2.0 requirements definition*
+*Last updated: 2026-10-07 after v2.0 roadmap creation (Phases 5-8, 41/41 requirements mapped, no orphans)*

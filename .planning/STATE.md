@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v2.0
 milestone_name: The Barren Wuffett Hub
 status: planning
-last_updated: "2026-10-07T17:51:19.132Z"
+last_updated: "2026-10-07T18:30:00.000Z"
 last_activity: 2026-10-07
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-11)
+See: .planning/PROJECT.md (updated 2026-10-07)
 
-**Core value:** A fun, shareable game that makes players want to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
-**Current focus:** Phase 03 — Level 1 — The Newspaper Verb & Economy
+**Core value:** A fun, replayable Buffett parody that people come back to daily and share on X. Entertainment is the product, a growing @Wolfhartvest following is the win, and nothing ever feels like an ad.
+**Current focus:** Phase 5 — Consolidate + Shared Shell + Hub Checkpoint
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-10-07 — Milestone v2.0 started
+Phase: 5 of 8 overall (first of 4 phases in milestone v2.0, Phases 5-8) — Consolidate + Shared Shell + Hub Checkpoint
+Plan: — (not yet planned)
+Status: Roadmap created, ready to plan
+Last activity: 2026-10-07 — v2.0 roadmap written (Phases 5-8), REQUIREMENTS.md traceability filled, 41/41 requirements mapped
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -67,21 +69,22 @@ Last activity: 2026-10-07 — Milestone v2.0 started
 - Phase 2.1 (Visual Pass — Cozy Pixel Art) inserted after Phase 2 on 2026-06-14 (URGENT) — replace placeholder art with a cohesive cozy 16-bit set (Kenney Tiny Town CC0) before Phase 3 backend, so the funnel isn't built on a placeholder-looking game. Spike 001 VALIDATED the approach.
 - Roadmap rearranged 2026-06-15 (entertainment-first, user decision): the funnel/backend (old Phase 3) moved to Phase 7 — built only after the game is genuinely good. Level 1 expanded into 3 new phases: 3 (The Newspaper Verb & Economy), 4 (Set Pieces — paper-route glow-up + Mr. Market "Mood Pendulum" boss redesign, direction A), 5 (Story & Heart — 7-beat young-Barren spine + Investment Journal collectibles). Old Phase 4 split into Phase 6 (Levels 2-3) and Phase 8 (Launch). New requirements L1E-01..09. Design: .planning/research/level-1-redesign-ideas.md (+ zelda-mystic-quest-patterns.md, buffett-early-years-story.md).
 - Phase 3.1 (Game Feel: Zelda Camera, Juice & Repair) inserted 2026-08-04 after the feel audit (`.planning/research/level-1-feel-audit.md`): user played the game and was unimpressed; audit found (1) the whole 480×832 world renders on one static screen — no Zelda camera, (2) Phase 3's feature layer shipped with 1×1-pixel art and 44-byte silent SFX stubs, (3) five mechanical bugs (multi-award whack, double level-complete overlay, 8 bushes inside collision tiles, no-op newspaper-upgrade hitbox, walk-around-able gate) that passed CI because no test instantiates a live scene. New requirements FEEL-01..06. Phase 4 now depends on 3.1. PROCESS LESSON: phases must not be marked Complete while `human_needed` UAT items sit pending — the experiential gate was skipped three phases in a row; plans must contain an explicit asset-production step (art + audio), not stubs-for-later.
+- v1.0 closed superseded 2026-10-07 (not completed): a feel audit + the pivot assessment found the adventure play-once and weakly shareable. v1.0's planned Phases 5-8 (Story & Heart, Levels 2-3, Funnel & Backend, Launch) were archived unbuilt; 32/47 v1.0 requirements were checked off. Archive: `milestones/v1.0-ROADMAP.md`, `milestones/v1.0-REQUIREMENTS.md`, `milestones/v1.0-phases/`.
+- v2.0 roadmap created 2026-10-07: 4 phases (5-8), continuing numbering from v1.0's Phase 4, covering all 41 v2.0 requirements. Phase 5 consolidates the branch stack, builds `src/shared/*` and the hub, and deploys to a non-public preview only. Phases 6-8 each release one new format (arcade, idle, swipe) with its own phone-feel pass, real-iPhone check, X-card verification, self-audit and go-ahead-gated deploy; all three depend only on Phase 5 and can reorder relative to each other, but the planned order is arcade → idle → swipe.
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Init: Legal pages (Impressum, Datenschutz) must exist before any public URL is shared — Phase 1 acceptance gate
-- Init: Supabase anonymous sessions must NOT be created at game boot — delay all backend auth to explicit player opt-in (Phase 3)
-- Init: Brevo custom SMTP must replace Supabase default SMTP before any user-facing email flows (Phase 3 blocker)
-- Init: Phase 2 acceptance criterion includes "audio works on real iPhone SE" — if iOS audio fails, Phase 3 does not start
+- v2.0 pivot (2026-10-06): dropped the email/Supabase/Brevo funnel for a credit-only one ("made by @Wolfhartvest"); replaced the single adventure with a staggered-release mini-game hub (arcade → idle → swipe) after spiking and playing all three on Android.
+- v2.0: each release phase's "done" includes the human phone-feel check and the real-iPhone check before any public deploy — the v1.0 lesson (phases marked complete with phone checks pending) is now a roadmap-level gate, not a note.
+- v2.0: Phase 6 (the arcade) carries the milestone's only public-deploy cutover — hub + arcade go live together on the user's go-ahead; Phases 7 and 8 ship their own format afterward, same gate pattern.
+- Init: Legal pages (Impressum, Datenschutz) must exist before any public URL is shared — Phase 1 acceptance gate (satisfied in v1.0; carries forward as LEGL-05/LEGL-07 in v2.0).
 - [Phase ?]: Removed Phaser ESM alias from Vite config — Phaser 4.1.0 exports field auto-resolves; manual alias created path conflict
 - [Phase ?]: All service/scene modules created atomically in Task 1 due to circular import requirements — build requires scenes+services+locales to all exist simultaneously
 - [Phase ?]: phaser4-rex-plugins VirtualJoystick import smoke-tested in prod build (Pitfall 4) — Phase 2 InputBus wiring unblocked
 - [Phase ?]: Settings scene uses Phaser Container for toggle buttons with setSize(44,44) for WCAG 2.5.5 touch target compliance
-- [Phase ?]: Datenschutz policy written with Supabase and Brevo as future-optional to avoid Phase 3 re-edit (RESEARCH Pattern 7)
 - [Phase 02.1]: ui_pause + ui_save included in scope (user-approved deviation) — clears all remaining HUD black boxes with no engine code changes
 - [Phase 02.1]: STYLE-GUIDE.md written as durable reference prose (not a task log) so Phase 4 developers can reproduce the cozy look with data + assets only — no engine code
 - [Phase 03]: PrizePack firstWhackOrRoll does NOT advance the slot on first-whack override — D-06 slot sequence starts fresh from slot 0 once done
@@ -95,38 +98,26 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Gewerbe-Versicherung für Finanz-Content-Tätigkeit recherchieren (legal) — vor öffentlichem Launch klären; pragmatischer Teilersatz für Medienanwalt-Check
-- Impressum per Verweis auf compoundingknowledge.com lösen (legal) — bei Phase-1-Planung (LEGL-01) berücksichtigen; Geltungssatz auf der Website nötig, eigene Datenschutzerklärung fürs Spiel bleibt Pflicht
 
 ### Blockers/Concerns
 
-- Research flags phaser4-rex-plugins package name as unverified on npm — verify before Phase 1 scaffolding
-- Legal counsel recommended for Persoenlichkeitsrecht, UWG Section 7, and BaFin finfluencer rules before first real subscriber
-- eToro/wikifolio affiliate T&Cs need direct verification before Journal portfolio links go live
 - LEGAL GATE — RESOLVED 2026-06-14: user confirmed "geltungssatz-confirmed". External imprint (compoundingknowledge.com/en/imprint) names the game; game imprint links back in ≤2 clicks (commit 7553a10). Public-URL sharing gate LIFTED — https://barren-wuffett.pages.dev may now be shared publicly.
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260616-n60 | Fix paper-route coin-earning regression (emit COINS_CHANGED) + regression test | 2026-06-16 | 6a7ec1c | [260616-n60-fix-paper-route-coin-earning-regression-](./quick/260616-n60-fix-paper-route-coin-earning-regression-/) |
-| 260617-k8p | Fix startup boots into boss fight + stray "wake up in hospital" text on load + trigger regression test | 2026-06-17 | 99fc335 | [260617-k8p-fix-startup-boots-into-boss-fight-stray-](./quick/260617-k8p-fix-startup-boots-into-boss-fight-stray-/) |
-| 260623-f1i | Fix whack verb non-functional in browser — InputBus.update() wiped the WHACK pulse before the poll read it + regression test | 2026-06-23 | 38ad588 | [260623-f1i-fix-whack-does-nothing-inputbus-update-c](./quick/260623-f1i-fix-whack-does-nothing-inputbus-update-c/) |
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | legal | Geltungssatz / imprint: external imprint (compoundingknowledge.com/en/imprint) names the game; game imprint links there in ≤2 clicks (commit 7553a10). User confirmed "geltungssatz-confirmed" 2026-06-14 → public-sharing gate LIFTED. | RESOLVED 2026-06-14 | 2026-06-12 |
+| adventure | ADV-01: phone check of v1.0 Phases 3.1 + 4 build, plus the whack/pause hit-area fix | Deferred to Future Requirements (v2.0 REQUIREMENTS.md) | 2026-10-07 |
+| adventure | ADV-02: Story & Heart (7-beat young-Barren spine) and Levels 2-3, per the archived v1.0 roadmap | Deferred to Future Requirements (v2.0 REQUIREMENTS.md) | 2026-10-07 |
+| reach | I18N-01: German localization (strings already go through `t(key)`) | Deferred to Future Requirements (v2.0 REQUIREMENTS.md) | 2026-10-07 |
 
 ## Session Continuity
 
-Last session: 2026-08-05
-Stopped at: Phases 3.1 + 4 code-complete and verified; game served at localhost:8080 for user UAT; session cleared
+Last session: 2026-10-07
+Stopped at: v2.0 roadmap written (.planning/ROADMAP.md, Phases 5-8); REQUIREMENTS.md traceability table filled, 41/41 requirements mapped with no orphans; STATE.md repointed to Phase 5
+Resume file: None
 
 Resume steps (next session):
 
-  1. Collect user UAT verdicts for Phases 3.1 + 4 (they were playing the build at http://localhost:8080 — production preview, detached process; restart with `npx vite preview --config vite/config.prod.mjs --port 8080` or `npm run dev -- --host` for phone testing). Key questions: boss feel (approach timing / lure density / 3 hits), whack feel, generated SFX/BGM taste.
-  2. After sign-off: merge branch `gsd/phase-04-level-1-set-pieces` (contains 3.1 + 4, stacked on `gsd/phase-03.1-level-1-game-feel-zelda-pass`) into main. Do NOT deploy to the public URL without explicit user approval.
-  3. Then Phase 5 (Story & Heart): 7-beat young-Barren spine, NPCs (Dottie/Donno/Barber Bristle/Old Penny), Count-the-Caps + Pinball-Snowball mini-games, hidden Journal pages. Design: .planning/research/buffett-early-years-story.md. Work method that's proven here: plan artifacts → build → headless Playwright verification (window.__BW_GAME__ probes) → screenshots to user → atomic commits.
-  Public URL: https://barren-wuffett.pages.dev (still the OLD pre-3.1 build — not yet redeployed).
-Resume file: .planning/phases/04-level-1-set-pieces/04-02-SUMMARY.md
+  1. Run `/gsd-discuss-phase 5` to gather context before planning Phase 5 (Consolidate + Shared Shell + Hub Checkpoint).
