@@ -1,249 +1,171 @@
 # Project Research Summary
 
-**Project:** Barren Wuffett
-**Domain:** Mobile-first HTML5/PWA pixel-art top-down adventure + trust-first marketing funnel
-**Researched:** 2026-06-11
+**Project:** Barren Wuffett — v2.0 "The Barren Wuffett Hub"
+**Domain:** Multi-page static-hosted PWA mini-game hub (Wordle/NYT-Games-style daily-return hub), built on an existing Phaser 4 + Vite 6 + TypeScript single-page adventure
+**Researched:** 2026-10-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Barren Wuffett is a free, mobile-first HTML5/PWA browser game built in Phaser 4 + TypeScript + Vite on Cloudflare Pages (zero-cost hosting). It parodies Warren Buffett's early life across 3-5 top-down adventure levels, using the game itself as a trust-building email funnel to drive traffic to the creator's wikifolio/eToro portfolios. Research across five dimensions -- stack, features, architecture, pitfalls, and engagement -- converges on a single strategic principle: **the game must earn trust before it asks for anything**. The audience is finance-curious adults with above-average skepticism toward lead-generation schemes; every design decision must pass the test "would this embarrass the creator if written up as a dark pattern?"
+This milestone converts an existing single-page Phaser adventure into a four-tile static mini-game hub (arcade, idle, swipe, plus the kept-as-is adventure demo), released one format at a time, each with its own X post. Experts building this shape of product (Wordle, NYT Games, Reigns-likes) converge on the same recipe the research independently arrived at: no backend, no accounts, a shared daily seed for comparability, a structured share-text artifact instead of attached images, and device-only progress (streak/checklist) accepted as disposable. Nothing in this milestone needs a new runtime framework or a router — it's a Vite multi-page build (`rollupOptions.input`, one real HTML file per route) with a small set of shared, Phaser-free TypeScript modules (`src/shared/*`) that every new format and the hub import, while the adventure's existing services stay untouched. The four spikes already validated the game feel on-device; what's new and unproven is the *porting* work — getting spike-era code through the production build's strict CSP, and wiring routing/PWA/analytics/OG correctly across five real HTML pages instead of one.
 
-The recommended architecture is offline-first with optional backend. The game is fully playable in a browser with no account, no login, and no email required for any level. IndexedDB (via idb-keyval) is the durable local store. Supabase is introduced only when a player actively opts into cloud-save, and anonymous Supabase sessions are never created at game boot -- each one counts toward the 50k MAU free-tier quota. The email capture funnel is built around three genuinely value-delivering touchpoints: a cloud-save offer after Level 1 completion (15-25% opt-in rate), a leaderboard submission gate, and a bonus Investment Journal unlock -- none of which block progress for players who decline.
+The recommended approach is: consolidate the unmerged branch stack and run the adventure's overdue phone check first (a regression gate, not new work), then build the shared shell once (config, daily seed, share flow, credit/About/legal overlay, device-only progress store, code-drawn cast — all CSP-clean, all Phaser-free except where Phaser is explicitly needed), deploy a hub+adventure-only checkpoint to validate the MPA/PWA/CSP plumbing on the real host, and only then port arcade → idle → swipe as three independent release slices that each depend only on the shared shell, not on each other. This ordering means Release 1 can ship without Releases 2 and 3 existing yet, matching the staggered-release requirement directly.
 
-The key tension in the research is timing: FEATURES.md argues "email capture is the funnel MVP and must ship with Level 1," while ARCHITECTURE.md and PITFALLS.md argue the game must be fully offline-playable first and Supabase deferred to avoid free-tier entanglement. The resolution is sequential, not either/or: **build the game fully offline-playable first (Phase 2), then build and test all funnel infrastructure -- Impressum, Privacy Policy, custom SMTP, double-opt-in flow -- before any public URL is shared (Phase 3).** A launch without a working funnel wastes the launch traffic; a launch with a broken or legally non-compliant funnel is worse. The funnel must be complete and tested before launch, but must not be built before the game works on a real iPhone.
-
----
+The main risks are not stack risk (every new "dependency" this milestone needs is either a config change or a build-time-only package) but integration risk specific to a static multi-page PWA: a stale service worker silently serving last release's hub after a new one ships (the single biggest threat to the "the new tile is unlocked" release moment actually landing), OG/X cards staying broken per-page if the per-page `<head>` block is ever centralized into a shared partial, iOS-specific gesture/audio/storage failures that the spikes never hit because they were only played on Android, and the recurring legal/parody-endorsement audit that must be re-run before *every* release, not just once at hub launch. All of these have concrete, cheap prevention steps documented in PITFALLS.md and should become explicit release-gate checklist items rather than one-time P1 tasks.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is zero-cost and deliberately minimal. Phaser 4 (v4.1.0, released April 2026) is the clear engine choice: largest community, most LLM training data, full TypeScript types, native Tiled JSON tilemap support, and built-in iOS audio unlock handling. Vite 6 + TypeScript 5 provides the build layer; vite-plugin-pwa adds service-worker and web-app-manifest with a single import. Cloudflare Pages hosts the static bundle with unlimited bandwidth on the free tier -- critical if any social share goes viral. Supabase (free tier: 500 MB DB, 50k MAU/month) provides Postgres, Auth, and Row-Level Security. Brevo handles transactional and marketing email (300 emails/day free, unlimited stored contacts, native double opt-in, EU-based infrastructure, DPA included). Aseprite ($20 one-time) is the only non-free tool and the clearest ROI in the budget.
+Zero new runtime/browser dependencies are required. Everything new is either a Vite config change (multi-page `rollupOptions.input`, `base`, `workbox.globPatterns`) or a build-time-only devDependency (self-hosted font package, `ffmpeg-static` for clip conversion) that never touches the shipped CSP. Cloudflare Web Analytics is a dashboard toggle plus a `script-src` CSP addition — no new vendor, no cookies, no consent banner. OG/X share cards are solved with a tool already in the repo (Playwright screenshot of a static `card.html`), not a new image-generation dependency or a serverless function.
 
 **Core technologies:**
-- **Phaser 4.1.0**: Game engine (rendering, scenes, input, tilemaps, audio) -- most LLM knowledge, full TS types, active maintenance
-- **TypeScript 5 + Vite 6**: Type-safe game code + fast dev server + PWA plugin host -- catches LLM-generated code errors at compile time
-- **vite-plugin-pwa 0.21.x**: Service worker, offline cache, installable PWA -- zero-config Workbox integration
-- **Cloudflare Pages**: Static hosting -- unlimited bandwidth on free tier, critical for viral resilience
-- **Supabase (free tier)**: Auth + Postgres for cloud-save + leaderboard -- real SQL, RLS, magic-link auth
-- **Brevo (free tier)**: Transactional + marketing email -- double opt-in native, EU infra, DPA, unlimited stored contacts
-- **phaser4-rex-plugins (VirtualJoystick)**: On-screen mobile joystick -- battle-tested standard for Phaser mobile
-- **idb-keyval**: IndexedDB wrapper for local save -- async, non-blocking, avoids localStorage 5 MB cap and Safari 7-day eviction
-
-**Key version warning:** Use phaser4-rex-plugins (not phaser3-rex-plugins) -- wrong package causes silent import errors.
+- Vite multi-page build (`build.rollupOptions.input`) — one real static HTML entry per route (hub, arcade, snowball, ceo, adventure) — no router library needed; Cloudflare Pages serves each path directly
+- `@fontsource/pixelify-sans` (static weights) — self-hosted woff2 satisfying `font-src 'self'`, same convention already used for Press Start 2P
+- `ffmpeg-static` + Playwright's `recordVideo` — dev-time-only gameplay clip capture/conversion for X posts, reusing Playwright (already a devDependency)
+- Cloudflare Web Analytics, "automatic" dashboard mode — cookieless, same-origin beacon proxy, needs only a `script-src` CSP addition, no `connect-src` change
+- vite-plugin-pwa, unchanged version, `generateSW` strategy kept — one PWA shell at root scope covering hub + all game pages via a build-wide `globPatterns` glob (currently unset/deferred — must finally be set this milestone)
 
 ### Expected Features
 
-The feature research draws a hard line between features that serve the audience (trust-building, value-delivering) and features that exploit them (dark patterns the finance audience recognizes and abandons). Conversion benchmark: 15-25% email opt-in from players completing Level 1, with 50-70% ticking the marketing consent checkbox. Lead quality is high because they are self-selected, invested players.
+Grounded in four already-played spikes (Mr. Market arcade, Snowball idle, Barren-CEO swipe, code-drawn cast) plus genre comparables (Wordle, NYT Games, Reigns, Cookie Clicker).
 
-**Must have for launch (table stakes + funnel):**
-- Touch controls (virtual D-pad) -- mobile-first audience; keyboard-only is unplayable
-- Portrait-mode support with orientation overlay -- >70% of mobile sessions start in portrait
-- Audio toggle (music + SFX, persisted) -- iOS auto-play policy makes this non-optional
-- Loading progress indicator -- blank screen on first load kills first impressions
-- Local save (IndexedDB) -- prerequisite for cloud-save; prevents frustration on refresh
-- Cloud-save email gate (post-Level-1, "save progress" framing) -- primary conversion mechanism; must ship at launch
-- Investment Journal (1 entry per level, email-gated) -- the value payload that makes the email ask feel fair
-- Barren's Wisdom end-screen with portfolio link (one per level, discreet) -- the only explicit funnel mention
-- Impressum + Privacy Policy pages -- legally mandatory before any public URL goes live
-- Share card (Canvas-rendered, spoiler-free) -- zero-cost distribution; boss defeats become acquisition touchpoints
-- og:image + og:title + og:description meta tags -- ensures share cards render in social previews
+**Must have (table stakes):**
+- Game tile grid at the site root, with locked "coming soon, follow @handle" tiles for unreleased games (no fake countdowns)
+- One shared shell module (config/seed/share/credit-About overlay) ported once, reused by all three new formats
+- Credit + About/legal overlay visible (not buried) on every page — UWG §5a(4)
+- Working absolute-URL OG/X share image per page — the current relative-URL bug must be fixed before Release 1's X post
+- Daily seed = same game for every player, every UTC day (already built, porting only)
+- Per-release X post with share card + short gameplay clip; native share sheet with X-intent fallback
+- Cookieless Cloudflare Web Analytics wired site-wide; privacy page matching actual practice (no Supabase/Brevo)
 
-**Should have -- add after core loop is validated (v1.x):**
-- Leaderboard -- add when >100 email captures (dead leaderboard is worse than none)
-- PWA install prompt -- add after first 50 players; trigger after Level 1 completion
-- Service worker / offline support -- add after PWA install is proven stable
-- Referral bonus system -- add when share card click data shows measurable referral patterns
-- Bonus Journal "deep cut" unlock -- secondary email touchpoint for non-converters
+**Should have (differentiators):**
+- Cross-game daily checklist and play streak, device-only, UTC-day boundary matching the seed
+- One unified code-drawn parody cast reused across all four formats (already built)
+- One shared "Daily #N" number across the whole hub
 
-**Defer to v2+:**
-- Daily login streaks / FOMO timers -- contradicts the Buffett brand and backfires with this audience
-- Paid level packs (Graham era, Berkshire era) -- architecture prepared from v1; build payment only after traction
-- German localization -- English first; i18n key structure kept tidy from day one
-- Charlie Munger companion character ("Chucky") -- delightful v2 addition, disproportionate v1 scope
-
-**Anti-features (never build in v1):**
-- Forced login before play, interstitial ads, aggressive popups, pre-ticked marketing checkboxes, daily streak guilt, variable-reward loot boxes, energy systems, pay-to-skip difficulty inflation, FOMO timers
+**Defer (v2+ / explicitly rejected):**
+- Accounts, cross-device sync, leaderboards, push notifications — all need a backend, contradicting the pivot
+- Streak-loss guilt messaging or streak-freeze purchases — named anti-pattern; silent reset to 1 instead
+- Countdown timers on locked tiles — manufactured urgency anti-pattern
+- Idle prestige/ascension loop at launch — the format is a daily reset, not a persistent run
+- Swipe deck expansion past 33 cards before launch — content treadmill, not a launch blocker
 
 ### Architecture Approach
 
-The architecture is offline-first, scene-as-state, content-as-data. All game state writes go to IndexedDB immediately; cloud sync is fire-and-forget async only when the player has linked an email. The Supabase anonymous session is created only on explicit player opt-in -- never at game boot. Each distinct mechanic (top-down overworld, platformer accent, boss fight) is its own Phaser scene; the overworld sleeps and the mini-game launches, then the overworld wakes on MINIGAME_COMPLETE. A Global Event Bus (singleton EventEmitter) decouples all cross-scene communication. Level data lives in TypeScript manifest objects in src/data/levels/; adding a new level = adding one data file, no engine code changes.
+A Vite multi-page static build where each route (hub, arcade, snowball, ceo, adventure) is a real, separate HTML entry with its own module graph; Rollup auto-splits shared imports (`src/shared/*`, `src/services/i18n.ts`) into common chunks while per-format-only code (Phaser, a format's own model) stays out of entries that don't need it. The adventure's existing services (`SaveService`, `ShareService`, `AudioService`, `ContentRegistry`) stay untouched and adventure-only; a new, deliberately separate `shared/progressStore.ts` (its own IndexedDB store) and `shared/shareFlow.ts` (text+url only, no image Blob) serve the three new formats instead of generalizing the adventure's image-coupled `ShareService`. One PWA registration at root scope covers the whole hub — no per-game installable scopes.
 
 **Major components:**
-1. **Scene Manager + Global Event Bus** -- scene lifecycle and decoupled cross-scene messaging; prevents monolithic scene anti-pattern
-2. **InputBus (Touch + Keyboard abstraction)** -- unified Action enum; VirtualJoystick on mobile; must be built before any game entity
-3. **SaveService (IndexedDB-primary, Supabase-secondary)** -- local writes always first; cloud sync is fire-and-forget; backend is authoritative for recovery after iOS storage eviction
-4. **ContentRegistry + Level Manifests** -- all level/NPC/journal data as TypeScript objects; engine reads manifests, never hard-codes level logic
-5. **UIScene (parallel overlay)** -- persistent HUD, dialogue boxes, email capture modal; always-on scene layered above game scenes
-6. **JournalService** -- tracks unlocked entries; serialized to save state; entries defined in content data
-7. **SupabaseClient singleton** -- single import point for all backend calls; never imported directly into scenes
-
-**Suggested build order (from ARCHITECTURE.md):**
-Vite scaffold -> Boot/Preload/Menu -> InputBus -> OverworldScene + tilemap -> ContentRegistry + first level manifest -> i18n Service -> UIScene + DialogueBox -> Entity system -> TriggerSystem -> First mini-game scene -> SaveService (local only) -> JournalService -> BossScene -> Supabase integration -> Email capture flow -> PWA hardening
+1. `src/shared/*` — the load-bearing new boundary: config, daily seed, share flow, overlays, device-only progress store, release-gating flags, code-drawn cast — all Phaser-free, imported by hub + all three new formats
+2. `src/hub/*` — vanilla TS + DOM tile grid and checklist/streak UI, reads `releaseConfig.ts` to decide which tiles are live vs. locked
+3. `src/{arcade,snowball,ceo}/*` — one per format, each with its own bootstrap (arcade gets its own `Phaser.Game()` instance; snowball/ceo are DOM-only) plus a pure, Phaser-free model module ported from the spike's balance-sim code
+4. `adventure/` — the former root `index.html` and all adventure code, moved unchanged to its own path, untouched by this milestone otherwise
 
 ### Critical Pitfalls
 
-1. **The Four Genres Trap** -- Building platformer, point-and-click, Kingdom-style, and Zelda-style as equal pillars = four games of work, project never ships. Prevention: mini-games capped at 20% of total dev time; core Zelda loop ships and is locked before any mini-game work begins; any mini-game requiring its own tileset or new physics does not ship in v1.
+1. **Stale service worker serves an old build after release** — set `workbox.globPatterns` across every HTML entry (currently deferred since Phase 1), avoid the default single-entry `navigateFallback` (SPA assumption on an MPA), and test an *existing installed* client actually updates, not just a fresh load — this is the single biggest threat to a staggered-release plan where "the new tile is unlocked" is the whole point of each X post.
+2. **OG/X share cards stay broken per-format** — each page needs its own absolute `og:image`/`og:url`/title, never centralized into the shared legal-links partial; re-crawl each release's share URL through X's Post Inspector after every deploy, since a broken card can't be fixed retroactively once the tweet is live.
+3. **iOS-only failures the Android-only spikes never hit** — Web Audio unlock in the arcade's Phaser scene, `navigator.share()` called from a Phaser input handler instead of a plain DOM handler, and swipe-card drag fighting iOS pull-to-refresh/rubber-banding — all three need a real iPhone test before their respective release ships.
+4. **Daily-seed determinism drift and spoiler leakage** — keep the seeded PRNG and any animation/particle randomness hard-separated (two RNG instances), assert the `?date=` fingerprint test per format, and keep share text to rank/category only, never literal event order.
+5. **Parody/Persönlichkeitsrecht re-audit must run every release, not once** — the credit-only funnel reduces but doesn't eliminate the legal risk; a full-text name/endorsement audit (UI strings, share text, OG description, draft X post copy) is a release-gate checklist item for P2, P3, and P4 independently.
 
-2. **iOS Safari Audio Lockout** -- All audio is silent on iOS until AudioContext.resume() is called inside a direct user gesture. Phaser 4 has built-in iOS audio unlock; test on a real iPhone (not simulator) as Phase 2 acceptance criterion.
+## Resolved Conflicts
 
-3. **iOS WebGL Memory Crash** -- Oversized texture atlases cause silent browser process termination after 2-5 minutes on iPhones. Hard cap: no single atlas larger than 2048x2048. Load per-level, unload on exit. Test on iPhone SE before declaring any level complete.
+**`base: ./` vs. `base: /` (STACK.md recommended switching; ARCHITECTURE.md treated the existing value as already correct).**
 
-4. **German Personality Rights (Persoenlichkeitsrecht)** -- Using Buffett's recognizable traits primarily for commercial traffic can fail the German primary-purpose test. Prevention: parody names everywhere ("Barren Wuffett," "Mr. Market"), no realistic likeness, explicit parody labeling. Run full-text search for "Warren," "Buffett," "Munger," "Berkshire" before launch -- none should appear in any user-facing string.
+**Resolution: keep `base: ./` — do not switch to `/`.** Reasoning:
+- ARCHITECTURE.md's finding is grounded in direct inspection of `vite/config.prod.mjs` (confirmed above) and the existing, already-deployed single-page build, where `base: ./` is the documented reason nested static paths already work — switching it is an unforced, unvalidated change to a setting the current site depends on.
+- Vite's relative base resolves each HTML entry's asset URLs relative to that file's own output location; as long as the multi-page build's output directory structure mirrors each entry's input path (Vite's default behavior for named `rollupOptions.input` entries), every page — root or nested under `arcade/`, `snowball/`, `ceo/`, `adventure/` — resolves its own assets correctly regardless of depth. This is the same mechanism PITFALLS.md flags as "needs explicit verification," not "is broken."
+- The two things STACK.md cited in favor of `/` are not actually base-path-dependent: absolute OG/X image URLs are hand-written full `https://` strings in each page's `<head>` (never derived from Vite's `base`), and the service worker scope is set explicitly via `vite-plugin-pwa`'s `scope`/`start_url` config, not inherited from `base`. Cloudflare Pages serving from the domain root makes `/` *safe*, but it doesn't make `/` *necessary* — and changing a proven-working setting adds risk with no corresponding benefit here.
+- **Action for the roadmap:** keep `base: ./`, but add "deployed-preview check: every new HTML entry loads its own JS/CSS/fonts with zero 404s in the network tab, from a direct URL load" as an explicit P1 verification step before the hub+adventure checkpoint deploy, and repeat it for each new entry added in P2–P4. This satisfies PITFALLS.md's Pitfall ("Vite Multi-Page Relative Base Path Breaks Nested Game Routes") without touching the config.
 
-5. **GDPR/UWG Double Opt-In Missing** -- German UWG Section 7 independently requires confirmed double opt-in for marketing email (fines up to EUR 50,000). The Supabase default SMTP (2 emails/hour) will fail at any real launch traffic; Brevo custom SMTP must be configured before any user-facing testing.
+## Open Questions to Carry Into the Roadmap
 
-6. **Impressum Missing at Launch** -- Section 5 TMG requires full contact info reachable within two clicks from any public URL. Abmahnanwaelte actively scan new sites; missing Impressum triggers EUR 300-1,500 demand per incident. Create /impressum and /datenschutz before any domain goes live.
-
-7. **Supabase Anonymous Sessions at Boot** -- Creating anon sessions on game start means every bot and 5-second bounce counts as MAU. At 50k MAU the free tier ends. Delay all Supabase auth until explicit player opt-in.
-
-8. **PWA iOS Storage Eviction** -- iOS silently evicts IndexedDB after ~7 days of PWA inactivity. Save architecture must treat Supabase as authoritative store and local cache as performance optimization only; pull from backend on load if local state is missing.
-
-9. **Email Gate Timing** -- An email prompt before meaningful gameplay produces 70-90% bounce from the finance-audience. Gate must trigger only after Level 1 completion, framed as "save your progress" not "sign up for updates."
-
-10. **Investment Journal as Regulated Financial Promotion** -- Specific buy/sell recommendations or return forecasts require BaFin authorization. Every Journal entry must be educational/personal-opinion, with a visible "not investment advice" disclaimer, attributed to creator, portfolio link framed as "see how I apply these principles."
-
----
+- **"Add to Home Screen" prompt is a genuine tradeoff, not a settled call.** PITFALLS.md (Pitfall 12) flags that installing to the Home Screen exempts a player's storage from iOS Safari's 7-day eviction cap for *unvisited* origins — directly protecting the streak mechanic — but v1.0's install-prompt pattern needs to be resurrected and is itself a UX decision (when to show it, how pushy it reads) that should be made explicitly in P1 planning, not left implicit. Frame it as "install protects your streak," not a generic PWA nicety.
+- **Streak/checklist guilt-free rules are specified and should be treated as a contract, not a suggestion** (FEATURES.md): UTC-day boundary matching the seed's `DATE`; a game counts "done" only when its end screen is reached; streak increments once per UTC day on first completion; silent reset to 1 on a gap, no loss modal, no red messaging; no streak-freeze purchase; best-effort only, no defense against a cleared cache or a tampered device clock. These rules belong directly in `src/shared/progressStore.ts`'s spec, not as a later polish pass — get them right in P1 since every later release's checklist extension depends on the same store.
 
 ## Implications for Roadmap
 
-The research points to a four-phase structure. Sequencing is driven by three constraints: (1) legal pages must exist before any public URL, (2) the game must work on iOS before any backend work, (3) funnel infrastructure must be complete and tested before launch but built after the game is proven.
+### Phase 1: Consolidate + Shared Shell + Hub Checkpoint
+**Rationale:** Every later release depends on this; it's also the only phase that touches existing adventure code (via the branch merge), so it should be isolated and verified before any new gameplay lands on top.
+**Delivers:** `main` fast-forwarded through the Phase 2-4 chain + the menu-tap fix + the spike docs; adventure's overdue phone/UAT check passed once; `src/shared/*` (config, daily seed, share flow, overlays, device-only progress store with guilt-free streak rules, release-gating flags, code-drawn cast) built CSP-clean; hub page with tile grid, locked teaser tiles, adventure tile; multi-page Vite config (`hub`, `adventure` entries only); `workbox.globPatterns` finally set; absolute-URL OG cards fixed for hub + adventure; Cloudflare Web Analytics wired with matching CSP and a rewritten privacy page; deployed as a standalone checkpoint on the real host before any new format exists.
+**Addresses:** Hub & Shared Shell table-stakes features (tile grid, locked tiles, credit/legal overlay, working OG card, daily seed), Analytics & Legal table stakes
+**Avoids:** Pitfalls 1 (seed determinism), 5 (legal links multi-page), 6 (stale SW cache), 7 (OG card per-page), 8 (analytics CSP + privacy page), 9 (CSP porting foundation), 12 (storage eviction/private mode)
 
-### Phase 1: Project Foundation and Legal Shell
+### Phase 2: Release 1 — Mr. Market Arcade
+**Rationale:** The arcade is the one format using Phaser (new audio/gesture risk categories) and is first in the staggered-release order per PROJECT.md; shipping it in isolation surfaces iOS-specific Phaser+DOM-overlay risk before idle/swipe (pure DOM) are built.
+**Delivers:** `market.ts` (pure, ported + Node sim), `MarketScene.ts` (Phaser) + its own `Game()` instance, npm Phaser replacing the spike's CDN script, self-hosted Pixelify Sans, arcade's own absolute OG card, headless phone check then real-phone feel pass, `releaseConfig.arcade = true`, deploy, X post.
+**Uses:** Vite multi-page entry addition, `@fontsource/pixelify-sans`, Playwright `recordVideo` + `ffmpeg-static` for the release clip
+**Implements:** `src/arcade/*` component per ARCHITECTURE.md's recommended structure
 
-**Rationale:** Legal exposure begins the moment a public URL exists. Impressum, Privacy Policy, and parody-naming conventions must be established before anything is publicly accessible. The development scaffold must enforce technical constraints (pixel-art config, per-level asset loading caps, iOS audio unlock wiring, touch input) that are nearly impossible to retrofit.
+### Phase 3: Release 2 — Snowball Idle
+**Rationale:** Independent of Release 1's gameplay code — only blocked on the P1 shared shell, so it can start as soon as P1 ships regardless of arcade's status; DOM-only, so it inherits iOS gesture safety by construction (no Phaser input layer).
+**Delivers:** `econ.ts` (pure, ported + Node sim) + DOM UI, snowball's own OG card, headless check + phone feel pass, `releaseConfig.snowball = true`, deploy, X post.
+**Addresses:** Idle-release table stakes (age progression, seeded daily offers) from FEATURES.md
+**Avoids:** Pitfall 9 (CSP porting) re-run for this format's specific spike code
 
-**Delivers:** Deployable Cloudflare Pages project with /impressum + /datenschutz routes, Vite + Phaser 4 + TypeScript scaffold with correct pixel-art config (antialias: false, pixelArt: true), PWA manifest shell, InputBus (touch + keyboard), style bible + canonical reference sprite, parody naming convention document.
-
-**Addresses from FEATURES.md:** Mobile viewport meta tag, portrait-mode handling stub, audio toggle scaffolding, legal pages.
-
-**Avoids from PITFALLS.md:** Impressum missing at launch (P6), German personality rights naming violations (P4), iOS audio lockout via scaffold setup (P2), iOS memory crash via 2048px atlas cap in asset pipeline (P3), touch input 300ms delay via touchstart events from day one (P11), AI asset style drift via style bible (P10).
-
-**Research flag:** Standard patterns. No phase-specific research needed.
-
----
-
-### Phase 2: Playable Core Loop -- Level 1 (Offline-Complete)
-
-**Rationale:** The game must be fully playable offline on a real iPhone before any backend work begins. This validates the core loop, confirms iOS compatibility, and ensures Phase 3 funnel infrastructure is built for a game that actually works.
-
-**Delivers:** Level 1 complete end-to-end -- overworld exploration, one scope-capped mini-game accent (reuses existing sprites + one new input handler), boss fight (Mr. Market first appearance), Journal entry unlock ceremony, Barren's Wisdom end-screen, local save (IndexedDB via idb-keyval), loading progress indicator, audio system with iOS unlock confirmed on real device, share card (Canvas-rendered) with og tags.
-
-**Addresses from FEATURES.md:** Touch controls, portrait-mode, audio toggle, loading progress, local save, share card, og tags, Investment Journal entry #1, Barren's Wisdom end-screen #1.
-
-**Avoids from PITFALLS.md:** Four genres trap -- mini-game is scope-capped before Phase 2 begins (P1); iOS audio lockout -- tested on real iPhone as acceptance criterion (P2); iOS memory crash -- 2048px cap enforced (P3); monolithic scene anti-pattern -- UIScene runs in parallel; localStorage anti-pattern -- idb-keyval from day one.
-
-**Engagement mechanics (from ENGAGEMENT.md):** Curiosity gap cliffhanger on level-complete screen, boss foreshadowing music/palette shift 30-60s before fight, Journal unlock ritual (distinct paper-rustle SFX + brief page-appear animation), patience-vs-rushing mechanic (dog on timer in Level 1), game juice (screen shake scaled to hit size, coin clink + particle burst, button visual response <50ms), "Mr. Market in shadow" cliffhanger teaser at level end.
-
-**Research flag:** Likely needs phase research. Phaser 4 scene.sleep()/launch()/wake() mini-game handoff and boss fight mobile control overlay benefit from targeted research during phase planning.
-
----
-
-### Phase 3: Funnel Infrastructure -- Email, Backend, Legal Compliance
-
-**Rationale:** This phase builds everything needed to convert players into email subscribers before any public traffic lands. It must be complete and end-to-end tested before launch. Building it before Phase 2 would create Supabase entanglement before the game was proven; building it after launch wastes the one-time launch traffic spike.
-
-**Delivers:** Supabase project configured (custom SMTP via Brevo, RLS policies, cloud_saves + leaderboard tables, anon-to-email upgrade auth flow), double opt-in flow tested end-to-end with real email addresses, cloud-save email gate UI (post-Level-1, "save progress" framing), GDPR consent recording (timestamp + scope in save state), Brevo list with double opt-in enforced at list level, Privacy Policy updated to name all processors (Supabase, Brevo, Cloudflare), "resend confirmation" UI button, Supabase keep-alive configured (weekly ping), Investment Journal content written and passed through BaFin content checklist (not investment advice, creator attribution, visible disclaimer, portfolio link framed correctly), eToro/wikifolio affiliate disclosure on any page with a portfolio link, backend-primary save architecture (Supabase authoritative, IndexedDB is cache).
-
-**Addresses from FEATURES.md:** Cloud-save email gate, Investment Journal email-gated delivery, GDPR double opt-in, email drip sequence trigger setup.
-
-**Avoids from PITFALLS.md:** GDPR/UWG double opt-in missing (P5), Supabase SMTP rate limits at launch (P9), anonymous sessions at boot (ARCHITECTURE anti-pattern 2), PWA iOS storage eviction -- backend-primary save (P12), Investment Journal as regulated advice (P8), email gate killing retention -- correct trigger timing (P7).
-
-**Research flag:** Needs phase research. Supabase anon-to-email upgrade auth flow, Brevo double opt-in API configuration, and GDPR consent timestamp/scope storage patterns need targeted research.
-
----
-
-### Phase 4: Levels 2-5 and Launch Readiness
-
-**Rationale:** With core loop proven and funnel working, remaining levels are built using established patterns. Each level adds one thematic mechanic. PWA hardening and install prompt are added here after the game is stable. Soft launch precedes public launch for funnel validation.
-
-**Delivers:** Levels 2-5 (each with overworld, one scope-capped mini-game, boss fight, Journal entry, end-screen), compound interest HUD ("Wuffett Value" tracker, Level 2), buy-low timing mini-game (Level 2), Margin of Safety boss mechanic (Level 3), Mr. Market mood-cycle boss (Level 3), stock-ticker + hold/anxiety-meter boss mechanic (Levels 4-5), PWA hardening (Workbox caching strategy, offline smoke test), PWA install prompt triggered after Level 1 completion, soft launch validation, public launch.
-
-**Addresses from FEATURES.md:** All remaining P1 Level content, PWA install prompt (P2), service worker / offline support (P2).
-
-**Avoids from PITFALLS.md:** Four genres trap -- each level uses ContentRegistry/manifest pattern, no engine code changes (P1); scope creep -- each additional level is additive, not multiplicative.
-
-**Engagement mechanics (from ENGAGEMENT.md):** Buy-low timing mechanic (Level 2), compound interest HUD (Level 2), Margin of Safety labeled HUD buffer in boss fight (Level 3), Mr. Market irrationality cycles (Level 3), patience-hold mechanic with visual anxiety meter (Levels 4-5), Journal entry standalone quality gate ("would I share this without the game?"), Journal entry share cards (quote-card format for finance audience).
-
-**Research flag:** Levels 2-4 use established patterns (skip research-phase). Level 5 stock-ticker mechanic needs scoping research to define minimum viable implementation.
-
----
+### Phase 4: Release 3 — Barren-CEO Swipe
+**Rationale:** Last in the planned staggered order; the one format with a genuinely new iOS-specific failure mode (pointer-events vs. pull-to-refresh/rubber-banding) not present in either prior release, so it benefits from being built after the project has already done two real-iPhone release cycles.
+**Delivers:** `cards.ts` (pure, ported + Node sim) + DOM UI with `touch-action`/`overscroll-behavior` CSS treatment, endings-collection grid, ceo's own OG card, headless check + phone feel pass (including real-device fast-flick/edge-drag test), `releaseConfig.ceo = true`, deploy, X post.
+**Addresses:** Swipe-release table stakes (Reigns-style swipe, endings collection) from FEATURES.md
+**Avoids:** Pitfall 11 (pointer-events vs. iOS scroll) — the one pitfall specific to this release
 
 ### Phase Ordering Rationale
 
-- **Legal-first (Phase 1):** Impressum and parody naming cannot be retrofitted after a launch-day Abmahnung. They cost almost nothing to build first.
-- **Game-before-backend (Phase 2 before Phase 3):** Building Supabase on top of an unproven mobile game creates double risk. Phase 2 acceptance criteria include "audio works on real iPhone SE" -- if that fails, Phase 3 does not start.
-- **Funnel-before-launch (Phase 3 before any public URL sharing):** Launch without working double opt-in and verified email delivery wastes the one-time attention spike. Supabase default SMTP (2 emails/hour) is a hard blocker for any real traffic.
-- **Scale-after-validation (Phase 4):** ContentRegistry/manifest pattern means each additional level is a data file addition, not engine modification. No architectural surprises.
+- P1 must come first and alone because it's the only phase touching the unmerged branch stack and the adventure's regression risk — isolating it avoids compounding a merge/regression bug with new-format bugs.
+- P2-P4 are deliberately independent of each other (each depends only on P1's shared shell, confirmed in both ARCHITECTURE.md's Build Order and FEATURES.md's Feature Dependencies), which lets the staggered-release requirement ("each format ships as soon as it passes its phone feel check") hold literally — P3 is not blocked by P2's completion, only by P1's.
+- The P2→P3→P4 ordering shown here follows PROJECT.md's stated release order (arcade → idle → swipe) for roadmap narrative purposes, but the roadmapper should treat P3 and P4 as reorderable relative to each other if a phone-feel pass finishes out of sequence — only P1's position as a prerequisite is fixed.
+- Grouping avoids Pitfall 9 (CSP porting) by making "runs under the real deployed CSP, not just localhost" an explicit per-phase deliverable rather than a P1-only concern, since P1 can't finish this on behalf of formats that don't exist in the real build yet.
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 2:** Phaser 4 scene.sleep()/launch()/wake() mini-game handoff with typed data passing; boss fight mobile control hint overlay
-- **Phase 3:** Supabase anonymous-to-email upgrade auth flow; Brevo double opt-in API; GDPR consent timestamp/scope storage schema
-- **Phase 4 (Level 5 only):** Stock-ticker simulation scoping -- minimum viable implementation that feels authentic
+Needs deeper research during planning:
+- **Phase 1:** the exact Workbox `globPatterns`/`navigateFallback` configuration for a multi-page site with a growing entry list (Pitfall 6) — the general pattern is documented here, but the precise glob/exclusion syntax should be verified against `vite-plugin-pwa`'s current docs when P1 is planned in detail.
+- **Phase 2:** iOS Safari AudioContext unlock timing inside a DOM-overlay-triggers-Phaser-scene architecture (Pitfall 2) — this exact combination (DOM overlay + Phaser canvas underneath) is new to this repo; confirm the precise synchronous-unlock call sequence against Phaser 4's current sound-manager API during plan-phase.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** Vite + Phaser 4 + TypeScript has official templates; Cloudflare Pages deployment is trivially documented
-- **Phase 4 (Levels 2-4):** ContentRegistry + manifest + mini-game scene handoff proven in Phase 2; no new patterns
-
----
+Phases with standard, well-documented patterns (skip research-phase):
+- **Phase 3:** pure DOM port of an already-balanced, already-played spike; no new architectural risk beyond what P1 already solved.
+- **Phase 4:** the `touch-action`/`overscroll-behavior` CSS pattern for suppressing iOS native gestures is well-documented (PITFALLS.md cites it directly); the swipe mechanic itself is a straight port.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Engine, hosting, email tool verified against official docs/pricing pages as of 2026-06-11 |
-| Features | HIGH (table stakes) / MEDIUM (conversion rates) | Conversion rate estimates (15-25%) from gamified lead-gen case studies, not this specific game |
-| Architecture | HIGH | Core Phaser scene patterns and offline-first save are well-documented standards |
-| Pitfalls | HIGH (technical) / MEDIUM (legal) | iOS Safari and memory crash are well-documented; legal pitfalls require qualified DE counsel before launch |
-| Engagement | HIGH (theory) / MEDIUM (application) | SDT and Octalysis are peer-reviewed; specific mechanic mappings need real player feedback for calibration |
+| Stack | MEDIUM-HIGH | Zero new runtime deps keeps risk low; several specific claims (Cloudflare beacon CSP origins, package versions) cross-checked against official docs/registry and promoted to HIGH, but the overall MPA/PWA mechanics are community-sourced |
+| Features | HIGH | Internal findings grounded in four spikes the user actually played on-device plus Node balance-sim data; external comparables (Wordle, NYT Games, Reigns) are well-documented genre conventions |
+| Architecture | HIGH | Grounded in direct inspection of the current repo's actual files, configs, and git history; the few web-sourced supporting citations agree with each other and with this repo's already-working `base: ./` convention |
+| Pitfalls | HIGH for CSP/build/PWA/iOS mechanics (verified against repo files and current docs); MEDIUM for X/Twitter card-caching specifics (undocumented, changes) and German legal items (needs qualified counsel per release, as in v1.0) |
 
-**Overall confidence:** HIGH for build decisions; MEDIUM for legal compliance (requires qualified counsel) and engagement tuning (requires real player feedback).
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Phaser 4 rex-plugin availability:** Verify phaser4-rex-plugins package name on npm before scaffolding. If VirtualJoystick has not been ported to Phaser 4, fall back to Phaser 3.90.
-- **Legal counsel:** German Persoenlichkeitsrecht, UWG Section 7, and BaFin finfluencer regulations need jurisdiction-specific legal review before the first real subscriber is added.
-- **iOS Safari Phaser 4 compatibility:** Phaser 4 is recent; test on real iPhone SE as the first Phase 2 acceptance criterion.
-- **Engagement tuning:** Build difficulty parameters as level manifest data (enemy speed/health) so tuning requires no code changes.
-- **eToro/wikifolio affiliate T&Cs:** Verify current disclosure requirements against eToro partner T&Cs and German UWG partner disclosure rules.
-
----
+- **X/Twitter card cache behavior is not formally documented** and reportedly persists for days independent of live page changes — plan for a "verify via Post Inspector after every deploy, before posting" step rather than trusting a code fix alone; if a card is wrong on a live post, treat it as unrecoverable for that post (PITFALLS.md's Recovery Strategies table already covers this).
+- **German legal specifics (Persönlichkeitsrecht/UWG) are MEDIUM confidence by design** — this research is not a substitute for qualified counsel review before each release, consistent with how v1.0 treated the same category of risk.
+- **The open "feel" questions carried forward from the spikes** (arcade's 60s length/busyness, idle's 5-minute life and prestige question, swipe's humor-beyond-finance-followers and 33-card sufficiency) are explicitly *not* resolved by this research — FEATURES.md gives a recommendation for each (keep as spiked, ship as-is, don't add a meta-loop) but final validation is deferred to each release's real-phone feel pass, per the project's own verification practice.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- https://phaser.io/download/release/v4.1.0 -- version confirmation, bundle size (345 KB minified)
-- https://phaser.io/news/2026/05/phaser-3-vs-phaser-4 -- migration notes, greenfield recommendation
-- https://supabase.com/pricing -- free tier limits (500 MB DB, 50k MAU/month)
-- https://supabase.com/docs/guides/auth/rate-limits -- 2 emails/hour default SMTP hard limit
-- https://www.brevo.com/pricing/ -- 300 emails/day free, unlimited contacts
-- https://developers.cloudflare.com/pages/platform/limits/ -- unlimited bandwidth on free tier
-- https://github.com/vite-pwa/vite-plugin-pwa -- PWA integration approach
-- Deci & Ryan -- Self-Determination Theory in Digital Games -- autonomy/competence/relatedness framework
-- "Level Up or Game Over: Dark Patterns in Mobile Games" (ACM 2024) -- temporal dark patterns reduce adult appeal
-- https://heydata.eu/en/magazine/opt-in-and-opt-out-how-does-double-opt-in-work-according-to-gdpr-2 -- UWG Section 7 requirement
-- https://www.ionos.com/digitalguide/websites/digital-law/a-case-for-thinking-global-germanys-impressum-laws/ -- Section 5 TMG requirements
+- Direct repo inspection: `vite/config.prod.mjs` (confirmed `base: ./`, `manualChunks`, PWA config), `index.html`, `src/main.ts`, `src/game/main.ts`, `public/_headers`, `public/manifest.webmanifest`, `src/services/{SaveService,ShareService,i18n,ContentRegistry}.ts`, `tests/og-tags.test.ts`, `git log`/`git merge-base` on the branch stack
+- `.planning/PROJECT.md` — v2.0 milestone scope, constraints, decisions, branch-stack context
+- `.claude/skills/spike-findings-barren-wuffett/SKILL.md` + `references/format-shell.md` + spike sources — curated, already-validated spike findings from four on-device playtests
+- [Cloudflare Web Analytics FAQ](https://developers.cloudflare.com/web-analytics/faq/) — exact CSP origins, automatic vs. manual beacon behavior
+- [Playwright `Video` API docs](https://playwright.dev/docs/api/class-video) — `recordVideo` finalize-on-close behavior
+- [Apple Developer Forums — Safari iOS PWA data persistence beyond 7 days](https://developer.apple.com/forums/thread/710157) — Home-Screen-install storage exemption
+- npm registry version checks for `ffmpeg-static`, `gifski`, `@fontsource/pixelify-sans`
 
 ### Secondary (MEDIUM confidence)
-- https://bliz.cc/blog/gamified-lead-generation -- 12-22% opt-in rate benchmarks
-- https://medium.com/@tabfoundry/marketing-game-case-study-14-3-days-spent-in-the-game-674-new-leads-3-days-and-871-in-new-sales-923ea4abae77 -- 89.5% capture rate in branded game
-- https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide -- iOS storage eviction behavior
-- https://www.sza.de/en/thinktank/bafin-finfluencer-guide-legal-requirements-social-media -- financial promotion regulatory line
-- https://se-legal.de/ai-voice-imitation-personality-rights-german-law/?lang=en -- Persoenlichkeitsrecht commercial exploitation test
-- Yu-kai Chou -- Octalysis Framework -- Core Drive 4 (Ownership) applied to Investment Journal design
-- Loewenstein (1994) -- Information Gap Theory -- curiosity gap mechanic design
-- https://phaser.discourse.group/t/phaser-3-mobile-performance-ios-android/1435 -- iOS WebGL memory limits
+- [NYT Games 2024 redesign coverage (TechCrunch, Creative Review)](https://techcrunch.com/2024/03/07/nyt-games-redesigned-app-boost-discovery-simplify-navigation/) — hub-of-games pattern, no-login play
+- Wordle design-history write-ups (Slate, Medium, beastoftraal.com) — emoji-grid share origin, client-side streak/localStorage design
+- Vite multi-page community write-ups, `vite-plugin-pwa` discussion threads on scope/globPatterns — cross-checked against this repo's own already-working config
+- [Cloudflare injects a beacon, CSP blocks it — DEV Community](https://dev.to/indiecoredev/cloudflare-injects-a-beacon-my-csp-said-no-20cl) — silent-failure mode confirmation
+- [iOS Safari localStorage Private Mode quota=0 bug catalog](https://github.com/scottjehl/Device-Bugs/issues/63)
 
-### Tertiary (LOW confidence -- verify before use)
-- phaser4-rex-plugins package on npm -- package name needs verification before scaffolding
-- PixelLab AI review -- free tier generation limits need current verification
-- eToro affiliate compliance guidelines -- current T&Cs need direct verification with eToro partner program
+### Tertiary (LOW confidence)
+- X/Twitter card-caching behavior and Post Inspector guidance (third-party synthesis, platform behavior undocumented and subject to change) — treat as "re-verify per release," not a fixed fact
+- `.planning/milestones/v1.0-research/PITFALLS.md` — carried-forward items, rewritten for v2.0 context
 
 ---
-
-*Research completed: 2026-06-11*
-*Research dimensions: Stack, Features, Architecture, Pitfalls, Engagement (5 dimensions)*
+*Research completed: 2026-10-07*
 *Ready for roadmap: yes*

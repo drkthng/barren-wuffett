@@ -1,277 +1,211 @@
 # Feature Research
 
-**Domain:** Mobile-first HTML5 browser adventure game / branded marketing funnel
-**Researched:** 2026-06-11
-**Confidence:** HIGH (table stakes / anti-features), MEDIUM (conversion rate estimates, GDPR patterns)
-
----
+**Domain:** Daily-return mini-game hub, credit-only funnel (Wordle / NYT Games -style hub of short replayable formats; comparables: Wordle, NYT Games app, Connections, Framed, Reigns, Cookie Clicker / Universal Paperclips)
+**Researched:** 2026-10-07
+**Confidence:** HIGH — internal findings are grounded in four spikes the user actually played on a phone plus Node balance-sim data; external findings are grounded in well-documented, widely-written-about genre conventions (Wordle's design history, NYT Games' 2024 redesign, Reigns' card economy, classic incrementals)
 
 ## Feature Landscape
 
+Grouped by the categories REQUIREMENTS.md will use: **Hub & Shared Shell, Arcade release, Idle release, Swipe release, Sharing/Launch kit, Analytics & Legal.**
+
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels broken or unprofessional.
+#### Hub & Shared Shell
 
 | Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Touch controls (virtual D-pad / tap-to-move) | Every mobile player assumes they can play with their thumbs; keyboard-only kills engagement instantly on phone | MEDIUM | Virtual joystick or tap-target overlay; Phaser 3 has built-in touch input; must feel responsive (<50ms latency perception threshold) |
-| Portrait-mode support with orientation lock/overlay | >70% of casual browser sessions start in portrait; a hard landscape lock loses half the audience before first interaction | LOW | Show "please rotate" overlay OR design the viewport to work in portrait natively; top-down Zelda-style maps well to portrait with a virtual D-pad below the viewport |
-| Audio toggle (music + SFX separately) | Mobile users frequently play in public or silent mode; blaring audio on page load is an immediate close trigger | LOW | Two persistent toggles (music / SFX); persist preference in localStorage; never auto-play audio before first user gesture (iOS WebAudio policy blocks it anyway) |
-| Visible loading progress indicator | First load of a pixel-art sprite sheet can be 1–3 MB; blank screen with no feedback = assumed crash | LOW | A branded loading bar (e.g., Barren Wuffett walking across a progress bar) doubles as a first impression; target initial bundle <300 KB, lazy-load level assets |
-| Fast first load (<3 s on 4G) | Mobile users abandon sites that take >3 s; game players are slightly more patient but not by much | MEDIUM | Asset compression (TexturePacker), lazy-loading level packs, service worker pre-cache for repeat visits; Cloudflare Pages CDN handles edge caching |
-| Local save / progress persistence | Casual players return days later; losing progress on refresh = permanent churn | LOW | localStorage for immediate saves; IndexedDB for larger state blobs; this is the prerequisite for cloud-save email capture |
-| Pause / resume | Phones interrupt constantly (calls, notifications); a game that can't pause feels hostile | LOW | Pause menu accessible via on-screen button and OS back-gesture intercept |
-| Basic settings screen | Sound toggles, credits, privacy policy link, Impressum link (legally required in Germany) | LOW | Must be reachable from main menu AND from in-game pause menu |
-| Mobile viewport meta tag + prevent zoom | Pinch-zoom breaks game layout; browser chrome eating into viewport causes layout jumps | LOW | `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">` |
-| Legal pages: Impressum + Privacy Policy | Legally mandatory for DE-operated web services; absent = GDPR violation risk | LOW | Static pages linked from footer and settings; must name responsible person, address, email; privacy policy must describe all data collected (email, localStorage, analytics if any) |
-| Cookie/consent banner (non-essential cookies only) | Required by German TTDSG / GDPR if using any analytics, third-party embeds, or marketing pixels | LOW | If the game uses only functional localStorage and no third-party tracking, a simple "this site uses functional storage" notice suffices — no banner needed; any analytics (e.g., Plausible) that is cookieless and privacy-first avoids consent overhead |
+|---|---|---|---|
+| Game tile grid at the site root (4 tiles) | Every multi-game daily hub (NYT Games' 2024 redesign moved from a crossword-first layout to a flat list of all games specifically so nothing hides) shows the full catalog at a glance | S | Reuse code-drawn cast art per tile; CSS grid, portrait-first |
+| Locked "coming soon" tiles for unreleased games | Sets correct expectations instead of a dead link or a missing tile that looks broken | S | Padlock icon + "follow @Wolfhartvest" CTA; no fake countdown (see Anti-Features) |
+| One shared config/credit/share/daily-seed module ported into the real Vite+TS build | All three new formats need identical plumbing; solving the CSP/font/top-level-await problems three separate times would triple the risk | M | Fully specified in `format-shell.md`; the real blocker is the build's strict CSP, not the logic |
+| Credit + About/legal overlay on every game | Not just a nice-to-have — UWG §5a(4) requires the credit be visible, not buried | S | DOM-overlay pattern already proven in the spikes |
+| Working OG/X share image (absolute URL, real image) | X needs an absolute `og:image` to render a card at all; today's is a relative URL pointing at a blank navy PNG | M | Known, already-diagnosed bug — must be fixed before Release 1's X post, not after |
+| Daily seed = same game for every player, every UTC day | This is the Wordle mechanic itself — without a shared "today," there is no comparability in replies and no reason to call anything "Daily #N" | S (already built) | Only porting work remains |
+
+#### Arcade release (Mr. Market, Release 1)
+
+| Feature | Why Expected | Complexity | Notes |
+|---|---|---|---|
+| 60 s single-session run with a clear end screen | Validated: skill gradient already separates smart (15-20%/yr) from idle/random (2-8%/yr) by 100-10,000x in value at this length | S (port) | `mr-market-arcade.md` has tuned numbers from two balance passes |
+| One-thumb drag input | Table stakes for any mobile arcade-catch game | S (port) | Already tuned; `MOVE_SPEED`, knife grace etc. carry over as-is |
+| Share result (value, %/yr, rank, decade squares) | The thing people actually post | S (port) | Text shape already validated |
+
+#### Idle release (Snowball, Release 2)
+
+| Feature | Why Expected | Complexity | Notes |
+|---|---|---|---|
+| Age 6→90 progression via tap-to-hustle + buy-and-reinvest | Standard incremental grammar players already know from Cookie Clicker / Universal Paperclips lineage | S (port) | `econ.js` is a pure, Node-simmed module; port as-is |
+| Seeded daily offers (crash/buyout/tip/mill), same for everyone | Consistency with the hub's daily identity; also the funniest content per the spike notes | S (port) | Already fixed to "every life opens with a crash, deal the same set, seed only the order" |
+
+#### Swipe release (Barren, CEO, Release 3)
+
+| Feature | Why Expected | Complexity | Notes |
+|---|---|---|---|
+| Reigns-style swipe-left/right with 4 two-sided meters | Genre table stakes once the pitch is "Reigns-style" | S (port) | Pointer Events + CSS transform, no gesture library needed |
+| Endings-collection grid (3×3, `???` for undiscovered) | Core Reigns replay hook; also satisfies the Octalysis "ownership" drive cheaply | S (port) | `localStorage['barren-ceo-endings']`, best-effort |
+
+#### Sharing / Launch kit
+
+| Feature | Why Expected | Complexity | Notes |
+|---|---|---|---|
+| Per-release X post with a share-card image + short gameplay clip | This is the stated growth mechanism (X follower growth via plays per release) — without it a release is silent | M | Repeats 3× (one per release); screen-recording + card-generation workflow, not code |
+| Native share sheet on phone, X-intent fallback on desktop | Mobile users expect one tap, not copy-paste | S (port) | Already proven pattern (`navigator.share` synchronous text, no await before the call) |
+
+#### Analytics & Legal
+
+| Feature | Why Expected | Complexity | Notes |
+|---|---|---|---|
+| Cookieless Cloudflare Web Analytics, wired site-wide | This *is* the success metric's input (plays per release) — without it there's no way to know a release worked | S/M | One script tag; confirm it fires on every hub route, not just `/` |
+| Privacy page matching actual practice (no Supabase/Brevo) | Legal requirement under GDPR given the German operator; also just honest | S | Edit of an existing page |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set Barren Wuffett apart. Not required, but directly serve the funnel and retention goals.
-
 | Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Cloud-save email gate | Converts the save system into the primary email capture touchpoint; feels like a feature ("sync your progress across devices"), not a demand; value-first framing triggers reciprocity | MEDIUM | Supabase free tier: user provides email → receives magic-link or confirmation → local save synced to DB; must be framed as "never lose your progress" not "give us your email"; GDPR: separate checkbox for marketing vs functional save (save = legitimate interest, marketing = explicit consent) |
-| Investment Journal collectibles | The differentiating funnel mechanic; one unlockable per level/boss gives a genuine, entertaining investing insight in Barren Wuffett's voice; subtle eToro/wikifolio mention at the end of each entry | HIGH | Each journal entry = 150–300 words of real value; illustrated in pixel-art style; acts as the "reward" that justifies giving an email; must stand alone as interesting content even to someone who never visits the portfolio links |
-| Dynamic share card (result image) | Wordle-style shareability: after each boss defeat, a pre-composed PNG shows score, level name, quote from the Journal entry, and game URL; one tap to share to Twitter/WhatsApp | MEDIUM | html2canvas or Canvas API renders a 1200×630 shareable card; og:image meta tag ensures rich previews in social feeds; the share text carries the game URL = organic distribution loop |
-| Leaderboard (email-gated score submission) | Competitive players will give an email for a chance to appear on a leaderboard; adds retention hook beyond story completion | MEDIUM | Supabase table for top scores per level; email required to submit (second touchpoint after cloud-save); display top 10 publicly; no account needed beyond email — keeps friction minimal |
-| Bonus content unlock (Journal "deep cut" entries) | A secondary email touchpoint: players who didn't save to cloud can still unlock an exclusive "behind-the-scenes" Journal entry by subscribing; lower-stakes ask for players who don't care about cloud save | LOW | One exclusive entry per act (not per level) keeps the incentive scarce; delivered via email (first email in the drip sequence doubles as content delivery) |
-| PWA install prompt (deferred) | "Add to home screen" = bookmarked return visits; icon on home screen = constant recall; increases Day 7 and Day 30 retention meaningfully | LOW | Trigger the install prompt after level 1 completion (not on first load); use `beforeinstallprompt` event; Chromium/Android supports full install; iOS shows partial support (Safari "Add to Home Screen") |
-| Offline play via Service Worker | Once installed as PWA, game works on the subway; rare but appreciated; signals quality | MEDIUM | Cache game shell + Level 1 assets on install; Level 2–5 assets fetched and cached on first play; cloud-save sync queued for next connection |
-| Narrative collectibles system (lore cards) | Drives exploration and replay; per-level "moment cards" (e.g., "The Paper Route," "The Coca-Cola Discovery") that fill a collectible album; gives completionists a reason to replay | MEDIUM | Simple flag array in save state; displayed in a gallery screen; not email-gated (reward exploration freely); Journal entries ARE gated (reward email) |
-| "Barren's Wisdom" end-screen quote | After completing each level, a short Buffett-parody quote (in Barren Wuffett's voice) with a tiny "Discover Barren's real portfolios →" link; the one moment where the funnel is made explicit | LOW | Must be charming, not salesy; the quote IS the content; the link is small; finance-audience players are primed to click if the game has earned their trust |
-| Share-with-friend referral bonus | Players earn an in-game bonus (extra collectible or cosmetic) by sharing a referral link; this mechanic drove +108% extra entries in documented branded game case studies | MEDIUM | Referral code appended to share URL; Supabase tracks referral → credit; in-game cosmetics (different character hat, color palette swap) keep reward tangible without monetization |
+|---|---|---|---|
+| Cross-game daily checklist ("today's dailies: 2/3 done") | NYT Games has per-game stats/streaks but siloed per game; a hub-wide checklist reinforces "this is one hub," not three separate apps glued together | S/M | Device-only; must key off the same UTC date the seed already defines (see Streak rules below) |
+| Cross-game play streak ("day N") | A Wordle-style habit hook rare on an indie multi-format hub — most indie daily-game clones do one format only | S | Needs careful non-punitive UX; see dedicated section below |
+| One unified code-drawn parody cast across all 4 formats | No format-switch "reskin" feeling; this is *why* the spike comparison could be about format and not art | Already built | `pixel-cast.md` |
+| The theme is the mechanic, not a skin, in every format | ENGAGEMENT.md's strongest prior finding: compounding, patience and Mr. Market's mood swings are the actual rules, not flavor text over a generic game — no finance-parody competitor does this across three different genres at once | Already built | Embedded in each format's pure module (`buildMarket`, `econ.js`, `cards.js`) |
+| One shared daily number across the whole hub | Lets a single X post say "Daily #N" meaningfully for whichever game it's about, and lets replies compare apples to apples | S | `EPOCH` already shared in one config constant |
 
-### Anti-Features (Things to Deliberately NOT Build)
-
-Features that seem reasonable but would damage the trust of a finance-audience funnel — this audience is sophisticated, skeptical, and will immediately associate dark patterns with the creator's investment credibility.
+### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Forced login/account wall before play | Reduces anonymous load, enables personalization | 93% of players abandon games with deceptive registration walls; finance audience associates forced accounts with data harvesting; eliminates word-of-mouth ("just send the link and play") | Let anyone play immediately; offer cloud-save as an opt-in benefit after level 1 |
-| Interstitial ads (banner, video, popups between levels) | Obvious monetization path | 45% of players delete a game after overly frequent interstitials; 61% actively discourage friends from downloading; for a trust-building funnel, one bad ad placement poisons the investment content that follows | v1 has zero ads; monetization is via email-to-portfolio conversion, not ad CPMs; revisit ad formats only after v2+ paid content is live |
-| Aggressive email popups (modal on page load, countdown timers, "wait — don't go!" exit-intent) | Standard lead-gen playbook | Finance-savvy audience recognizes and resents dark patterns; associates manipulation with the creator's investment judgment; static popup opt-in rate is only 1.9% anyway vs 12.8% for gamified capture | Cloud-save gate after level 1 (12–20% opt-in realistic); bonus Journal entry offer (softer ask); leaderboard submission (competitive players self-select) |
-| Pre-ticked marketing consent checkbox | Reduces friction at signup | Explicitly illegal under GDPR; voids consent; German data protection authorities (e.g., BayLDA, LfDI) actively enforce this; single fine could exceed entire project lifetime value | Separate unchecked checkbox: "I'd like to receive Barren's Investment Journal updates (optional)" — this is also better for list quality |
-| Daily login streaks / FOMO timers ("Offer expires in 2:47!") | Drives DAU and urgency | Manufactured urgency reads as manipulation to a value-investing audience that prizes patience and rationality; contradicts the Buffett brand ("our favorite holding period is forever"); creates churn if players miss a day | Natural re-engagement via email drip (Journal entries land in inbox on a schedule the player consented to) |
-| Social login (Facebook/Google OAuth) as the only save option | Reduces password friction | Requires App Review (Facebook), OAuth credentials management, privacy policy updates for third-party data; adds vendor dependency; privacy-conscious finance audience may distrust social login for an investment-adjacent app | Magic-link email auth (Supabase) — frictionless, no password, no third-party data sharing, fully GDPR-controllable |
-| Real names / likenesses of Warren Buffett, Charlie Munger, or corporate logos | Obvious authenticity signal | Legal risk: defamation, right of publicity (Buffett is a public figure but commercial exploitation differs from parody commentary); trademark infringement for logos | Parody names throughout ("Barren Wuffett," "Chucky Munger," "Omahoma Investments"); parody is a protected expression category in most jurisdictions when clearly satirical |
-| Aggressive upsell modals mid-gameplay | Monetization preparation | Breaks immersion; signals that the "free" game was bait-and-switch; destroys the trust built by the gameplay-first approach | Architecture prepared for paid content (level packs) but zero upsell prompts in v1; any paid content in v2+ should be surfaced only from main menu, never mid-play |
-| Full-screen cookie consent banner blocking gameplay | GDPR "compliance theater" | If game uses only functional localStorage (no third-party analytics, no ad pixels, no cross-site tracking), a full consent banner is not legally required; showing one anyway trains players to dismiss-and-ignore, adds friction, and signals privacy paranoia | Cookieless analytics (Plausible, Umami) require no consent banner; Supabase auth uses server-side session, not tracking cookies; link to privacy policy in footer |
-
----
+|---|---|---|---|
+| Accounts / login | "Progress survives a new device" sounds responsible | Needs a backend + GDPR consent flow — exactly what the 2026-10-06 pivot dropped and why | localStorage, best-effort, explicitly disposable (same tradeoff Wordle shipped with for years) |
+| Leaderboards | Looks like the obvious "compare scores" virality lever | Needs a backend; invites optimiser/cheat discourse; the share text already does this job | Rank tiers + decade squares/emoji *are* the leaderboard, carried in the share text itself |
+| Push notifications ("come back today!") | Looks like the cheapest streak-saving nudge | ENGAGEMENT.md flags notification-begging by name for this exact audience; inconsistent iOS web-push support; needs a consent prompt | Checklist/streak is pull — the player checks the hub, nothing checks on the player |
+| Streak-loss guilt messaging / streak-freeze purchases | Feels like it protects engagement | ENGAGEMENT.md's #2 named anti-pattern (login-streak guilt); "buy a freeze" implies monetization this project has none of | Silent reset to 1, no modal, no purchasable grace |
+| Countdown timers on locked "coming soon" tiles | Feels like it builds anticipation | Manufactured urgency is ENGAGEMENT.md's FOMO-timer anti-pattern; the real ship dates aren't fixed (staggered on "passes its phone feel check") anyway | Static "follow @handle" CTA, no clock |
+| In-game links to eToro / wikifolio / portfolio | Feels like "why not, it's right there" | Already explicitly out of scope; parody + endorsement is a legal risk (UWG §5a(4): subtle ≠ hidden) | Credit-only: handle + website, About screen only |
+| Prestige/ascension loop added to the idle game at launch | Looks like free extra depth — it's idle genre's biggest retention lever elsewhere | This format is a *daily* 5-minute arc reset by a fresh seed, not a persistent idle game run for days; a cross-day prestige means new persistent state exactly where the backend was just removed, and risks turning a comedy bio-sim into a grind before the "is 5 min long enough" question is even answered | Ship the self-contained daily life first; if feel pass says it's thin, trim the business list or re-pace `YEAR_SECONDS`, don't add a meta-loop |
+| Expanding the swipe deck past 33 cards before launch | Insurance against "feels thin" vs. Reigns' ~750-887 cards | Content is this format's *planned* release treadmill (per `swipe-satire.md`); blocking Release 3 on writing hundreds of cards contradicts the staggered-release strategy | Ship 33; treat "add N cards" as the ongoing post-launch cadence for this one game |
+| Server-synced streak/checklist | Protects against a cleared cache wiping stats | Backend again, by another name | Accept the loss-on-clear tradeoff; it's the same one every account-less daily game accepts |
 
 ## Feature Dependencies
 
 ```
-[Local save / localStorage]
-    └──required by──> [Cloud-save email gate]
-                          └──enables──> [Leaderboard email touchpoint]
-                          └──enables──> [Investment Journal gated delivery]
-                          └──enables──> [Email drip sequence]
+Shared hub shell (config + seed + share + credit/About overlay)
+    └──requires──> CSP fixes (npm Phaser, self-hosted Pixelify Sans, es2022 build target for top-level await)
+                       └──requires──> nothing else — do this first, once
 
-[Level 1 complete]
-    └──triggers──> [Cloud-save prompt (first email ask)]
-    └──triggers──> [PWA install prompt]
-    └──triggers──> [Barren's Wisdom end-screen with portfolio link]
+Hub page (tiles, checklist, streak)
+    └──requires──> Shared hub shell (must agree on the same DATE/seed definition and config constants)
 
-[Email captured]
-    └──unlocks──> [Investment Journal entry (per level)]
-    └──unlocks──> [Leaderboard submission]
-    └──unlocks──> [Cloud sync across devices]
+Arcade / Idle / Swipe release
+    └──requires──> Shared hub shell
+    └──requires──> OG/X share image fix (otherwise that release's X post under-performs or fails to render)
 
-[Investment Journal entry]
-    └──contains──> [Subtle eToro/wikifolio link]
-    └──feeds──> [Email drip sequence (one entry per email)]
+Daily checklist + streak
+    └──requires──> at least one released game to check off (can ship alongside Release 1; doesn't need all three)
 
-[Share card feature]
-    └──requires──> [Canvas/html2canvas rendering]
-    └──requires──> [og:image meta tags on page]
-    └──enhances──> [Referral bonus system]
+Per-release X post + share card + clip
+    └──requires──> that release's phone feel pass has passed
+    └──enhances──> Cookieless analytics (the post is what drives the traffic analytics measures)
 
-[PWA install]
-    └──requires──> [Service worker]
-    └──requires──> [Web app manifest]
-    └──enables──> [Offline play]
+Swipe deck expansion (post-launch)
+    └──requires──> Swipe release shipped
+    └──conflicts with──> gating Release 3 on deck size (must not block launch)
 
-[Leaderboard]
-    └──requires──> [Supabase backend]
-    └──requires──> [Email captured] (gated submission)
-
-[Narrative collectibles (lore cards)]
-    └──enhances──> [Replay motivation]
-    └──does NOT require──> [Email capture] (deliberately ungated)
-
-[Audio toggle]
-    └──requires──> [localStorage] (persist preference)
-
-[Orientation handling]
-    └──required by──> [Portrait-mode play]
-    └──independent of──> [All other features]
+Idle prestige loop / "personal best" compare
+    └──conflicts with──> "device-only, no new persistent state" simplicity bar — deferred, revisit only post-launch
 ```
 
 ### Dependency Notes
 
-- **Cloud-save gate requires local save first:** The prompt only makes sense after the player has something worth saving; trigger at end of Level 1 (not before).
-- **Investment Journal requires email:** The Journal IS the primary value exchange; ungating it would eliminate the conversion mechanism.
-- **Leaderboard conflicts with anonymous play:** Leaderboard score display can be public, but submission must require email; show the board to everyone to create FOMO, gate submission.
-- **Share card enhances referral bonus:** Without a referral tracking URL, the share card is still a valuable virality mechanic; the bonus system is a v1.x enhancement.
-- **Narrative collectibles (lore cards) must NOT require email:** Free exploration reward maintains goodwill and keeps the game feeling generous; the email-gated Journal entries land as premium by contrast.
+- **Everything downstream reuses the shared shell**, so the CSP/font/top-level-await/seed fixes must land once, in the shell phase, not be re-solved per format.
+- **The share-card bug is a dependency of every release's X post**, not just Release 1's — fix it in the shared-shell phase so it's already solved by the time Release 1 ships.
+- **The checklist/streak doesn't have to wait for all three releases** — checking off "today's arcade run" alone is already a meaningful loop, and the feature should ship with Release 1 and simply gain a column per later release.
 
----
+## Open Feel Questions — Recommendations
+
+Grounded in the spikes' own sim data plus genre comparables.
+
+### Arcade: is 60 s the right length, is item-type reading busy?
+
+**Recommendation: keep 60 s for Release 1.** Viral short-session arcade loops that this genre lineage draws from (Flappy Bird, Crossy Road, Chrome's offline dino game) sit in the 30-90 s range, and 60 s already produced a validated, wide skill gradient in the sim (smart 15-20%/yr vs. idle/random 2-8%/yr). Don't extend length to fix "busyness" — fix busyness directly instead: lean harder on silhouette/color families (round-and-warm = good, spiky-and-cold = bad) so a glance reads good/bad before a label does, reserving "reading the type" for players who want the nuance. Re-test busyness specifically in the phone feel pass; only extend the 60 s if the feel pass says the run *feels short*, which is a different problem than busy.
+
+### Idle: is 5 minutes the right life, does it need a prestige loop?
+
+**Recommendation: ship the 5-minute self-contained life for Release 2; do not add a prestige loop.** The format is a *daily* arc reset by a fresh seed each day — closer to a daily puzzle's "one attempt" framing than to a persistent idle game checked hourly over days. The classic idle prestige loops this genre is compared against (Cookie Clicker's ascension, Universal Paperclips' narrative phase-shift) exist because those games run indefinitely; this one deliberately resets daily, so "pass the snowball on" would require new cross-day persistent state exactly where the backend was just removed. If the phone feel pass says 5 minutes feels thin, prefer trimming the business list (already flagged as possibly too long by age 70) or re-pacing `YEAR_SECONDS`, over adding a meta-loop.
+
+### Swipe: is it funny beyond finance followers, is 33 cards enough?
+
+**Recommendation: ship 33 cards for Release 3 as planned; treat card-writing as the post-launch content cadence.** Reigns' ~750-887-card depth was built over its lifetime, not at launch — 33 is a reasonable *first* deck by that model, not a finished one. "Is it funny beyond finance followers" is a writing/testing question, not a feature gap: mitigate by having at least one phone-feel-pass reader who isn't a finance follower, since every other validation so far has been the creator's own judgment on a topic they're close to.
+
+## Streak & Checklist UX Rules (device-only, no backend)
+
+The project explicitly wants a streak despite ENGAGEMENT.md's prior finding that login-streak guilt is an anti-pattern. Both can be true: ship the streak, but not its guilt mechanics.
+
+1. **Day boundary = the same UTC ISO date the daily seed already uses** (`DATE` in `format-shell.md`), never the device's local midnight. The hub's "today" must agree with which daily game is actually showing — two different boundaries (UTC for the seed, local time for the streak) would let the checklist say "not done today" while the seed has already rolled over, right at the DE timezone edge (01:00/02:00 local) the shell doc already calls out.
+2. **Checklist state keys off `{DATE, gameId}` in `localStorage`**, wrapped in try/catch exactly like the existing pattern (private-mode browsers throw). A game counts as "done today" the first time its end screen is reached that day, not merely opened — mirrors how the share flow already gates on `result`.
+3. **The streak increments once per UTC day**, the moment the *first* game of that day is completed — not once per game finished. Clearing several games the same day keeps the streak alive for that day but doesn't add extra days.
+4. **No streak-loss modal, no red "you broke it" messaging.** On a gap, silently reset `currentStreak` to 1 on the next completion and show the new number going forward; never surface what was lost. This is ENGAGEMENT.md's #2 anti-pattern by name — adding a streak doesn't require adopting its guilt mechanics.
+5. **No streak-freeze purchase** — there's no monetization to sell one from. If a grace mechanic is wanted at all, the only acceptable form is a silent, non-configurable one-day grace (miss one day, streak holds); add it only if the phone feel pass shows people annoyed by a brittle streak, otherwise skip it as unneeded complexity.
+6. **Clearing site data resets everything, and that's a disclosed, acceptable tradeoff** — the same one Wordle shipped with for years before it had accounts. Don't design around preventing it; that's a backend problem by definition.
+7. **The checklist is pull, not push.** No notification, no badge requiring a permission prompt. The player sees "2/3 today" only when they open the hub, which keeps this inside both the no-push constraint and ENGAGEMENT.md's notification-begging anti-pattern.
+8. **Best-effort, not authoritative.** Treat the streak/checklist like the swipe game's endings collection — a nice local artifact, not a system that must survive every edge case (new device, cleared cache, multiple open tabs). A simple localStorage read-modify-write is good enough at this scale.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (Release 1)
 
-Minimum viable product for validating the core loop and funnel concept.
+- [ ] Shared shell ported into the real build (config, seed, share, credit/About overlay) — every later release depends on it
+- [ ] Hub page with 4 tiles: Arcade live; Idle + Swipe locked "coming soon, follow @Wolfhartvest"; Adventure as an early-demo tile
+- [ ] Daily checklist + streak, scoped to whatever is live (just the arcade at first), UTC-day boundary matching the seed's `DATE`
+- [ ] Mr. Market arcade ported, phone-feel-passed, OG/X share card fixed, share card + clip produced, deployed, one X post
+- [ ] Cookieless analytics wired site-wide so Release 1's plays are measurable
+- [ ] Privacy page corrected (no Supabase/Brevo mentions)
 
-- [ ] Touch controls (virtual D-pad) — without this, the game is unplayable for mobile users (primary audience)
-- [ ] Portrait-mode with orientation overlay — most mobile sessions start portrait; locked landscape loses ~50% of organic traffic
-- [ ] Audio toggle (music + SFX, persisted) — iOS auto-play policy makes this unavoidable anyway; must exist from day one
-- [ ] Loading progress indicator — blank screen kills first impressions before gameplay begins
-- [ ] Local save (localStorage) — prerequisite for cloud-save; also prevents frustration on page refresh
-- [ ] Cloud-save email gate (post-Level-1) — the primary conversion mechanism; must ship with the game, not after
-- [ ] Investment Journal (1 entry per level, email-gated) — the funnel's value payload; the reason the email ask feels fair
-- [ ] Barren's Wisdom end-screen with portfolio link — one discreet, charming mention of real portfolios per level
-- [ ] Impressum + Privacy Policy pages — legally mandatory in Germany; absent = immediate legal exposure
-- [ ] Share card (Canvas-rendered) — zero-cost distribution; each boss defeat becomes a potential acquisition touchpoint
-- [ ] og:image + og:title + og:description meta tags — ensures share card renders properly in all social previews
+### Add After Validation (Releases 2 and 3)
 
-### Add After Validation (v1.x)
+- [ ] Snowball idle ported + feel-passed + released, unlocking its hub tile and extending the checklist
+- [ ] Barren-CEO swipe ported + feel-passed + released, unlocking its hub tile and extending the checklist
+- [ ] Each release's own share card + clip + X post
 
-Add once core loop and email capture are working and validated.
+### Future Consideration (post v2.0)
 
-- [ ] Leaderboard — add when there are enough players to make it feel alive (dead leaderboard is worse than no leaderboard); trigger: >100 email captures
-- [ ] PWA manifest + install prompt — add after first 50 players; verify the core game is stable before encouraging home screen installs
-- [ ] Service worker / offline support — add after PWA install; only valuable if players are actually installing
-- [ ] Referral bonus system — add when share card traffic shows measurable referral patterns; trigger: share card click data from analytics
-- [ ] Bonus Journal "deep cut" unlock — secondary email touchpoint for players who skipped cloud-save; add when observing >30% of players completing game without converting
-- [ ] Narrative collectibles gallery screen — lore cards exist in Level 1 from launch, but the gallery UI can ship in v1.x when there are enough to display meaningfully
-
-### Future Consideration (v2+)
-
-Defer until product-market fit is established and v1 players have validated the funnel.
-
-- [ ] Daily hooks / streak system — only after establishing a reason to return daily (new content); avoid FOMO mechanics that conflict with the Buffett brand
-- [ ] Paid level packs (v2 arc: Graham era, Berkshire era) — architecture prepared from v1; build payment flow only after traction justifies App Store alternative channels
-- [ ] German localization — English first per PROJECT.md; add after validating English audience; i18n structure kept tidy from day one
-- [ ] Charlie Munger companion character ("Chucky") — delightful differentiation for v2; adds dev scope disproportionate to v1 value
-- [ ] Multiple save slots — adds complexity; single slot is sufficient for v1 solo play
-- [ ] Social login (OAuth) — adds OAuth dependencies and privacy policy complexity; magic-link is better for this audience anyway
-
----
+- [ ] Swipe deck content expansion beyond 33 cards — the format's built-in release treadmill
+- [ ] Idle "personal best" compare, only if the phone feel pass flags the 5-minute life as too short — not a full prestige loop
+- [ ] Any cross-device sync — explicitly deferred; would require reintroducing a backend
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Touch controls | HIGH | MEDIUM | P1 |
-| Portrait-mode handling | HIGH | LOW | P1 |
-| Audio toggle | HIGH | LOW | P1 |
-| Loading progress bar | HIGH | LOW | P1 |
-| Local save (localStorage) | HIGH | LOW | P1 |
-| Cloud-save email gate | HIGH | MEDIUM | P1 |
-| Investment Journal (email-gated) | HIGH | HIGH | P1 |
-| Barren's Wisdom end-screen | HIGH | LOW | P1 |
-| Impressum + Privacy Policy | HIGH (legal) | LOW | P1 |
-| Share card (Canvas) | HIGH | MEDIUM | P1 |
-| og:image meta tags | MEDIUM | LOW | P1 |
-| Narrative collectibles (lore cards) | MEDIUM | MEDIUM | P2 |
-| Leaderboard | MEDIUM | MEDIUM | P2 |
-| PWA install prompt | MEDIUM | LOW | P2 |
-| Service worker / offline | MEDIUM | MEDIUM | P2 |
-| Referral bonus system | MEDIUM | MEDIUM | P2 |
-| Bonus Journal deep-cut unlock | MEDIUM | LOW | P2 |
-| Accessibility settings (text size, contrast) | LOW | LOW | P2 |
-| Daily streak system | LOW | LOW | P3 |
-| Paid level pack architecture | LOW | HIGH | P3 |
-| German localization (i18n wiring) | LOW | MEDIUM | P3 |
-| Charlie companion character | LOW | HIGH | P3 |
+|---|---|---|---|
+| Shared shell port (config/seed/share/overlay) | HIGH | M | P1 |
+| OG/X share image fix | HIGH | S/M | P1 |
+| Hub page + locked teaser tiles | HIGH | S | P1 |
+| Daily checklist + streak | MEDIUM | S | P1 |
+| Arcade port + feel pass + release | HIGH | M | P1 |
+| Cookieless analytics | HIGH (it IS the success metric) | S | P1 |
+| Idle port + feel pass + release | HIGH | M | P2 |
+| Swipe port + feel pass + release | HIGH | M | P2 |
+| Swipe deck expansion | MEDIUM | M (content, not code) | P3 |
+| Idle prestige / personal-best | LOW/MEDIUM | M | P3 |
+| Accounts, leaderboards, push, cross-device sync | LOW for this audience | HIGH + violates constraints | Rejected |
 
-**Priority key:**
-- P1: Must have for launch
-- P2: Should have — add once core loop is stable
-- P3: Nice to have — future consideration
+## Competitor / Comparable Feature Analysis
 
----
-
-## Email Capture Conversion Rate Benchmarks
-
-Realistic expectations for the funnel, based on documented gamified lead-generation data:
-
-| Touchpoint | Mechanism | Expected Opt-in Rate | Notes |
-|------------|-----------|----------------------|-------|
-| Cloud-save gate (post-Level-1) | "Save progress across devices" framing | 15–25% of players who reach Level 1 end | Best-performing pattern; value-first; comparable gamified captures average 12.8–22% |
-| Leaderboard submission gate | Score board + competitive framing | 8–15% of players who complete a level | Competitive players self-select; lower volume but higher intent |
-| Bonus Journal unlock | "Unlock exclusive insight" offer | 5–10% of remaining non-converters | Secondary touchpoint for players who passed on cloud-save |
-| Share card referral (indirect) | Organic social share → new player → conversion | Multiplier on above rates, not additive | Branded game case study showed +108% reach from referral bonus alone |
-
-**Net realistic expectation:** If 100 players complete Level 1, expect 15–25 email captures. Marketing consent (separate checkbox) will be a subset — expect 50–70% of capturers to tick the marketing box. This means ~8–17 marketing-consented leads per 100 Level 1 completions. Quality will be high: self-selected value-investing audience who completed gameplay.
-
----
-
-## Competitor Feature Analysis
-
-| Feature | Wordle (viral browser game benchmark) | Typical F2P Mobile Game | Barren Wuffett Approach |
-|---------|---------------------------------------|-------------------------|-------------------------|
-| Login required | None — play immediately | Usually required or social login | None to play; email opt-in only for save/leaderboard |
-| Ads | None | Interstitials, banner, rewarded video | None in v1 |
-| Save system | Daily cookie (no account) | Account-required cloud save | Local save default; cloud save as email-capture feature |
-| Shareability | Emoji grid, frictionless 1-tap | Screenshot with watermark | Canvas share card, OG tags, referral URL |
-| Monetization | None (acquired by NYT) | IAP, loot boxes, energy systems | Email → portfolio traffic (indirect); v2+ paid packs |
-| GDPR / compliance | Minimal (US-owned, NYT handles) | Cookie banners, ToS | Full DE compliance: Impressum, double opt-in, cookieless analytics |
-| Retention hook | Daily scarcity (one puzzle/day) | Streaks, lives, timers | Story progression, collectibles, Journal drip via email |
-| Trust signals | Simple, no dark patterns | Often dark-pattern-heavy | No dark patterns, discreet funnel, genuine educational content |
-
----
-
-## GDPR / Email Capture Implementation Notes
-
-These are non-negotiable for a Germany-operated project.
-
-1. **Separate consent purposes.** The cloud-save email collection has two distinct legal bases:
-   - Functional (account for save sync): legitimate interest OR contractual necessity — does NOT require a marketing checkbox.
-   - Marketing (Investment Journal emails, portfolio updates): requires explicit, separate, opt-in consent. Unchecked box, plain language ("I'd like to receive Barren's investing insights by email — optional").
-
-2. **Double opt-in for marketing.** Not legally required by GDPR, but German courts (BGH) and authorities treat it as best practice and it provides consent documentation. Implement: capture email → send confirmation email → player clicks confirm → added to marketing list. Supabase + Resend/Mailgun handle this.
-
-3. **No pre-ticked boxes.** Illegal under GDPR. Both checkboxes (save + marketing) must start unchecked.
-
-4. **Right to withdraw.** Every marketing email must contain an unsubscribe link. Supabase or email tool manages list state.
-
-5. **Data minimization.** Collect only: email address, level progress (for save), score (for leaderboard), consent timestamp. No name, no location beyond what the browser provides, no behavioral tracking beyond functional analytics.
-
-6. **Cookieless analytics.** Use Plausible or Umami (self-hostable on free tier). No consent banner required. No GDPR overhead.
-
-7. **Impressum content.** Full name, physical address, email address, phone number of the responsible person (the creator). Linked from every page footer and from the in-game settings menu.
-
----
+| Feature | Wordle / NYT Games | Reigns | Idle genre (Cookie Clicker, Universal Paperclips) | Our Approach |
+|---|---|---|---|---|
+| Hub of multiple daily games | Yes — NYT Games' 2024 app redesign centers a "Games" tab listing every title plus a "Stats" tab; playable fully without an account, login only needed for cross-device sync | N/A (single game) | N/A (single game) | Same idea at indie scale: one tile grid, device-only stats, never an account |
+| Streak / checklist | Per-game streak + stats, server-synced if logged in, but works with zero account | None | None (session-based, not daily) | Device-only streak + checklist spanning all games, no account, no sync |
+| Share artifact | Spoiler-free emoji grid + score line, shareable without logging in | No native daily share artifact (not a daily game) | Screenshots only, no built-in share string | Structured share text (result + rank + emoji line + handle) via native share sheet / X intent |
+| Locked/upcoming content | NYT launches new games (Connections, Strands) as separate announced events, not shown as locked tiles ahead of time | DLC packs shown in-store before release | N/A | Locked "coming soon, follow @handle" tiles — closer to a storefront "coming soon" page, chosen because all 3 formats already exist and staggering is the release calendar, not a build queue |
+| Replay depth via content volume | The calendar itself supplies infinite content (a new puzzle daily) | ~750-887 cards | N/A (one long escalating run, no repeats within a playthrough) | Arcade/idle: procedurally fresh via daily seed, no content debt. Swipe: 33 cards vs. Reigns' hundreds — the one format with a real near-term repetition ceiling, by design deferred to post-launch content |
+| Monetization / account pressure | NYT Games subscription upsell; accounts for cross-device sync | Premium DLC (mobile) | Ad-supported or paid; no accounts | None anywhere — credit-only funnel, by explicit constraint |
 
 ## Sources
 
-- [MDN: Mobile touch controls for HTML5 games](https://developer.mozilla.org/en-US/docs/Games/Techniques/Control_mechanisms/Mobile_touch)
-- [Mozilla Hacks: Progressive Web Games](https://hacks.mozilla.org/2018/05/progressive-web-games/)
-- [Bliz.cc: Gamified Lead Generation (2026)](https://bliz.cc/blog/gamified-lead-generation)
-- [SandHill Digital: Gamification in Lead Generation](https://sandhilldigital.io/2025/02/26/gamification-lead-capture/)
-- [OptiMonk: 11 Email Capture Best Practices 2026](https://www.optimonk.com/email-capture-best-practices)
-- [Tabfoundry Medium: Marketing Game Case Study — 674 leads, 89.5% capture rate](https://medium.com/@tabfoundry/marketing-game-case-study-14-3-days-spent-in-the-game-674-new-leads-3-days-and-871-in-new-sales-923ea4abae77)
-- [iubenda: GDPR opt-in consent on mobile](https://www.iubenda.com/en/blog/how-to-collect-opt-in-consent-on-mobile-under-the-gdpr/)
-- [heydata.eu: Double opt-in under GDPR/DSGVO](https://heydata.eu/en/magazine/opt-in-and-opt-out-how-does-double-opt-in-work-according-to-gdpr-2)
-- [GameAnalytics: GDPR game compliance](https://www.gameanalytics.com/blog/gdpr-game-compliant)
-- [AllAboutBerlin: Running a website in Germany (Impressum, GDPR)](https://allaboutberlin.com/guides/website-compliance-germany)
-- [Star Loop Studios: Mobile game retention features](https://starloopstudios.com/which-mobile-game-features-keep-players-coming-back/)
-- [Digital Edge: Browser game case study 42M sessions (2025)](https://digitaledge.org/how-a-simple-browser-game-reached-42-million-sessions-in-q3-q4-2025-full-case-study/)
-- [Peek & Poke: How to use branded games in marketing](https://peekandpoke.com/blog/how-to-use-branded-games/)
-- [PocketGamer: Dark patterns in F2P mobile games](https://www.pocketgamer.biz/prevent-ui-ux-dark-patterns-f2p-mobile-games/)
-- [arxiv: Dark Patterns in Mobile Games study](https://arxiv.org/html/2412.05039v1)
-- [Phaser: Orientation handling](https://phaser.io/examples/v3.55.0/scalemanager/view/orientation-check)
-- [WebGameDev: PWA for HTML5 games](https://www.webgamedev.com/publishing/pwa)
-- [LogRocket: Offline storage for PWAs](https://blog.logrocket.com/offline-storage-for-pwas/)
-- [Wordle viral mechanics — HowToGeek](https://www.howtogeek.com/108120/how-to-share-your-wordle-score-without-spoilers/)
-- [Phrazle: History of Wordle virality mechanics](https://phrazle.co.uk/blog/history-of-wordle/)
+- Internal, HIGH confidence (validated on-device by the user, with Node balance-sim data): `.claude/skills/spike-findings-barren-wuffett/references/format-shell.md`, `mr-market-arcade.md`, `snowball-idle.md`, `swipe-satire.md`, `pixel-cast.md`
+- Internal, HIGH confidence (prior project research, SDT-grounded): `.planning/research/ENGAGEMENT.md` — streak-guilt, FOMO-timer and notification-begging anti-patterns reused directly in the Streak & Checklist rules above
+- [NYT Games debuts redesigned app to boost discovery and simplify navigation](https://techcrunch.com/2024/03/07/nyt-games-redesigned-app-boost-discovery-simplify-navigation/) — MEDIUM confidence, journalism on the official 2024 redesign (Games tab, Stats tab, no-login play)
+- [How NYT Games mastered the art of thoughtful play](https://www.creativereview.co.uk/new-york-times-games-wordle-crossplay-design-jonathan-knight/) — MEDIUM confidence, design-press interview with NYT Games leadership
+- [Wordle's viral marketing tactic makes brilliant use of people-as-media](https://beastoftraal.com/2022/01/04/wordles-viral-marketing-tactic-makes-brilliant-use-of-people-as-media/) — MEDIUM confidence, practitioner account of the emoji-grid share origin
+- [Breaking Down Wordle (Medium)](https://howardlee93.medium.com/breaking-down-wordle-80d2a13f2390) — MEDIUM confidence, practitioner breakdown of client-side streak/localStorage design
+- [Wordle: Game creator Josh Wardle on strategy, stats, and why it went viral (Slate)](https://slate.com/culture/2022/01/wordle-game-creator-wardle-twitter-scores-strategy-stats.html) — MEDIUM confidence, on scarcity/no-archive as part of the daily hook
+- [Reigns — card-count discussion (Steam Community / Expert Game Reviews)](https://steamcommunity.com/app/474750/discussions/0/152392549354152776/) — MEDIUM confidence, community-sourced card-count figures (~750-887 cards across the game's life), used only as an order-of-magnitude comparison against our 33-card launch deck
 
 ---
-
-*Feature research for: Barren Wuffett — HTML5 browser adventure game / investment portfolio marketing funnel*
-*Researched: 2026-06-11*
+*Feature research for: Barren Wuffett v2.0 — The Barren Wuffett Hub*
+*Researched: 2026-10-07*

@@ -1,417 +1,245 @@
 # Architecture Research
 
-**Domain:** Mobile-first HTML5/PWA top-down adventure game with heterogeneous mini-game mechanics, offline-first save, and optional BaaS backend
-**Researched:** 2026-06-11
-**Confidence:** HIGH (core patterns are Phaser 3 standard; BaaS integration patterns are well-documented; offline-first strategy is widely validated)
+**Domain:** Multi-page Vite/Phaser/TS static game bundle — integrating a mini-game hub + 3 new formats around an existing single-page Phaser adventure
+**Researched:** 2026-10-07
+**Confidence:** HIGH (grounded in direct inspection of the current repo, vite configs, services, and the spike-findings skill). The 3 generic Vite-MPA/PWA-scope/Cloudflare-routing web lookups used to cross-check the plan are LOW-confidence individually (unauthenticated web search synthesis) but agree with each other and with the already-working `base: './'` convention in this repo, so the overall recommendation is high-confidence even though a couple of supporting citations are weak.
 
-## Standard Architecture
+## What the Current Build Actually Does (verified by reading the code)
 
-### System Overview
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│                     Browser / PWA Shell                        │
-│   Service Worker (offline cache) · Web App Manifest            │
-├───────────────────────────────────────────────────────────────┤
-│                     Phaser 3 Game Instance                     │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  │
-│  │  Scene    │  │  Asset    │  │  Audio    │  │  Input    │  │
-│  │  Manager  │  │  Loader   │  │  Manager  │  │  Manager  │  │
-│  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  │
-│        │              │              │              │          │
-│  ┌─────┴──────────────┴──────────────┴──────────────┴──────┐  │
-│  │               Global Event Bus (singleton)               │  │
-│  └─────┬──────────────────────────────────────────────┬─────┘  │
-│        │                                              │         │
-│  ┌─────┴─────────────────────┐  ┌────────────────────┴──────┐  │
-│  │     Scene Stack           │  │   UI Overlay Scene        │  │
-│  │  (active game/mini-game)  │  │   (HUD, dialogue, menus)  │  │
-│  └───────────────────────────┘  └───────────────────────────┘  │
-├───────────────────────────────────────────────────────────────┤
-│                     Game Services Layer                        │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  │
-│  │   Save    │  │  Content  │  │   i18n    │  │  Journal  │  │
-│  │  Service  │  │  Registry │  │  Service  │  │  Service  │  │
-│  └─────┬─────┘  └───────────┘  └───────────┘  └───────────┘  │
-│        │                                                       │
-│  ┌─────┴──────────────────────────────────────────────────┐   │
-│  │              Local Store (IndexedDB via idb-keyval)     │   │
-│  └─────┬──────────────────────────────────────────────────┘   │
-│        │ (async, on user opt-in)                               │
-├────────┴──────────────────────────────────────────────────────┤
-│                     Backend (Supabase free tier)               │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐                  │
-│  │   Auth    │  │  cloud_   │  │  leader-  │                  │
-│  │ (anon →   │  │  saves    │  │  board    │                  │
-│  │  email)   │  │  table    │  │  table    │                  │
-│  └───────────┘  └───────────┘  └───────────┘                  │
-└───────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities
-
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Scene Manager | Lifecycle: start, pause, sleep, stop scenes; manage rendering order | Phaser 3 built-in (`this.scene.*`) |
-| Global Event Bus | Decoupled cross-scene messaging without coupling scene classes | Singleton `Phaser.Events.EventEmitter` instance exported as module |
-| Input Manager | Unified pointer/touch/keyboard abstraction; virtual joystick on mobile | Phaser pointer API + `phaser3-rex-notes` virtual joystick plugin |
-| Asset Loader | Per-scene preload queues; shared global cache; lazy-load per level | Phaser built-in loader; assets in `public/assets/` served by Vite |
-| Audio Manager | BGM/SFX; mobile autoplay unlock; mute state; cross-scene persistence | Phaser Sound Manager (wraps Web Audio + HTML5 Audio fallback) |
-| Save Service | Local-first CRUD on save slots; async cloud push on opt-in | `idb-keyval` for IndexedDB; Supabase JS client for cloud |
-| Content Registry | Central manifest of all levels, mini-games, characters, journal entries | Plain JSON/TypeScript data files; loaded at boot, never at runtime |
-| i18n Service | Key-based text lookup; current locale; easy language swap | `i18next` (< 10 KB, zero deps); JSON namespace files per locale |
-| Journal Service | Track unlocked entries; serialize/deserialize to save state | Pure functions over save-state slice; entries defined in content data |
-| UI Overlay Scene | Always-on HUD (hearts, coins, pause); dialogue boxes; menus | Separate Phaser scene running in parallel above game scenes |
+- **One HTML entry.** `index.html` → `<script type="module" src="/src/main.ts">` → `src/main.ts` calls `StartGame('game-container')` from `src/game/main.ts`, which builds one `Phaser.Game` with all adventure scenes (`Boot, Preloader, MainMenu, Settings, OverworldScene, UIScene, BossScene, PaperThrowScene`). There is no router, no second page.
+- **`base: './'`** in both `vite/config.dev.mjs` and `vite/config.prod.mjs` — Vite emits **relative** asset URLs per HTML file. This is the one existing decision that makes a multi-directory static deploy (several `index.html`s at different depths) work for free; nothing here needs to change for the hub.
+- **`manualChunks: { phaser: ['phaser'] }`** in `config.prod.mjs` — Phaser is already isolated into its own chunk. Only HTML entries whose module graph imports `'phaser'` get a `<script>` tag for that chunk. Confirmed by grep: only `src/game/**`, `src/entities/**`, `src/ui/{HUD,ShopOverlay,HospitalOverlay,DialogueBox}.ts`, and `src/systems/WhackSystem.ts` import `'phaser'` at runtime; `src/systems/{Economy,MoodPendulum,RouteScoring,PrizePack,WhackOffsets,SwingTracker}.ts` are plain pure TS with **no** Phaser import — this pure/impure split is the existing convention the three new formats should extend, not invent.
+- **`vite-plugin-pwa`** is configured with `manifest: false` (uses the static `public/manifest.webmanifest` as the single source of truth) and **no `workbox.globPatterns` yet** — the Phase‑1 comment says "deferred to Phase 4" but `git log` on `vite/config.prod.mjs` shows it was never revisited. One service worker, one scope, registered at the site root. `manifest.webmanifest` has `start_url: "./"`, `scope` implied root, `display: "standalone"`.
+- **CSP** (`public/_headers`, pattern `/*` = applies to every path on the deploy): `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'`. This blocks CDN Phaser, Google Fonts, and any third-party `connect-src` (matters for Cloudflare Web Analytics, below).
+- **`SaveService`** (`src/services/SaveService.ts`) is adventure-specific: `idb-keyval` `createStore('bw-saves', 'saves')`, single key `'slot_1'`, versioned (`SAVE_VERSION = 2`) shape with `level/position/flags/coins/journalUnlocked/bestScores`. IndexedDB is **origin-scoped, not path-scoped** — moving the HTML file that loads this code from `/` to `/adventure/` does not touch this database at all; no migration is needed.
+- **`ShareService`** (`src/services/ShareService.ts`) is also adventure-specific and tightly coupled to it: it takes a `game.renderer.snapshot()` of the live Phaser canvas, renders a 1200×630 card via `src/ui/ShareCard.ts`, and shares a `File` via `navigator.share({files, text})`, with a hardcoded filename and a synchronous-gesture cache (`prepareShareCard` before the tap, `shareCard` with no `await` before `navigator.share` on the cached path). This is **not** the shared `share()` the three new formats need — the spike's `format-shell.md` pattern shares **text + url only**, no image Blob, because the per-page OG tags (see below) do the card-rendering job instead of an attached image.
+- **`i18n.ts`** is a 2-dependency-free module: `import en from '../../public/locales/en/common.json'`, exposes `t(key)`. No Phaser, no DOM. Safe to import from every page unchanged.
+- **Tests**: `vitest.config.ts` runs `tests/**/*.test.ts` in a Node environment; the existing suite (`og-tags.test.ts`, `save-service.test.ts`, `mood-pendulum.test.ts`, etc.) reads `index.html` and pure modules directly with `readFileSync`/imports — no DOM/browser runner. The spikes' Playwright `_verify.cjs` scripts are a **separate, additional** layer (412×915 mobile viewport, `window.__X__` probes) that this repo does not yet have; they are a sibling practice to `vitest`, not a replacement.
+- **Branch stack** (confirmed via `git merge-base --is-ancestor`): `main` is at Phase 1 only. `gsd/phase-02 → 02.1 → 03 → 03.1 → 04` is one straight line. `gsd/fix-menu-taps` (2 commits, `ab9cbe1` + `5fe9533`) branches off the tip of `phase-04`. `spike/pivot-formats` (current branch; docs-only commits `a49e5bf…05950db`: spike wrap-ups, the `spike-findings-barren-wuffett` skill, the v2.0 `PROJECT.md`/milestone-archive changes) **also** branches off the tip of `phase-04`, as a sibling of `fix-menu-taps` — `fix-menu-taps` is confirmed **not** an ancestor of `spike/pivot-formats`, so its 2 commits must be brought in separately.
 
 ## Recommended Project Structure
 
 ```
-barren-wuffett/
-├── public/
-│   ├── assets/
-│   │   ├── sprites/          # sprite sheets, character atlases
-│   │   ├── tilemaps/         # Tiled JSON export + tileset PNGs
-│   │   ├── audio/            # BGM (ogg+mp3), SFX (ogg+mp3)
-│   │   └── fonts/            # bitmap fonts for retro look
-│   ├── manifest.webmanifest  # PWA manifest
-│   └── sw.js                 # service worker (Workbox generated)
-├── src/
-│   ├── main.ts               # Phaser Game config + boot
-│   ├── scenes/
-│   │   ├── BootScene.ts      # minimal scene: load manifest, init services
-│   │   ├── PreloadScene.ts   # global assets (UI sheet, common SFX)
-│   │   ├── MainMenuScene.ts
-│   │   ├── OverworldScene.ts # top-down adventure core
-│   │   ├── UIScene.ts        # persistent HUD overlay (parallel)
-│   │   ├── DialogueScene.ts  # modal dialogue overlay
-│   │   ├── minigames/
-│   │   │   ├── PlatformerScene.ts   # Mario-style segment
-│   │   │   ├── PointClickScene.ts   # point & click segment
-│   │   │   └── ResourceScene.ts     # Kingdom-style resource mini
-│   │   ├── BossScene.ts      # boss fight (uses overworld + extra logic)
-│   │   └── JournalScene.ts   # collectible viewer (overlay)
-│   ├── services/
-│   │   ├── SaveService.ts    # local IndexedDB + cloud sync
-│   │   ├── ContentRegistry.ts # load + validate content manifests
-│   │   ├── i18n.ts           # i18next wrapper + locale types
-│   │   ├── AudioService.ts   # wraps Phaser sound, handles unlock
-│   │   └── SupabaseClient.ts # single Supabase client instance
-│   ├── input/
-│   │   ├── InputBus.ts       # unified action enum (MOVE_LEFT, INTERACT…)
-│   │   ├── KeyboardBinding.ts
-│   │   └── TouchBinding.ts   # virtual joystick + tap zones
-│   ├── data/
-│   │   ├── levels/
-│   │   │   ├── level-01.ts   # level manifest: tilemap, enemies, triggers
-│   │   │   └── level-02.ts
-│   │   ├── dialogue/
-│   │   │   └── en/           # JSON dialogue trees per character
-│   │   ├── journal/
-│   │   │   └── entries.ts    # journal entry definitions + unlock conditions
-│   │   └── characters.ts     # NPC/enemy stats, sprite keys
-│   ├── entities/
-│   │   ├── Player.ts         # player game object + state machine
-│   │   ├── NPC.ts
-│   │   └── Enemy.ts
-│   ├── systems/
-│   │   ├── CollisionSystem.ts
-│   │   ├── TriggerSystem.ts  # zone-based event triggers in tilemaps
-│   │   └── CameraSystem.ts
-│   ├── ui/
-│   │   ├── DialogueBox.ts
-│   │   ├── HUD.ts
-│   │   └── JournalCard.ts
-│   └── events/
-│       └── GameEvents.ts     # typed event name constants + event bus export
-├── vite.config.ts
-├── tsconfig.json
-└── package.json
+index.html                       # MODIFIED → becomes the HUB entry (was the adventure's entry)
+arcade/index.html                 # NEW — Mr. Market arcade (Phaser), release 1
+snowball/index.html               # NEW — Snowball idle (DOM only), release 2
+ceo/index.html                    # NEW — Barren, CEO swipe (DOM only), release 3
+adventure/index.html              # NEW (moved) — exact former root index.html, unchanged <body>/<script> content
+
+src/
+├── main.ts                       # UNCHANGED — now loaded by adventure/index.html instead of /index.html
+├── game/                         # UNCHANGED — adventure Phaser scenes, untouched
+├── entities/ ui/ systems/ data/  # UNCHANGED — adventure-only code
+├── services/
+│   ├── AudioService.ts           # UNCHANGED (adventure)
+│   ├── SaveService.ts            # UNCHANGED (adventure save, origin-scoped, unaffected by the path move)
+│   ├── ShareService.ts           # UNCHANGED (adventure's image-card share stays as-is)
+│   ├── ContentRegistry.ts        # UNCHANGED (adventure level manifests)
+│   └── i18n.ts                   # UNCHANGED — reused as-is by hub + all 3 new formats
+├── shared/                       # NEW — the hub plumbing from format-shell.md, imported by hub + arcade + snowball + ceo (never by adventure, never pulls in Phaser)
+│   ├── config.ts                 # HANDLE, SITE_URL, BASE_URL, per-page GAME_URLS, EPOCH
+│   ├── dailySeed.ts              # hashStr (FNV-1a), mulberry32, DATE/DAILY_NO, schedule fingerprint helper
+│   ├── shareFlow.ts              # share(text, url) — native share → clipboard+X-intent fallback (text-only, no Blob)
+│   ├── overlays.ts               # Title/End/About DOM overlay helpers, `.handle` fill-in, About copy constant
+│   ├── testHooks.ts              # window.__X__ probe + forensic LOG helper shape, shared across formats
+│   ├── progressStore.ts          # NEW device-only store: daily checklist + streak + per-format bests (see Data Flow)
+│   ├── releaseConfig.ts          # NEW — one flag per format; gates hub tile lock state AND which entries a given deploy builds
+│   └── cast.ts                   # ported from sources/002-old-barren-cast/cast.js — pure, code-drawn sprites (Px grid → dataURL), no binary asset
+├── hub/                          # NEW
+│   ├── main.ts                   # hub bootstrap — vanilla TS + DOM, no Phaser import
+│   ├── tiles.ts                  # tile model: {id, title, blurb, status: 'live'|'locked', href?} driven by releaseConfig.ts
+│   └── checklist.ts              # daily checklist + streak UI, reads/writes shared/progressStore.ts
+├── arcade/                       # NEW — release 1
+│   ├── main.ts                   # own `new Phaser.Game()` instance, separate from the adventure's
+│   ├── scenes/MarketScene.ts     # Phaser scene (drag-to-catch), ported from game.js
+│   └── market.ts                 # pure buildMarket() — ported from items.js/game.js, NO Phaser import, unit-testable
+├── snowball/                     # NEW — release 2
+│   ├── main.ts                   # DOM bootstrap, no Phaser import
+│   └── econ.ts                   # pure economy model, ported from econ.js
+└── ceo/                          # NEW — release 3
+    ├── main.ts                   # DOM bootstrap, no Phaser import
+    └── cards.ts                  # pure deck/meter model, ported from cards.js
+
+public/
+├── og/                           # NEW — one 1200×630 card per page, replacing the single broken og-image.png
+│   ├── hub.png  arcade.png  snowball.png  ceo.png  adventure.png
+├── fonts/
+│   ├── press-start-2p-latin.woff2   # existing
+│   └── pixelify-sans-latin.woff2    # NEW — self-hosted; spikes used Google Fonts CDN, which the CSP blocks
+├── locales/en/common.json       # MODIFIED — add hub./arcade./idle./ceo. keys (adventure's keys untouched)
+├── _headers                      # MODIFIED — add Cloudflare Web Analytics beacon origin to script-src/connect-src
+├── manifest.webmanifest          # MODIFIED — icons/name may stay; start_url/scope stay "/" (the hub is now the install target)
+└── datenschutz.html              # MODIFIED — drop Supabase/Brevo mentions, describe cookieless analytics instead
+
+tests/                            # EXISTING vitest suite stays; add one file per new pure module (market/econ/cards, dailySeed, progressStore) following the existing Economy/MoodPendulum pattern
+scripts/ or .planning/spikes-ports/ # NEW — per-format Node `_sim.mjs` balance simulators + Playwright `_verify.cjs` phone checks, ported 1:1 from the spike sources
 ```
 
 ### Structure Rationale
 
-- **`src/scenes/minigames/`:** Each mini-game is an isolated Phaser scene. The overworld pauses/sleeps when a mini-game launches; it resumes when the mini-game emits `MINIGAME_COMPLETE`. This creates zero coupling between mechanics.
-- **`src/services/`:** All backend and persistence concerns live outside scenes. Scenes call service functions; services never reference scene objects. This keeps scenes testable and swappable.
-- **`src/data/`:** Content-as-data. Level packs, characters, journal entries are TypeScript data objects (or JSON). Adding a new level = adding a file and registering it in `ContentRegistry`. No engine code changes.
-- **`src/input/InputBus.ts`:** Scenes request actions (`isActive(Action.MOVE_LEFT)`) not raw keys. This is the single switch point to support touch, keyboard, or gamepad identically.
-- **`public/assets/`:** All assets in `public/` are served as static files by Vite (no bundling overhead, direct URL). Phaser's loader fetches them at scene preload time.
+- **`src/shared/` is the load-bearing new boundary.** Every module in it must stay Phaser-free so that `hub/`, `snowball/`, `ceo/` never pull the Phaser chunk in. `arcade/` is the one new format allowed to import Phaser, in its own `Game()` instance, independent of the adventure's.
+- **No shared Phaser `Game` instance across pages.** Each of `adventure/` and `arcade/` boots its own `new Phaser.Game({...})` inside its own entry — they are different HTML documents (different `<script type="module">` boundaries), so there is no shared-instance question to solve; this is a benefit of the MPA approach, not a cost.
+- **`releaseConfig.ts` is a single flat constant, not a service.** €0 static hosting rules out a remote feature-flag fetch; one file, one boolean per format, edited and redeployed per release.
+- **Adventure's existing services (`SaveService`, `ShareService`, `AudioService`, `ContentRegistry`) are not touched or generalized.** They stay adventure-only. The new `shared/progressStore.ts` and `shared/shareFlow.ts` are deliberately separate, lighter modules for the new formats rather than generalizations of the old ones — generalizing `ShareService`'s image-Blob flow would be over-engineering, since none of the spiked formats need an attached image (the per-page OG tag does that job).
 
 ## Architectural Patterns
 
-### Pattern 1: Scene-as-State (Heterogeneous Mini-Games)
+### Pattern 1: Vite multi-page build, one entry per route, shared code auto-split
 
-**What:** Each distinct mechanic (top-down, platformer, point-and-click, boss) is its own Phaser scene. The overworld `sleep()`s the current scene and `launch()`es the mini-game scene, passing parameters via `scene.start(key, data)`. When the mini-game emits `MINIGAME_COMPLETE` on the event bus, the overworld `wake()`s and the mini-game stops.
+**What:** `build.rollupOptions.input` maps a name to each HTML file; Rollup builds one bundle graph per entry and automatically factors shared imports (e.g. `src/shared/*`, `src/services/i18n.ts`) into common chunks, while per-entry-only imports (Phaser, a format's own scene/model) stay out of entries that never reference them.
+**When to use:** Exactly this project's shape — several independent small apps sharing a few plumbing modules on one static origin.
+**Trade-offs:** No client-side router, no shared in-memory app state across pages (acceptable here — the hub and each game are separate full page loads, and cross-page "state" only needs to be the on-device store, not live JS state).
 
-**When to use:** Whenever a mechanic needs its own physics config, camera behavior, or input mapping that would conflict with the parent scene.
-
-**Trade-offs:** Slight startup latency per mini-game scene (mitigated by pre-creating scenes in config); each scene has its own asset scope so shared assets must be in global cache.
-
-**Example:**
-```typescript
-// OverworldScene.ts — entering a mini-game zone
-enterMiniGame(key: string, data: object) {
-  this.scene.sleep();                   // preserve overworld state
-  this.scene.launch(key, data);         // start mini-game scene
-  GameEvents.once(Events.MINIGAME_COMPLETE, (result) => {
-    this.scene.stop(key);
-    this.scene.wake();
-    this.handleMiniGameResult(result);
-  });
-}
+```js
+// vite/config.prod.mjs — additive to the existing config
+import { resolve } from 'node:path';
+export default defineConfig({
+  base: './',                      // unchanged — already correct for nested entries
+  build: {
+    rollupOptions: {
+      input: {
+        hub:       resolve(__dirname, '../index.html'),
+        adventure: resolve(__dirname, '../adventure/index.html'),
+        arcade:    resolve(__dirname, '../arcade/index.html'),   // added when Release 1 is built
+        // snowball / ceo entries added in their own release steps — see Build Order
+      },
+      output: { manualChunks: { phaser: ['phaser'] } },          // unchanged
+    },
+  },
+});
 ```
 
-### Pattern 2: Content-as-Data (Level Manifests)
+### Pattern 2: Per-page static OG/X meta — no server, no templating
 
-**What:** Every level is described by a TypeScript data object (not a class). The object declares the tilemap key, enemy spawn list, trigger zones, mini-game references, dialogue tree keys, and journal unlock conditions. The engine reads manifests; it never hard-codes level logic.
+**What:** Each HTML entry is a real, separate static file, so each one simply carries its **own** `<meta property="og:*">`/`<meta name="twitter:*">` block with an **absolute** URL (X will not render a relative `og:image`, which is the root cause of the currently-broken card). `shared/config.ts` exports one absolute URL per page (`GAME_URLS.arcade = 'https://barren-wuffett.pages.dev/arcade/'`), and `shared/shareFlow.ts`'s `share(text, url)` passes that page's own URL as the share target. When X (or any crawler) fetches that URL, it renders using that page's own `<head>`, not the hub's — no attached image, no server logic, pure static hosting.
+**When to use:** Any static multi-page site that wants per-route social cards.
+**Trade-offs:** One more HTML file to keep the `<head>` boilerplate (viewport, CSP-compatible font preload, manifest link if applicable) duplicated across 5 files — acceptable at this scale; extract a tiny `scripts/` templater later only if it becomes painful.
 
-**When to use:** Always — this is the foundation for selling future level packs without engine changes.
-
-**Trade-offs:** Requires discipline to keep logic out of manifests; complex behaviours may need a small scripting hook (a `onEnter` callback reference).
-
-**Example:**
-```typescript
-// data/levels/level-01.ts
-export const level01: LevelManifest = {
-  id: "level-01",
-  titleKey: "level.paperRoute.title",
-  tilemapKey: "tilemap_level01",
-  bgmKey: "bgm_paperroute",
-  enemies: [{ type: "newsboy_rival", spawnTile: { x: 10, y: 5 } }],
-  triggers: [
-    { zone: "zone_minigame_01", action: "launch_scene", target: "PlatformerScene" },
-    { zone: "zone_boss", action: "launch_scene", target: "BossScene", data: { bossId: "mr_market_01" } },
-  ],
-  journalUnlock: "entry_paper_route",
-};
+```html
+<!-- arcade/index.html <head>, pattern repeated per page with its own url/title/description/image -->
+<meta property="og:url"   content="https://barren-wuffett.pages.dev/arcade/" />
+<meta property="og:title" content="Barren vs. Mr. Market — Barren Wuffett" />
+<meta property="og:image" content="https://barren-wuffett.pages.dev/og/arcade.png" />
+<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 ```
 
-### Pattern 3: Local-First Save with Lazy Cloud Sync
+### Pattern 3: Device-only progress store shared across pages via a second IndexedDB store
 
-**What:** All game state writes go to IndexedDB immediately and synchronously from the player's perspective. Cloud sync is a fire-and-forget async operation attempted after every save, only if the player has linked an email (Supabase anonymous → email upgrade). Failures are silent; next successful sync wins.
+**What:** `shared/progressStore.ts` opens its own `idb-keyval` store (e.g. `createStore('bw-hub', 'progress')`) — deliberately separate from `SaveService`'s `'bw-saves'/'saves'` — holding `{ version, checklist: Record<dateISO, string[]>, streak: {count, lastDate}, bests: Record<formatId, number> }`. Because IndexedDB is scoped to the **origin**, not the path, every page (`/`, `/arcade/`, `/snowball/`, `/ceo/`) that imports this module opens the *same* database. Each format calls `recordDailyPlay(formatId, date, resultSummary)` once its daily run ends; the hub calls `readProgress()` on its own load to render the checklist/streak and each tile's "best" badge. There is no live cross-tab sync (not needed — the user finishes a game, taps back to the hub, the hub does a fresh page load and reads fresh state).
+**When to use:** Any "Wordle-style" daily-return mechanic across multiple static pages with zero backend.
+**Trade-offs:** Not live if two tabs are open simultaneously; irrelevant for a mobile-first single-tab flow. Follow `SaveService`'s exact robustness pattern — wrap every call in try/catch (private-mode-safe), carry a `version` field, run a `migrate()` on read, never trust the raw shape.
 
-**When to use:** This is the only correct architecture for an offline-first game with optional backend. Never make cloud sync blocking.
-
-**Trade-offs:** Conflict resolution is simplistic (newest timestamp wins, or prompt user on load). No real-time multi-device sync. Sufficient for a single-player game.
-
-**Example:**
-```typescript
-// services/SaveService.ts
-async save(slot: SaveSlot): Promise<void> {
-  slot.version = SAVE_VERSION;
-  slot.updatedAt = Date.now();
-  await set(`save_${slot.id}`, slot);         // IndexedDB — always first
-  if (supabase.auth.getUser()?.email) {
-    syncToCloud(slot).catch(() => {});         // fire-and-forget
-  }
-}
+```ts
+// src/shared/progressStore.ts — mirrors SaveService.ts conventions, new store name
+import { createStore, get, set } from 'idb-keyval';
+const store = createStore('bw-hub', 'progress');
+export interface HubProgress { version: number; checklist: Record<string, string[]>;
+  streak: { count: number; lastDate: string }; bests: Record<string, number>; }
+export async function recordDailyPlay(formatId: string, date: string, best?: number) { /* try/catch, migrate, write */ }
+export async function readProgress(): Promise<HubProgress> { /* try/catch, migrate, default shape */ }
 ```
 
-### Pattern 4: Unified Input Bus (Touch + Keyboard)
-
-**What:** An `InputBus` singleton maps raw inputs to named `Action` values. Scenes and entities read `InputBus.isActive(Action.MOVE_LEFT)` only. The `TouchBinding` module positions a virtual joystick on mobile; `KeyboardBinding` maps arrow/WASD. Both write to the same `activeActions` set.
-
-**When to use:** From day one. Retrofitting unified input onto a keyboard-only game is painful.
-
-**Trade-offs:** Slight indirection; worth it entirely. Joystick has analog data (angle, force) that the bus exposes as extended properties for the platformer scene.
+**Adventure's own "best" data is not duplicated into this store.** If the hub tile for the adventure wants a "continue" vs "start" badge, it imports the existing `SaveService.load()` directly (already pure, already testable) — one more reuse of existing code rather than a new sync path.
 
 ## Data Flow
 
-### Scene Launch Flow (Mini-Game)
+### Hub ↔ games (device-only progress)
 
 ```
-Player enters trigger zone (TriggerSystem)
-    ↓
-TriggerSystem emits Events.TRIGGER_ZONE on GameEvents bus
-    ↓
-OverworldScene handler receives event
-    ↓
-OverworldScene.sleep() → scene.launch("PlatformerScene", manifest.triggerData)
-    ↓
-PlatformerScene.init(data) → PlatformerScene.preload() → PlatformerScene.create()
-    ↓
-[Player completes or fails mini-game]
-    ↓
-PlatformerScene emits Events.MINIGAME_COMPLETE on GameEvents bus
-    ↓
-OverworldScene.wake() → scene.stop("PlatformerScene")
-    ↓
-SaveService.save(currentState)
+[Game page loads] → shared/dailySeed.ts resolves DATE/DAILY_NO
+      ↓
+[Player finishes the daily run] → shared/progressStore.recordDailyPlay(formatId, DATE, result)
+      ↓ (IndexedDB 'bw-hub' store, origin-scoped — no network)
+[Player taps back to hub, hub/index.html loads fresh]
+      ↓
+[hub/main.ts] → shared/progressStore.readProgress() → hub/checklist.ts renders today's checklist + streak + per-tile best badge
 ```
 
-### Save / Cloud Sync Flow
+### Share → OG card (per page, static, no attachment)
 
 ```
-Game event (level complete, journal unlock, checkpoint)
-    ↓
-Scene calls SaveService.save(stateSlice)
-    ↓
-SaveService → idb-keyval.set() [IndexedDB, async, non-blocking]
-    ↓
-SaveService checks: is user authenticated with email?
-    ├─ NO  → done (fully offline, game continues)
-    └─ YES → Supabase.upsert(cloud_saves, { user_id, data, updated_at })
-                  ↓ success: silent
-                  ↓ failure: queued for next attempt (simple retry flag in localStorage)
+[Player taps SHARE] → shared/shareFlow.share(text, GAME_URLS.<page>)   // text built synchronously, no await before navigator.share
+      ↓
+navigator.share({text, url}) on touch   OR   clipboard + x.com/intent/tweet fallback on desktop
+      ↓
+X/any crawler fetches GAME_URLS.<page> → reads THAT page's own <head> og:* tags → renders that page's own public/og/<page>.png
 ```
 
-### Input Flow
+### Release gating (build-time, not runtime)
 
 ```
-User physical input (touch / keyboard / gamepad)
-    ↓
-Phaser Input Manager (pointer events / cursors)
-    ↓
-TouchBinding / KeyboardBinding writes to InputBus.activeActions Set
-    ↓
-Entity update() reads InputBus.isActive(Action.*)
-    ↓
-Entity state machine applies movement / interaction
+releaseConfig.ts { arcade: true, snowball: false, ceo: false }
+      ↓                                   ↓
+hub/tiles.ts: locked tile, no <a href>    vite/config.*.mjs rollupOptions.input: entry omitted entirely
 ```
 
-### i18n Text Flow
-
-```
-Content data references string key  (e.g. "ui.hearts.label")
-    ↓
-UI component calls i18n.t("ui.hearts.label")
-    ↓
-i18next looks up current locale namespace (en/common.json)
-    ↓
-Returns translated string; falls back to key if missing
-```
-
-### Email Capture / Account Upgrade Flow
-
-```
-Player reaches cloud-save prompt (checkpoint or leaderboard submit)
-    ↓
-UIScene shows email capture modal
-    ↓
-Player enters email
-    ↓
-Supabase.auth.updateUser({ email }) → sends verification email (double opt-in)
-    ↓
-Player verifies → anonymous session upgraded to permanent email user
-    ↓
-SaveService.syncToCloud() runs immediately with full save state
-    ↓
-GDPR consent recorded in save state (timestamp + scope)
-```
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0–1k users | Supabase free tier is sufficient (500 MB DB, 50k MAU). No changes needed. |
-| 1k–50k users | Monitor Supabase MAU; anonymous sessions that never convert inflate count. Add anonymous session TTL cleanup cron (Supabase Edge Function). Consider Cloudflare R2 for asset hosting if bandwidth spikes. |
-| 50k+ users | Evaluate Supabase Pro ($25/mo). Add Redis-backed leaderboard cache (Upstash free tier first). CDN-front all static assets. Potentially migrate to self-hosted Supabase to control costs. |
-
-### Scaling Priorities
-
-1. **First bottleneck: Supabase MAU quota.** Every anonymous sign-in counts. Delay `signInAnonymously()` until the player actively requests cloud save — not at game boot. This alone extends free-tier runway 10x.
-2. **Second bottleneck: asset bandwidth.** 16-bit sprites are small, but audio adds up. Use Cloudflare Pages for hosting (unlimited bandwidth on free tier). Use Vite asset fingerprinting for aggressive cache headers.
+Both sides of a given format change together in the same commit — a locked tile must never link to a route that doesn't exist in that deploy's build, and a built route must never be reachable from the hub before its flag flips.
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Monolithic Scene
+### Anti-Pattern 1: One `navigateFallback` for the whole PWA (SPA pattern applied to an MPA)
 
-**What people do:** Put all game logic — overworld, mini-games, UI, dialogue — inside one giant Phaser scene.
+**What people do:** Copy the typical `vite-plugin-pwa` SPA recipe — `workbox.navigateFallback: '/index.html'` — so any offline navigation falls back to one page.
+**Why it's wrong:** This project is a multi-page app; a visitor offline-navigating to `/arcade/` would get silently redirected to the hub instead of the arcade page, which looks like a bug.
+**Do this instead:** Either omit `navigateFallback` and rely on Workbox precaching each HTML entry by its own URL (so offline navigation to any precached route serves itself), or scope `navigateFallback`/`navigateFallbackDenylist` per route if true offline-first is required later. At minimum, finally set `workbox.globPatterns` (currently unset since Phase 1) to include every new page's JS/CSS/HTML/PNG/woff2 — this was already overdue before the hub existed.
 
-**Why it's wrong:** Mini-games need conflicting physics configs (arcade vs. matter). UI updates during transitions become race conditions. The scene update loop becomes unmanageable. Adding a new mini-game requires editing shared state everywhere.
+### Anti-Pattern 2: Generalizing `ShareService`'s image-Blob flow for the new formats
 
-**Do this instead:** One scene per mechanic. Use `scene.sleep()` / `scene.wake()` to preserve state across transitions. Run UI as a permanently-layered parallel scene.
+**What people do:** See one `ShareService` already exists and try to extend it to cover arcade/snowball/ceo's share buttons too.
+**Why it's wrong:** `ShareService` is built around a Phaser canvas snapshot (`game.renderer.snapshot`) specific to the adventure's single victory screen; snowball/ceo have no Phaser canvas at all, and the spike-proven pattern for all three new formats is text+url only (the OG tag does the card job, not an attached file). Forcing a snapshot-based flow onto DOM-only pages adds a dependency and a failure mode (snapshot requires a live `Phaser.Game`) that doesn't exist for them.
+**Do this instead:** `shared/shareFlow.ts` as its own small module (`share(text, url)`), independent of `ShareService.ts`. Leave the adventure's `ShareService` untouched.
 
-### Anti-Pattern 2: Cloud Save at Boot
+### Anti-Pattern 3: Reusing the adventure's `createStore('bw-saves', 'saves')` for hub progress
 
-**What people do:** Call `supabase.auth.signInAnonymously()` on game start so every player is "tracked."
+**What people do:** Since `SaveService` already proves the IndexedDB pattern works, bolt the daily checklist/streak onto the same store/key to "save a file."
+**Why it's wrong:** Couples an unrelated, frequently-changing daily/streak shape to the adventure's versioned level-save schema; a future `SAVE_VERSION` bump or `migrate()` change for the adventure now risks corrupting hub progress and vice versa.
+**Do this instead:** A second, separate `idb-keyval` store (`'bw-hub'/'progress'`) — cheap (IndexedDB supports multiple stores per origin trivially) and keeps the two concerns independently versioned.
 
-**Why it's wrong:** Every session — including bots, previews, and people who close the tab in 5 seconds — counts as a Supabase MAU. At 50k MAU you are paying. Also triggers privacy/GDPR questions before the player has any reason to trust the game.
+## Integration Points (from the actual code)
 
-**Do this instead:** Play is fully anonymous and local until the player explicitly requests cloud save or leaderboard submission. Only then create/link a Supabase identity.
+| Integration point | Current state | What changes | Risk |
+|---|---|---|---|
+| `index.html` → `src/main.ts` | Root entry boots the adventure's Phaser game directly | Root entry becomes the **hub**; the exact former `index.html` content moves verbatim to `adventure/index.html` (same `<script src="/src/main.ts">`, same `#game-container`) | Low — confirmed IndexedDB/localStorage are origin-scoped, not path-scoped, so the adventure's save survives the move untouched |
+| `vite/config.{dev,prod}.mjs` `rollupOptions` | Single implicit entry (`index.html`), `manualChunks: {phaser:['phaser']}` | Add explicit `input: {hub, adventure, arcade, …}` map; keep `manualChunks` as-is | Low — matches `base: './'` already in place |
+| `vite-plugin-pwa` | `manifest:false`, no `globPatterns`, one scope at `/` | Keep **one** PWA registration at root scope (hub becomes the install target); finally set `workbox.globPatterns` to cover all new pages' assets; avoid a blanket `navigateFallback` (see Anti-Pattern 1) | Medium — the one existing installed-PWA icon (if any real users have it) will now open to the hub instead of the adventure; acceptable since the live site is still the 2026-06-11 Phase-1 build per project context, and the hub is the intended new front door |
+| `public/_headers` CSP | `script-src 'self'; font-src 'self'; connect-src 'self'` — blocks CDN Phaser, Google Fonts, any analytics beacon | Add npm Phaser import (already a dependency, just stop using the CDN `<script>` the spikes used) + self-hosted Pixelify Sans in `public/fonts/`; add Cloudflare Web Analytics' script + beacon origins to `script-src`/`connect-src` when wiring analytics | Low-Medium — must verify Cloudflare Web Analytics' exact script/beacon hostnames before editing the CSP; a syntax mistake in `_headers` breaks the whole site, not just one page |
+| `src/services/i18n.ts` | Already dependency-free, imports `public/locales/en/common.json` directly | Reused as-is by hub + all 3 new formats; extend `common.json` with new keys, no new infra | None |
+| `src/services/SaveService.ts` / `ShareService.ts` / `ContentRegistry.ts` / `AudioService.ts` | Adventure-only, Phaser-coupled or save-coupled | **Untouched.** New `shared/progressStore.ts` and `shared/shareFlow.ts` are separate, lighter modules — not extensions of these | None |
+| `public/manifest.webmanifest` | `start_url: "./"`, icons for the adventure | `start_url`/`scope` stay root (now resolves to the hub); icons can stay or get a hub-flavored refresh — not required for function | Low |
+| `public/datenschutz.html` | Describes Supabase/Brevo (being dropped this milestone) | Rewrite to describe cookieless Cloudflare Web Analytics and the device-only progress store (no cookies, no account, no email) | Low — text-only change, but legally load-bearing (GDPR/UWG per `PROJECT.md` constraints) |
+| Branch stack (`main`, `phase-02…04`, `gsd/fix-menu-taps`, `spike/pivot-formats`) | `main` only has Phase 1; everything above is unmerged, confirmed via `git merge-base` | Fast-forward `main` through the linear `phase-02→04` chain, then bring in `fix-menu-taps`' 2 commits (confirmed **not** already in `spike/pivot-formats`), then merge `spike/pivot-formats`' docs-only commits | Low merge-conflict risk (fix-menu-taps touches `src/game/scenes`; the spike-formats commits are `.planning/`+`.claude/skills/` docs only — disjoint paths) but **the adventure has never had its Phase 3.1/4 phone UAT per `PROJECT.md`** — do that check once, right after consolidating, before building anything new on top |
 
-### Anti-Pattern 3: Hard-Coded Level Logic in Scenes
+## New vs Modified (explicit)
 
-**What people do:** Write `if (levelId === 'level-01') { spawnEnemyAt(10, 5); }` directly in scene code.
+**New files/dirs:** `arcade/`, `snowball/`, `ceo/`, `adventure/` (as a directory — content moved, not newly written), `src/shared/*`, `src/hub/*`, `src/arcade/*`, `src/snowball/*`, `src/ceo/*`, `public/og/*`, `public/fonts/pixelify-sans-latin.woff2`, per-format pure-model unit tests, per-format Node `_sim.mjs` + Playwright `_verify.cjs` phone checks (ported from the spike sources).
 
-**Why it's wrong:** Adding level packs means modifying engine code, risking regressions, and making the codebase unreadable.
+**Modified files:** `index.html` (becomes the hub's markup, replacing the adventure's), `vite/config.dev.mjs` + `vite/config.prod.mjs` (multi-entry `input`, `workbox.globPatterns`), `public/_headers` (CSP additions for analytics), `public/locales/en/common.json` (new keys appended), `public/manifest.webmanifest` (verify `start_url`/`scope` still correct for the new root), `public/datenschutz.html` (analytics + progress-store language, Supabase/Brevo removed).
 
-**Do this instead:** Level manifests in `src/data/levels/`. The overworld scene reads manifests and dispatches to generic systems. New level = new data file only.
+**Explicitly untouched:** `src/game/**`, `src/entities/**`, `src/data/**`, `src/systems/**`, `src/ui/**`, `src/services/{SaveService,ShareService,AudioService,ContentRegistry}.ts`, the entire existing `tests/` suite (only additive new test files, no edits to existing ones expected).
 
-### Anti-Pattern 4: `localStorage` for Save Data
+## PWA Scope Decision
 
-**What people do:** Use `localStorage.setItem('save', JSON.stringify(bigObject))`.
+**One PWA, one scope, at the site root — the hub, not any individual game, is the installable/offline unit.** Rationale: `vite-plugin-pwa` registers one service worker per plugin invocation/scope; running it multiple times for independently-installable per-game scopes (confirmed as a supported but more complex pattern) buys nothing here, since none of the requirements ask for a game to be installed *without* the hub, and the €0/no-backend/static-only constraint rewards the simplest working setup. Consequence: the install prompt, the home-screen icon, and offline precaching all point at `/`; `/arcade/`, `/snowball/`, `/ceo/`, `/adventure/` are ordinary pages *within* that one PWA's precache scope, reachable offline once visited/precached, but not separately "installable."
 
-**Why it's wrong:** `localStorage` is synchronous; large writes block the render loop causing frame drops. It has a 5–10 MB limit. Safari clears it after 7 days of inactivity. Structured save state quickly exceeds the limit once journal entries and level flags accumulate.
+## Build Order
 
-**Do this instead:** `idb-keyval` (1.1 KB) wrapping IndexedDB. Async, no blocking, far larger quota, same simple key-value API.
+Respects: shared shell before formats; arcade releasable without snowball/ceo existing; branch consolidation first; adventure regression check before any new code lands on top.
 
-### Anti-Pattern 5: Embedding i18n Strings in Scene Code
-
-**What people do:** Write `this.add.text(0, 0, 'Press START to begin')` directly in TypeScript.
-
-**Why it's wrong:** German localization becomes a global search-and-replace. String context is lost. Pluralization rules differ per language.
-
-**Do this instead:** Every visible string is a key (`'menu.pressStart'`). All text passes through `i18n.t()`. JSON locale files live in `public/locales/en/` and `public/locales/de/`. Adding German = adding one folder of JSON files.
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Supabase Auth | `supabase.auth.signInAnonymously()` on opt-in; `updateUser({ email })` for upgrade | Single client instance in `SupabaseClient.ts`; never import Supabase directly in scenes |
-| Supabase DB | `supabase.from('cloud_saves').upsert(...)` in SaveService; `from('leaderboard').insert(...)` | Row-level security: users can only read/write their own rows |
-| Cloudflare Pages | Static hosting; Vite build output deployed to Pages | Free tier has unlimited bandwidth; set aggressive cache headers on `public/assets/` |
-| Service Worker | Workbox `generateSW` in Vite build; pre-caches shell + critical assets | Game must be fully playable offline after first load |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Scene ↔ Scene | `GameEvents` bus (events only; no direct scene references) | Prevents tight coupling; scenes can be added/removed without touching others |
-| Scene → Service | Direct function call (services are plain modules) | Services have no Phaser dependency; unit-testable |
-| Service → Supabase | `SupabaseClient.ts` singleton | All backend calls in one place; easy to mock or swap |
-| Content Data → Scene | `ContentRegistry.getLevel(id)` returns typed manifest | Scenes never import level data directly; registry validates at boot |
-| InputBus → Entity | `InputBus.isActive(Action)` polled in entity `update()` | No callbacks; polling is simpler and avoids event listener leaks |
-
-## Suggested Build Order
-
-Build in this sequence to unblock each subsequent phase:
-
-1. **Vite + Phaser 3 + TypeScript scaffold** — project skeleton, PWA manifest, service worker shell
-2. **Boot / Preload / MainMenu scenes** — proves scene lifecycle, establishes asset pipeline
-3. **InputBus** — touch + keyboard abstraction before any game entity
-4. **OverworldScene (walking + tilemap)** — core loop, camera, collision; no enemies yet
-5. **ContentRegistry + first level manifest** — data-driven level loading proven early
-6. **i18n Service** — wire up from the start; costs nothing and prevents technical debt
-7. **UIScene (HUD) + DialogueBox** — parallel scene pattern established; dialogue system
-8. **Entity system (Player, NPC, Enemy)** — game objects with state machines
-9. **TriggerSystem** — zone-based event triggers; prerequisite for mini-game handoff
-10. **First mini-game scene** — proves Scene-as-State pattern; validates mini-game handoff
-11. **SaveService (local only, IndexedDB)** — offline save before any backend work
-12. **Journal Service + JournalScene** — collectible system on top of save state
-13. **BossScene** — boss fight mechanics; uses trigger system already built
-14. **Supabase integration** — auth, cloud save, leaderboard; added after core game works
-15. **Email capture flow** — UI + GDPR consent on top of Supabase auth
-16. **PWA hardening** — Workbox caching strategy, offline smoke test, install prompt
+1. **Consolidate `main`.** Fast-forward through the linear `phase-02 → 02.1 → 03 → 03.1 → 04` chain. Bring in `gsd/fix-menu-taps`' 2 commits (not already present on `spike/pivot-formats`). Merge `spike/pivot-formats`' docs-only commits. Run the adventure's overdue phone/UAT check **once**, now, before anything else — this is the "adventure regression risk" gate, done while the adventure is still a single-page app and easiest to verify in isolation.
+2. **Shared shell, no new gameplay.** Move the adventure's `index.html` to `adventure/index.html` unchanged; put the hub's markup at the new root `index.html`. Build `src/shared/*` (config, dailySeed, shareFlow, overlays, testHooks, progressStore, releaseConfig, cast — each with a unit test, pure/DOM, zero Phaser imports). Build `src/hub/*` and wire the adventure tile. Flip the multi-entry Vite config (`hub`, `adventure` only, so far). Fix both pages' OG tags (absolute URLs, real images) — the long-known broken-card defect. Wire Cloudflare Web Analytics + CSP + the rewritten privacy page. **Deploy this hub+adventure-only build first**, as a checkpoint that validates the MPA/PWA/CSP plumbing on the real host before any new gameplay code is layered on.
+3. **Release 1 — arcade.** Port `market.ts` (pure) + its Node sim, `MarketScene.ts` (Phaser) + `arcade/main.ts` (its own `Game()` instance), self-host Pixelify Sans, swap CDN Phaser for the npm import, build `arcade/index.html` with its own OG card. Headless phone check, then a real-phone feel pass. Flip `releaseConfig.arcade = true`, add the `arcade` entry to `rollupOptions.input`, deploy, X post. **This step touches nothing in `snowball/` or `ceo/`, which don't need to exist yet** — the only shared dependency is step 2's shell, already done.
+4. **Release 2 — snowball (idle).** Same shape as step 3: port `econ.ts` + DOM UI + sim, phone check, flip flag, add entry, deploy, post. Can start as soon as step 2 is done, independent of step 3's gameplay code (only blocked on the shared shell, not on the arcade).
+5. **Release 3 — ceo (swipe).** Same shape: port `cards.ts` + DOM UI + sim, phone check, flip flag, add entry, deploy, post.
 
 ## Sources
 
-- [Phaser 3 Scene Concepts — Official Docs](https://docs.phaser.io/phaser/concepts/scenes)
-- [Phaser 3 GitHub — Vite + TypeScript Template](https://github.com/phaserjs/template-vite-ts)
-- [Phaser Scene Manager (Rex Notes)](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/scenemanager/)
-- [Ourcade — Communicating Between Scenes in Phaser 3](https://blog.ourcade.co/posts/2020/phaser3-how-to-communicate-between-scenes/)
-- [Supabase Anonymous Sign-Ins — Official Docs](https://supabase.com/docs/guides/auth/auth-anonymous)
-- [Game Save Best Practices for Web Games — Bugnet](https://bugnet.io/blog/game-save-best-practices-web)
-- [Offline-First Frontend Apps in 2025 — LogRocket](https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite/)
-- [Phaser PWA Tutorial — GameDev Academy](https://gamedevacademy.org/phaser-progressive-web-apps-tutorial/)
-- [Virtual Joystick for Phaser — Rex Notes](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/virtualjoystick/)
-- [Phaser Merged Input Plugin (keyboard + gamepad)](https://github.com/GaryStanton/phaser3-merged-input)
-- [Howler.js — JavaScript Audio Library](https://howlerjs.com/)
-- [Audio for Web Games — MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Audio_for_Web_Games)
-- [HTML5 Game Localization with i18next — Nicastro.in](https://nicastro.in/html5-game-dev-tutorials/excaliburjs-tutorials/game-localization-i18next-library-excaliburjs)
-- [Supabase Free Tier Limits 2026](https://aiagencyplus.com/supabase-free-tier-limits/)
+- Direct repo inspection: `index.html`, `src/main.ts`, `src/game/main.ts`, `vite/config.{dev,prod}.mjs`, `public/_headers`, `public/manifest.webmanifest`, `src/services/{SaveService,ShareService,i18n,ContentRegistry}.ts`, `tests/og-tags.test.ts`, `vitest.config.ts`, `git log`/`git merge-base` on the branch stack. (HIGH — primary source, read directly)
+- `.claude/skills/spike-findings-barren-wuffett/SKILL.md` + `references/format-shell.md` + `sources/hub-index.html` + `sources/003{a,b,c}-*/index.html` + `sources/003a-mr-market-arcade/_verify.cjs`. (HIGH — curated project skill, already-validated spike findings)
+- `.planning/PROJECT.md` (v2.0 milestone scope, constraints, decisions, branch-stack context). (HIGH — primary project source)
+- [Vite "Building for Production" / multi-page guidance](https://v3.vitejs.dev/guide/build) and community write-ups on `rollupOptions.input` for MPAs. (LOW — web search synthesis, cross-checked against this repo's already-working `base: './'` + `manualChunks` setup, so treated as confirmed rather than speculative)
+- [vite-pwa/vite-plugin-pwa discussion #704, "Vite Multi-page App"](https://github.com/vite-pwa/vite-plugin-pwa/discussions/704) and issue #764 on service-worker scope. (LOW — web search synthesis; used only to confirm that one-registration-one-scope is the simple/default path and multi-scope is an opt-in alternative)
+- [Cloudflare Pages redirects/config docs](https://developers.cloudflare.com/pages/configuration/redirects/) and community threads on folder/index.html routing. (LOW — web search synthesis; confirms `folder/index.html` → `/folder/` works with no `_redirects`, consistent with this project's existing `public/impressum.html`/`datenschutz.html` static routing)
 
 ---
-*Architecture research for: Barren Wuffett — HTML5/PWA mobile-first adventure game*
-*Researched: 2026-06-11*
+*Architecture research for: barren-wuffett v2.0 "The Barren Wuffett Hub" — hub/multi-format integration*
+*Researched: 2026-10-07*
