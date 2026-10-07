@@ -1,171 +1,125 @@
 # Requirements: Barren Wuffett
 
-**Defined:** 2026-06-11
-**Core Value:** A fun, shareable game that makes players *want* to leave their email and discover the creator's real investment portfolios — entertainment first, funnel second, never feeling like an ad.
+**Defined:** 2026-10-07 (milestone v2.0 The Barren Wuffett Hub)
+**Core Value:** A fun, replayable Buffett parody that people come back to daily and share on X. Entertainment is the product, a growing @Wolfhartvest following is the win, and nothing ever feels like an ad.
 
-## v1 Requirements
+v1.0's requirements (adventure + email funnel) are archived in `milestones/v1.0-REQUIREMENTS.md`. Category prefixes continue from v1.0 where they still fit (INFR, VIRL, LEGL).
 
-### Core Gameplay
+## v2.0 Requirements
 
-- [x] **GAME-01**: Player can move the character through a top-down pixel-art overworld with a virtual joystick/D-pad on touch devices and keyboard on desktop (input via unified InputBus)
-- [ ] **GAME-02**: Player can complete 3 levels covering Buffett's childhood/youth (paper route, pinball/Coke hustle, first stock investment), each with distinct length and difficulty
-- [ ] **GAME-03**: Each level ends with a boss fight (Mr. Market archetype with era-specific behavior, e.g., greed phase / panic phase)
-- [ ] **GAME-04**: Each level contains at least one mini-game accent from another genre (platformer, point & click, light resource management), implemented as an isolated scene with clean handoff
-- [x] **GAME-05**: Player can talk to NPCs through a dialogue system (data-driven JSON dialogue)
-- [x] **GAME-06**: At least one core mechanic per level rewards patience/timing in the spirit of value investing (e.g., waiting for the right buy moment beats grinding)
-- [x] **GAME-07**: Music and SFX have separate persistent toggles; audio unlocks correctly on iOS after first user gesture
-- [x] **GAME-08**: Game shows a branded loading progress bar and loads fast on 4G (initial bundle lean, level assets lazy-loaded, textures ≤2048px)
-- [x] **GAME-09**: Player can pause/resume anytime; settings screen reachable from main menu and pause menu
-- [x] **GAME-10**: Game plays well in portrait mode on phones (orientation handled gracefully, no pinch-zoom breakage)
+### Baseline & Build
 
-### Visual & Art (Phase 2.1 — inserted)
+- [ ] **INFR-06**: `main` contains the full Level 1 work (v1.0 Phases 2.1-4), the menu-tap fix (`gsd/fix-menu-taps`) and the spike docs, with every existing test green
+- [ ] **INFR-07**: Player opens the adventure at `/adventure/` and it plays as before: existing saves load, and a headless phone-viewport regression run reaches the boss and the level-complete screen
+- [ ] **INFR-08**: Each page (`/`, `/arcade/`, `/snowball/`, `/ceo/`, `/adventure/`) loads directly from a fresh URL on the deployed site with zero 404s and zero CSP violations
+- [ ] **INFR-09**: A returning player whose browser cached the previous build gets the new build, including newly unlocked tiles, on their next visit after a release, without clearing site data
+- [ ] **INFR-10**: Every build can be checked on a non-public Cloudflare preview URL first. The public site changes only on the user's explicit go-ahead, and the first public hub deploy ships together with the arcade
 
-- [x] **ART-01**: Level 1 overworld renders with a cohesive 16-bit pixel-art tileset (cozy town) replacing placeholder art, with auto-tiled grass↔path/terrain transitions — driven by the existing level-01 tile-index map, no engine changes
-- [x] **ART-02**: Player, NPCs (grandpa, store clerk, rival), dog, and Mr. Market boss have cohesive multi-frame sprites — 4-direction walk animation for moving characters; boss has distinct phase poses — wired via Preloader spritesheets + Phaser animations
-- [x] **ART-03**: All shipped art is CC0 or commercially-licensed with provenance/attribution tracked; assets are mobile-optimized (lean bundle, textures ≤2048px) and loaded via the existing Preloader/ContentRegistry pipeline
-- [x] **ART-04**: A reusable art style guide (palette, 16px grid, perspective, sourcing + pipeline) is documented so later levels reuse the look with data + assets only — no engine code
+### Shared Shell
 
-### Level 1 Expansion (Phases 3–5 — added 2026-06-15, entertainment-first redesign)
+- [ ] **SHELL-01**: Every new game shows "made by @Wolfhartvest" on its title and end screens, sourced from one config constant
+- [ ] **SHELL-02**: Every new game has an About overlay with "parody · not affiliated · not investment advice" and the creator's website (compoundingknowledge.com, About only)
+- [ ] **SHELL-03**: Every player gets the same daily game per UTC day, numbered "Daily #N" consistently across the hub and all games, and `?date=` reproduces any day
+- [ ] **SHELL-04**: The code-drawn cast (old Barren, Charlie, Mr. Market greed/panic/neutral, extras) renders in the real build at phone size, matching spike 002
+- [ ] **SHELL-05**: Player taps Share and gets the native share sheet on a phone, or clipboard + X intent on desktop, with text ending in "made by @Wolfhartvest" and the game's URL passed separately
+- [ ] **SHELL-06**: All new pages run under the strict CSP with self-hosted fonts (Press Start 2P, Pixelify Sans) and make no third-party requests except the analytics beacon
+- [ ] **SHELL-07**: Every new game exposes the test hooks headless phone checks rely on: `?date`, `?speed`, `?bot`, a `window.__X__` probe, and an exportable forensic log
 
-> Design source: `.planning/research/level-1-redesign-ideas.md`, `.planning/research/zelda-mystic-quest-patterns.md`, `.planning/research/buffett-early-years-story.md`
+### Hub
 
-- [x] **L1E-01**: The rolled-up newspaper is a real interaction verb — the player swings it to destroy bushes and whack props/targets, with crisp visual + audio feedback (Phase 3)
-- [x] **L1E-02**: Whackables drop coins/items via a fair deterministic 8-slot prize-pack (no long droughts); the first bush always drops a coin; a HUD "snowball" coin counter tracks the running total (Phase 3)
-- [x] **L1E-03**: The patrolling dog is a non-lethal hazard — contact causes knockback + brief i-frames + a "hospital" respawn with a small coin fee and loss of the bush-whacking streak bonus; never a death screen (Phase 3)
-- [x] **L1E-04**: A town shop sells 3–4 permanent upgrades (newspaper upgrade, anti-dog helmet, a saved-for traversal unlock that gates a new town area, a cheap consumable); each purchase is felt for the rest of Level 1, no forced grinding (Phase 3)
-- [x] **L1E-05**: The paper-route mini-game is restyled with characterful house targets and ends on an explicit results splash (papers delivered, accuracy %, coins, grade, NEW BEST) (Phase 4)
-- [x] **L1E-06**: Mr. Market is redesigned as the "Mood Pendulum" boss — a visible greed↔panic meter, damaging FOMO lures, and a strike-window on panic; non-linear, readable, fair; reuses the newspaper-whack verb with no new mid-fight controls (Phase 4)
-- [ ] **L1E-07**: Level 1 plays a multi-beat young-Barren story spine (The Spark → first stock) delivered via skippable, i18n-ready cutscenes/dialogue that give the boss motivation (Phase 5)
-- [ ] **L1E-08**: New parody NPCs (Dottie, Donno, Barber Bristle, Old Penny) with distinct sprites + dialogue drive specific story beats; all parody-safe — no real names/brands/likenesses (Phase 5)
-- [ ] **L1E-09**: At least two story mini-games ship — Count-the-Caps and the Pinball Snowball (reinvest-for-passive-income compounding loop) — as isolated scenes; hidden Investment Journal collectible pages are scattered in Level 1 (content-only, no backend) and unlock a reward (Phase 5)
+- [ ] **HUB-01**: Player opening the site root sees the hub: one tile per game with cast art, and every live game opens with one tap
+- [ ] **HUB-02**: Unreleased games show as locked tiles reading "coming soon, follow @Wolfhartvest" (no countdown) that link to the X profile, and flipping a game from locked to live is a single config change
+- [ ] **HUB-03**: The adventure has its own tile, labelled as an early demo, which opens `/adventure/`
+- [ ] **HUB-04**: Player sees today's checklist: which live dailies they have finished today (finished = reached that game's end screen)
+- [ ] **HUB-05**: Player sees a play streak that grows by one per UTC day with at least one finished daily, and silently restarts at 1 after a missed day (no loss message, no freeze)
+- [ ] **HUB-06**: After their 2nd streak day, player sees a dismissible hint to add the hub to their Home Screen ("keep your bests and endings safe"): the native prompt on Android, a two-step instruction on iOS. Once dismissed, it never returns
+- [ ] **HUB-07**: Checklist, streak and best scores survive reloads, and the hub and games still work when storage is unavailable (e.g. private mode)
 
-### Game Feel (Phase 3.1 — inserted 2026-08-04, feel audit)
+### Mr. Market Arcade (Release 1)
 
-> Source: `.planning/research/level-1-feel-audit.md` — root-cause audit of why the built game doesn't feel like the intended Zelda-light adventure
+- [ ] **ARC-01**: Player plays a 60 s one-thumb drag run, catching panic bargains and dodging greedy junk while the compounding snowball grows, ported from spike 003a into the real build (npm Phaser)
+- [ ] **ARC-02**: The day's market is identical for every player at any frame rate (a per-date fingerprint test passes), and visual-effect randomness never touches the seeded schedule
+- [ ] **ARC-03**: The end screen shows final value, %/yr, rank and decade squares, with Share and Play again. Reaching it ticks the arcade on the hub checklist and updates the best score
+- [ ] **ARC-04**: Good and bad items read at a glance on a phone through shape and colour families, confirmed in the phone feel pass
+- [ ] **ARC-05**: Sound plays on iPhone Safari after the first tap, and sharing from the end screen opens the share sheet on iPhone
+- [ ] **ARC-06**: The arcade passes the user's phone feel pass (length and busyness tuned) before release, and balance sims still show smart play clearly beating idle and random play
 
-- [x] **FEEL-01**: The overworld plays at Zelda scale — camera zoomed to ~10 tiles across, following the player with a deadzone through a town that spans multiple screens; HUD/overlays unaffected; player cannot leave the map bounds
-- [x] **FEEL-02**: Every interactive object renders as real pixel art — no 1×1/flat placeholder textures anywhere (bushes, swing animation, whack button, shop item icons, menu logo); whackable bushes are visually distinct from decorative ones
-- [x] **FEEL-03**: The core loop is audible — real SFX for whack, coin, dog bite, purchase, hospital, streak; mini-game and boss scenes emit SFX; music/SFX toggles govern real audio
-- [x] **FEEL-04**: Actions have juice — camera shake on whack hits, bush squash/pop, fade transitions between scenes (including a hospital fade instead of an instant teleport); no hard cuts
-- [x] **FEEL-05**: The economy loop is mechanically correct — one whack = exactly one prize roll; the newspaper upgrade genuinely enlarges the hit area; all 14 bushes are reachable (none inside collision tiles); the traversal gate actually blocks; the level-complete screen shows exactly once and pauses the world; movement speed is direction-normalized
-- [x] **FEEL-06**: Set pieces are entered intentionally — visible in-world markers with a confirm prompt (tap / interact key) replace invisible walk-over hijack zones; bushes regrow over time so the shop's big-ticket item is affordable without exploits
+### Snowball Idle (Release 2)
 
-### Save & Progress
+- [ ] **IDLE-01**: Player lives a ~5-minute compounding life from age 6 to 90 (hustle taps, buy and reinvest), ported from spike 003b as DOM + a pure economy model
+- [ ] **IDLE-02**: Each day's life deals the same seeded Mr. Market offers to everyone (crash first), reproducible with `?date=`
+- [ ] **IDLE-03**: The end screen shows the life's result and rank, with Share and Play again. Reaching it ticks the idle game on the hub checklist and records the best
+- [ ] **IDLE-04**: The idle game passes the user's phone feel pass (life length, pacing) before release, and sims show patience beating spending for a "saver" policy
 
-- [x] **SAVE-01**: Player progress persists locally (IndexedDB) across refresh and return visits — no account needed to play
-- [x] **SAVE-02**: Game is fully playable offline-anonymous; backend is never required for core gameplay
+### Barren the CEO Swipe (Release 3)
 
-### Funnel & Email
+- [ ] **CEO-01**: Player swipes cards left or right as Barren the CEO, balancing 4 two-sided meters with aging drift, ported from spike 003c (33 cards) as DOM + a pure deck model
+- [ ] **CEO-02**: Swiping on iPhone Safari never triggers pull-to-refresh, page scroll or rubber-banding, including fast flicks and edge drags
+- [ ] **CEO-03**: Player collects endings in a 3×3 grid (undiscovered endings show "???") that persists across runs
+- [ ] **CEO-04**: The end screen shows the ending and a career summary, with Share and Play again. Reaching it ticks the CEO game on the hub checklist
+- [ ] **CEO-05**: The swipe game passes the user's phone feel pass before release, including one reader outside finance, and sims show the deck isn't solved (thoughtful play wins about half the time, random play dies early)
 
-- [ ] **FUNL-01**: After completing Level 1, player is offered cloud-save ("never lose your progress") via email — optional, dismissible, game continues without it
-- [ ] **FUNL-02**: Player unlocks one Investment Journal entry per level via email; each entry is standalone-quality investing insight in Barren's voice (quality test: "would I share this if the game didn't exist?")
-- [ ] **FUNL-03**: Journal portfolio pointers read as information, not calls-to-action; discreet creator mention on level end-screens ("Barren's Wisdom" quote with small portfolio link)
-- [ ] **FUNL-04**: Player who declines cloud-save can unlock an exclusive "deep cut" Journal entry via newsletter subscription (secondary, softer touchpoint)
-- [ ] **FUNL-05**: Marketing consent uses a separate, unchecked checkbox with double opt-in (confirmation email); functional save consent is separate from marketing consent
+### Share & Launch Kit
 
-### Virality
+- [ ] **VIRL-03**: Pasting any page's URL into X shows a card with that page's own 1200×630 image, title and description (absolute URLs), verified in X's card preview after each deploy and before posting
+- [ ] **VIRL-04**: Each release comes with a short gameplay clip (MP4 + GIF) recorded headlessly on a phone viewport, ready to attach to its X post
+- [ ] **VIRL-05**: Share text carries the game, daily number, result + rank and an emoji line, and never spoils the day's game (rank and categories only, no event order)
 
-- [x] **VIRL-01**: After each boss defeat, player can share a Canvas-rendered card (1200×630, quote-based and spoiler-free, no raw highscores) with one tap
-- [x] **VIRL-02**: Game URL renders rich previews on social/messaging platforms (og:image, og:title, og:description)
+### Analytics & Legal
 
-### Legal & Compliance
+- [ ] **MEAS-01**: Creator can see page views per page (hub and each game) in Cloudflare Web Analytics, with no cookies set and the beacon allowed by the CSP
+- [ ] **LEGL-05**: The privacy page describes exactly what the site does: Cloudflare hosting, cookieless analytics and on-device progress storage, with no Supabase, Brevo or email mentions
+- [ ] **LEGL-06**: Every release passes a written self-audit over all its text (UI strings, share text, share card, page meta): parody names only, no endorsement, no portfolio/eToro/wikifolio links, credit visible, nothing reads as investment advice. The user signs it off before the public deploy
+- [ ] **LEGL-07**: Impressum and Datenschutz are reachable within two taps from every page (hub and each game)
 
-- [x] **LEGL-01**: Impressum and privacy policy pages are live and linked (footer + settings) before any public URL is shared
-- [x] **LEGL-02**: All persons/companies use parody names only ("Barren Wuffett" etc.) — no real names, photos, likenesses, or logos
-- [ ] **LEGL-03**: Every Journal entry passes a content checklist: visible financial disclaimer, no specific buy/sell recommendation (BaFin test)
-- [ ] **LEGL-04**: Data collection is minimal: email, level progress, score, consent timestamp — nothing else; every marketing email has an unsubscribe link
+## Future Requirements
 
-### Infrastructure
+Deferred: acknowledged, but not in this milestone's roadmap.
 
-- [x] **INFR-01**: Game is deployed on Cloudflare Pages (free tier) and playable via public URL
-- [ ] **INFR-02**: Supabase handles email capture and cloud save; custom SMTP (Brevo) configured before any user-facing email flows
-- [ ] **INFR-03**: Cookieless analytics tracks the funnel (level completions, gate conversion, share clicks) without a consent banner
-- [x] **INFR-04**: Levels are defined as data manifests (ContentRegistry) — adding a level or future pack means adding data files, not engine code
-- [x] **INFR-05**: All player-facing text lives in an i18n-ready structure (English content, German addable without refactor)
+### Content & Depth
 
-## v2 Requirements (Deferred)
+- **CEO-06**: The swipe deck grows beyond 33 cards as a post-launch content cadence (each batch can be its own X post)
+- **IDLE-05**: Idle personal-best comparison, only if the feel pass finds the 5-minute life too thin (never a prestige loop)
+- **HUB-08**: Silent one-day streak grace, only if players find the streak too brittle
 
-### v1.x (after launch validation)
+### Adventure
 
-- **Leaderboard** — email-gated submission, public top 10; add after ~100 email captures (dead leaderboard is harmful)
-- **Offline play via service worker (full hardening)** — install prompt ships in Phase 8; full offline-after-install hardening lands once players actually install the PWA
-- **Referral bonus system** — in-game cosmetic reward for shares; add when share-card analytics show traction
-- **Lore-card collectibles + gallery** — ungated exploration rewards; add when there's enough content to display
-- **Levels 4–5** — complete the childhood/youth arc as fast-follow updates
+- **ADV-01**: Phone check of the v1.0 Phases 3.1 + 4 build, plus the whack/pause hit-area fix (pending todo)
+- **ADV-02**: Story & Heart (7-beat young-Barren spine) and Levels 2-3, per the archived v1.0 roadmap
 
-### v2+
+### Reach
 
-- **German localization** — i18n structure is ready from v1
-- **Paid level packs** (Graham era, Berkshire era) — architecture prepared via ContentRegistry; payment flow only after traction
-- **Companion character "Charlie"** — purchasable sidekick; legal check (Munger personality rights) before shipping
-- **Multiple save slots**
+- **I18N-01**: German localization (strings already go through `t(key)`)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Native App Store / Play Store apps | Browser/PWA first; store rules restrict email capture and finance links, 15–30% cut |
-| Payments / IAP in v1 | Monetization later; v1 only keeps architecture extensible |
-| Ads (any format) | One bad ad placement poisons the trust the funnel depends on |
-| Forced login wall | 93% abandonment; anonymous play is non-negotiable |
-| Streaks, FOMO timers, energy systems, notification begging | Read as manipulation by finance-savvy adults; contradicts the Buffett brand |
-| Aggressive email popups / pre-ticked consent | Dark patterns; pre-ticked boxes are illegal under GDPR |
-| Social login (OAuth) | Vendor dependency + privacy distrust; magic-link email is better for this audience |
-| Real names/likenesses/logos (Buffett, Munger, Berkshire) | Legal risk; parody framing is the protection |
-| Full life story in v1 | Childhood/youth arc only; later eras are future packs |
+| Accounts / login / cross-device sync | Needs a backend + consent flow, which the 2026-10-06 pivot dropped. Progress is device-only and disposable, like Wordle's |
+| Leaderboards / any server-side state | €0 static hosting only. The shared daily seed + share text do the comparison job |
+| Email capture, newsletter, Supabase, Brevo | Credit-only funnel (pivot decision 2026-10-06) |
+| eToro / wikifolio / portfolio links in any game, Barren endorsing anything | Parody + endorsement legal risk (PITFALLS #4); UWG §5a(4) |
+| Push notifications | Notification-begging anti-pattern (ENGAGEMENT.md), weak iOS web-push support, needs a consent prompt |
+| Streak-loss guilt messages, streak-freeze purchases | Named anti-pattern; no monetization to sell from |
+| Countdown timers on locked tiles | Manufactured urgency; release dates depend on feel passes, not a calendar |
+| Idle prestige / ascension loop | The format resets daily by seed. A prestige loop needs new cross-day state and risks turning the comedy into a grind |
+| Per-game installable PWA scopes | One root-scope PWA covers the hub; more scopes add complexity nothing needs |
+| UI framework (React/Vue) or client-side router for the hub | Multi-page static HTML + vanilla TS is enough; the spikes proved DOM formats without one |
+| Native app stores, payments | Unchanged from v1.0: browser first, no monetization in-game |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GAME-01 | Phase 2 | Complete |
-| GAME-02 | Phase 6 | Pending |
-| GAME-03 | Phase 6 | Pending |
-| GAME-04 | Phase 6 | Pending |
-| GAME-05 | Phase 2 | Complete |
-| GAME-06 | Phase 2 | Complete |
-| GAME-07 | Phase 1 | Complete |
-| GAME-08 | Phase 1 | Complete |
-| GAME-09 | Phase 2 | Complete |
-| GAME-10 | Phase 1 | Complete |
-| ART-01 | Phase 2.1 | Complete |
-| ART-02 | Phase 2.1 | Complete |
-| ART-03 | Phase 2.1 | Complete |
-| ART-04 | Phase 2.1 | Complete |
-| L1E-01 | Phase 3 | Complete |
-| L1E-02 | Phase 3 | Complete |
-| L1E-03 | Phase 3 | Complete |
-| L1E-04 | Phase 3 | Complete |
-| FEEL-01 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| FEEL-02 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| FEEL-03 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| FEEL-04 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| FEEL-05 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| FEEL-06 | Phase 3.1 | Complete (2026-08-04, human UAT pending) |
-| L1E-05 | Phase 4 | Complete (2026-08-05, human UAT pending) |
-| L1E-06 | Phase 4 | Complete (2026-08-05, human UAT pending) |
-| L1E-07 | Phase 5 | Pending |
-| L1E-08 | Phase 5 | Pending |
-| L1E-09 | Phase 5 | Pending |
-| SAVE-01 | Phase 2 | Complete |
-| SAVE-02 | Phase 2 | Complete |
-| FUNL-01 | Phase 7 | Pending |
-| FUNL-02 | Phase 7 | Pending |
-| FUNL-03 | Phase 7 | Pending |
-| FUNL-04 | Phase 7 | Pending |
-| FUNL-05 | Phase 7 | Pending |
-| VIRL-01 | Phase 2 | Complete |
-| VIRL-02 | Phase 2 | Complete |
-| LEGL-01 | Phase 1 | Complete |
-| LEGL-02 | Phase 1 | Complete |
-| LEGL-03 | Phase 7 | Pending |
-| LEGL-04 | Phase 7 | Pending |
-| INFR-01 | Phase 1 | Complete |
-| INFR-02 | Phase 7 | Pending |
-| INFR-03 | Phase 7 | Pending |
-| INFR-04 | Phase 1 | Complete |
-| INFR-05 | Phase 1 | Complete |
+| (filled by the roadmapper) | | |
+
+**Coverage:**
+- v2.0 requirements: 41 total
+- Mapped to phases: 0
+- Unmapped: 41 ⚠️
 
 ---
-*Last updated: 2026-08-04 — feel audit: added FEEL-01..06 (Phase 3.1 INSERTED — Zelda camera, real assets/audio, juice, economy-loop repair) per `.planning/research/level-1-feel-audit.md`*
-*Previous: 2026-06-15 — entertainment-first rearrange: funnel → Phase 7; added L1E-01..09 (Level 1 expansion, Phases 3–5); marked ART-01 + INFR-01 complete; renumbered Levels 2-3 → Phase 6, Launch → Phase 8*
+*Requirements defined: 2026-10-07*
+*Last updated: 2026-10-07 after v2.0 requirements definition*
