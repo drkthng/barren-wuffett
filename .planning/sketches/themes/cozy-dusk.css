@@ -1,0 +1,53 @@
+/* cozy-dusk — warm evening in the adventure's cozy town: cocoa surfaces, cream text, warmer gold. */
+:root {
+  --color-bg: #221a1d;
+  --color-surface: #31252a;
+  --color-surface-2: #3e2f33;
+  --color-inset: #181215;
+  --color-border: #4d3b3f;
+  --color-bevel-hi: #5e4a4c;
+  --color-bevel-lo: #120d0f;
+  --color-text: #f7ecd8;
+  --color-text-muted: #b8a596;
+  --color-text-soft: #dccbb7;
+  --color-primary: #ffc95e;
+  --color-primary-hover: #ffdb8a;
+  --color-accent: #bfe3f2;
+  --color-danger: #e0644f;
+  --color-success: #8fcf6a;
+  --color-locked: #7a6862;
+  --color-scrim: rgba(18, 12, 14, 0.68);
+
+  --game-arcade: #6fbf4a;
+  --game-snowball: #a8dcf0;
+  --game-ceo: #e0874a;
+  --game-adventure: #b5d86a;
+
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-sans: 'Pixelify Sans', system-ui, sans-serif;
+  --font-mono: 'Press Start 2P', monospace;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 28px rgba(0,0,0,0.5);
+}
