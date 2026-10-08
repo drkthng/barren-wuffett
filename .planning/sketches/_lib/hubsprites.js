@@ -70,29 +70,33 @@ export function stepFor(days, milestones = [3, 7, 30]) {
     return s;
 }
 
-const DIAMETERS = [6, 8, 11, 14];                   // step 0..3 (sizes scale with the step index)
-const diam = step => DIAMETERS[Math.min(step, DIAMETERS.length - 1)];
+/** ball diameter for step 0..total: 6 px at the start, 14 px at the last milestone */
+function diam(step, total = 3) {
+    if (total === 3) return [6, 8, 11, 14][Math.min(step, 3)];
+    return Math.round(6 + 8 * Math.min(step, total) / total);
+}
 
 /** A — plain snowball: just grows */
-export function snowPlain(step) {
+export function snowPlain(step, total = 3) {
     const p = new Px(16, 16);
-    ball(p, 8, 15, diam(step));
+    ball(p, 8, 15, diam(step, total));
     return sprite(p.outline());
 }
 
-/** B — picks things up as it rolls: twig at step 1, coin at step 2, a Cherry Fizz can at step 3 */
-export function snowPickup(step) {
+/** B — picks things up as it rolls: a twig after the first milestone, a coin halfway, a Cherry Fizz can at the last */
+export function snowPickup(step, total = 3) {
     const p = new Px(18, 16);
-    const { cx, cy, r } = ball(p, 9, 15, diam(step));
-    if (step >= 1) {                                // twig poking out top-right
+    const { cx, cy, r } = ball(p, 9, 15, diam(step, total));
+    const t = step / total;                         // 0..1 progress through the milestones
+    if (t > 0) {                                // twig poking out top-right
         const x0 = Math.round(cx + r * 0.55), y0 = Math.round(cy - r * 0.55);
         p.pts([[x0, y0], [x0 + 1, y0 - 1], [x0 + 2, y0 - 2], [x0 + 2, y0 - 1]], 't');
     }
-    if (step >= 2) {                                // gold coin stuck in the left side
+    if (t >= 0.5) {                                 // gold coin stuck in the left side
         const x = Math.round(cx - r * 0.75), y = Math.round(cy + r * 0.05);
         p.rect(x - 1, y - 1, x + 1, y + 1, 'Y'); p.set(x + 1, y + 1, 'y'); p.set(x - 1, y - 1, 'X');
     }
-    if (step >= 3) {                                // Cherry Fizz can wedged in at the bottom right
+    if (t >= 1) {                                   // Cherry Fizz can wedged in at the bottom right
         const x = Math.round(cx + r * 0.25), y = Math.round(cy + r * 0.25);
         p.rect(x, y, x + 2, y + 3, 'R'); p.rect(x + 2, y, x + 2, y + 3, 'r'); p.rect(x, y + 1, x + 2, y + 1, 'T');
     }
@@ -100,19 +104,21 @@ export function snowPickup(step) {
 }
 
 /** C — on the long hill: the ball rolls down a snowy slope, its track grows behind it */
-export function snowHill(step) {
+export function snowHill(step, total = 3) {
     const W = 34, H = 18;
     const p = new Px(W, H);
     // slope: from (0, 6) down to (W, H-2); snow fill below the line
     const yAt = x => Math.round(6 + (x / (W - 1)) * (H - 9));
     for (let x = 0; x < W; x++) for (let y = yAt(x); y < H; y++) p.set(x, y, y === yAt(x) ? 'W' : (y > yAt(x) + 2 ? 'u' : 'w'));
     // track groove behind the ball, longer with each step
-    const d = diam(step);
+    const d = diam(step, total);
     const bx = W - 4 - Math.ceil(d / 2);            // ball sits near the bottom of the slope
-    const trackLen = [5, 10, 16, 24][Math.min(step, 3)];
+    const trackLen = Math.round(5 + 19 * Math.min(step, total) / total);
     for (let x = Math.max(0, bx - trackLen); x < bx - 1; x++) p.set(x, yAt(x) + 1, 'u');
-    // the ball rests on the slope surface
-    ball(p, bx, yAt(bx) + 1, d);
+    // the ball rests on the slope surface, with its own dark rim so it separates from the white slope
+    const base = yAt(bx) + 1, r = d / 2;
+    p.ellipse(bx, base - r, r + 1, r + 1, 'K');
+    ball(p, bx, base, d);
     return sprite(p.outline());
 }
 

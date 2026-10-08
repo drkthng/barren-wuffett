@@ -35,4 +35,4 @@ Then open `http://<PC-LAN-IP>:5181/sketches/001-hub-phone/` on your phone.
 | # | Name | Design Question | Winner | Tags |
 |---|------|----------------|--------|------|
 | 001 | hub-phone | What should the finished hub look like on a phone, in each of its real states? | **C: Game colours** + cozy-dusk palette, NEW badge until first played | hub, layout, cards, palette, phase-5 |
-| 002 | streak-snowball | How should the pixel snowball streak look and grow? | — | hub, streak, sprite, phase-5 |
+| 002 | streak-snowball | How should the pixel snowball streak look and grow? | **A: Plain snowball**, steps 3·7·14·30, keep the old number after a miss | hub, streak, sprite, phase-5 |
