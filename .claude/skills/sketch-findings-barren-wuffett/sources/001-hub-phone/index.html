@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Sketch 001 — Hub on the phone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../themes/default.css" id="theme-link" />
+<style>
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; transition: background .2s ease; }
+  img.px { image-rendering: pixelated; display: block; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  /* ── sketch chrome (theme-independent) ─────────────────────────────── */
+  #variant-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9998; background: rgba(12,10,18,.94); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-bottom: 1px solid rgba(255,255,255,.08); font: 12px/1.25 system-ui, sans-serif; color: #ddd; padding: 6px 8px; padding-top: calc(6px + env(safe-area-inset-top)); }
+  #variant-nav .row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; align-items: center; }
+  #variant-nav .row::-webkit-scrollbar { display: none; }
+  #variant-nav .row + .row { margin-top: 6px; }
+  .variant-tab, .state-chip, .nav-btn { flex: none; border: 1px solid rgba(255,255,255,.16); background: transparent; color: #ccc; border-radius: 6px; padding: 6px 9px; font: 600 12px system-ui, sans-serif; transition: all .15s ease; white-space: nowrap; }
+  .variant-tab:hover, .state-chip:hover, .nav-btn:hover { border-color: rgba(255,255,255,.45); color: #fff; }
+  .variant-tab.active { background: #ffd166; color: #1d1a27; border-color: #ffd166; }
+  .state-chip { font-weight: 500; }
+  .state-chip.active { background: rgba(127,200,255,.18); border-color: #7fc8ff; color: #fff; }
+  #nav-hide { margin-left: auto; }
+  #state-note { margin-top: 6px; color: #9aa; font-size: 11.5px; min-height: 14px; }
+  #nav-show { position: fixed; top: calc(6px + env(safe-area-inset-top)); right: 8px; z-index: 9998; display: none; background: rgba(12,10,18,.8); color: #ddd; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; padding: 6px 9px; font: 600 12px system-ui, sans-serif; opacity: .65; }
+  body.nav-hidden #variant-nav { display: none; }
+  body.nav-hidden #nav-show { display: block; }
+
+  #sketch-tools { position: fixed; bottom: calc(12px + env(safe-area-inset-bottom)); right: 12px; z-index: 9999; font: 12px system-ui, sans-serif; color: #fff; }
+  #tools-toggle { width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.7); color: #fff; font-size: 18px; opacity: .55; transition: opacity .2s; }
+  #tools-toggle:hover, #sketch-tools.open #tools-toggle { opacity: 1; }
+  #tools-panel { display: none; position: absolute; right: 0; bottom: 48px; width: 230px; background: rgba(0,0,0,.86); border-radius: 10px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  #sketch-tools.open #tools-panel { display: block; }
+  #tools-panel label { display: block; color: #aaa; margin: 8px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  #tools-panel label:first-child { margin-top: 0; }
+  #tools-panel select { width: 100%; padding: 6px; border-radius: 6px; background: #222; color: #fff; border: 1px solid #444; font: 13px system-ui; }
+  .seg { display: flex; gap: 4px; }
+  .seg button { flex: 1; padding: 6px 4px; border-radius: 6px; border: 1px solid #444; background: #222; color: #ccc; font: 12px system-ui; transition: all .15s ease; }
+  .seg button:hover { border-color: #888; }
+  .seg button.on { background: #7fc8ff; border-color: #7fc8ff; color: #111; }
+  #anno-tip { position: fixed; z-index: 10000; pointer-events: none; background: #111; color: #eee; font: 11px/1.45 ui-monospace, Consolas, monospace; padding: 6px 8px; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.5); max-width: 280px; display: none; white-space: pre-wrap; }
+  .anno-outline { outline: 1px dashed #ff4fd8 !important; outline-offset: 1px; }
+
+  #stage { margin: 0 auto; transition: max-width .2s ease; }
+  #stage.vp-phone { max-width: 375px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
+  #stage.vp-tablet { max-width: 768px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
+
+  /* ── hub: shared ──────────────────────────────────────────────────── */
+  .hub { max-width: 460px; margin: 0 auto; padding: 16px 16px calc(28px + env(safe-area-inset-bottom)); }
+  .hub-title { font-family: var(--font-pixel); font-size: 16px; line-height: 1.6; color: var(--color-primary); margin: 6px 0 4px; }
+  .tagline { color: var(--color-text-muted); font-size: 16px; margin: 0 0 14px; line-height: 1.35; }
+  .cards { display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; gap: 12px; align-items: center; color: inherit; text-decoration: none; cursor: pointer; position: relative; -webkit-user-select: none; user-select: none; transition: transform .12s ease, border-color .15s ease, box-shadow .12s ease, background .15s ease; }
+  .art { position: relative; flex: none; display: grid; place-items: end center; }
+  .k { font-family: var(--font-pixel); font-size: var(--text-xs); color: var(--color-primary); line-height: 1.5; }
+  .t { font-size: var(--text-lg); font-weight: 600; margin: 4px 0 2px; }
+  .d { font-size: var(--text-base); color: var(--color-text-soft); line-height: 1.3; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .badges:empty { display: none; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 13.5px; line-height: 1; padding: 4px 8px; }
+  .foot { color: var(--color-text-muted); font-size: 14px; margin-top: 16px; line-height: 1.5; text-align: center; }
+  .foot a { color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; display: inline-block; padding: 12px 4px; }
+  .foot .credit { color: var(--color-text-soft); }
+  .foot .legal { font-size: 13px; opacity: .85; margin-top: -6px; }
+
+  .strip { margin-bottom: 12px; }
+  .daily { font-family: var(--font-pixel); color: var(--color-primary); }
+  .boxes { display: inline-flex; gap: 4px; }
+  .box { width: 11px; height: 11px; border: 2px solid var(--color-text-muted); transition: all .15s ease; }
+  .box.on { background: var(--color-success); border-color: var(--color-success); }
+  .streak { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: var(--font-pixel); position: relative; }
+  .streak:active { transform: scale(.94); }
+  .bubble { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; background: var(--color-text); color: var(--color-bg); font-family: var(--font-sans); font-size: 14px; line-height: 1.25; padding: 7px 10px; border-radius: 8px; white-space: nowrap; box-shadow: var(--shadow-md); animation: pop .18s ease-out; }
+  .bubble::before { content: ''; position: absolute; right: 14px; top: -5px; width: 10px; height: 10px; background: var(--color-text); transform: rotate(45deg); }
+  @keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .fresh { animation: fadein .25s ease-out both; }
+
+  .hint { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 4px 6px 12px; margin-bottom: 12px; font-size: 15px; line-height: 1.3; overflow: hidden; transition: opacity .2s ease, transform .2s ease, max-height .25s ease, margin .25s ease, padding .25s ease; max-height: 220px; }
+  .hint .msg { flex: 1 1 160px; color: var(--color-text-soft); }
+  .hint .msg b { color: var(--color-text); font-weight: 600; }
+  .hint .how { font-family: var(--font-pixel); font-size: 10px; padding: 0 10px; min-height: 44px; background: transparent; border: 0; color: var(--color-primary); }
+  .hint .x { width: 44px; height: 44px; border: 0; background: transparent; color: var(--color-text-muted); font-size: 18px; }
+  .hint .steps { flex-basis: 100%; margin: 2px 0 6px; padding: 0; list-style: none; display: none; font-size: 14.5px; color: var(--color-text-soft); }
+  .hint .steps li { padding: 3px 0; }
+  .hint .steps .ico { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 1.5px solid currentColor; border-radius: 5px; font-size: 12px; vertical-align: -5px; margin: 0 2px; }
+  .hint.open .steps { display: block; }
+  .hint.gone { opacity: 0; transform: translateY(-6px); max-height: 0; margin: 0; padding-top: 0; padding-bottom: 0; }
+
+  /* ── variant A: spike, polished ───────────────────────────────────── */
+  .hub-a .strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--color-surface); border-radius: 12px; padding: 8px 12px; min-height: 50px; }
+  .hub-a .daily { font-size: 11px; }
+  .hub-a .sep { color: var(--color-text-muted); opacity: .55; }
+  .hub-a .check { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--color-text-soft); }
+  .hub-a .streak { margin-left: auto; font-size: 12px; color: var(--color-text); }
+  .hub-a .hint { border: 1px solid var(--color-border); border-radius: 12px; }
+  .hub-a .card { background: var(--color-surface); border-radius: var(--radius-lg); padding: 12px; border: 2px solid transparent; }
+  .hub-a .card.pressed { border-color: var(--color-primary); transform: scale(.985); }
+  .hub-a .art { width: 64px; height: 64px; }
+  .hub-a .badge { background: var(--color-surface-2); border-radius: var(--radius-full); color: var(--color-text-soft); }
+  .hub-a .badge.done { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 15%, transparent); }
+  .hub-a .badge.new { color: var(--color-bg); background: var(--color-primary); font-family: var(--font-pixel); font-size: 9px; padding: 5px 7px; }
+  .hub-a .badge.lock { background: transparent; padding-left: 0; color: var(--color-text-muted); }
+  .hub-a .card.locked .art img.portrait { filter: grayscale(1) brightness(.8); opacity: .55; }
+  .hub-a .card.locked .t, .hub-a .card.locked .d { opacity: .6; }
+  .hub-a .card.locked .k { color: color-mix(in srgb, var(--color-primary) 55%, var(--color-locked)); }
+  .hub-a .lockpin { position: absolute; right: -6px; bottom: -6px; }
+
+  /* ── variant B: pixel cabinet ─────────────────────────────────────── */
+  .hub-b .hub-title { text-shadow: 3px 3px 0 var(--color-bevel-lo); }
+  .hub-b .strip { display: flex; align-items: stretch; border: 3px solid var(--color-text); border-radius: 6px; box-shadow: 0 0 0 2px #0b0910, inset 0 0 0 2px #0b0910; background: linear-gradient(180deg, var(--color-surface-2), var(--color-inset)); min-height: 62px; }
+  .hub-b .cell { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 8px 10px; }
+  .hub-b .cell + .cell { border-left: 2px solid color-mix(in srgb, var(--color-text) 25%, transparent); }
+  .hub-b .cell.grow { flex: 1.3; }
+  .hub-b .lbl { font-size: 12px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  .hub-b .val { display: flex; align-items: center; gap: 8px; font-family: var(--font-pixel); font-size: 12px; color: var(--color-text); }
+  .hub-b .daily { font-size: 12px; }
+  .hub-b .val { min-height: 28px; }
+  .hub-b .box { border-radius: 0; }
+  .hub-b .streak { font-size: 12px; }
+  .hub-b .hint { background: var(--color-surface); box-shadow: inset 2px 2px 0 var(--color-bevel-hi), inset -2px -2px 0 var(--color-bevel-lo); }
+  .hub-b .cards { gap: 14px; }
+  .hub-b .card { background: var(--color-surface); padding: 12px; box-shadow: inset 3px 3px 0 var(--color-bevel-hi), inset -3px -3px 0 var(--color-bevel-lo), 0 0 0 2px #0b0910, 0 5px 0 2px #0b0910; margin-bottom: 4px; }
+  .hub-b .card.pressed { transform: translateY(4px); box-shadow: inset 3px 3px 0 var(--color-bevel-hi), inset -3px -3px 0 var(--color-bevel-lo), 0 0 0 2px #0b0910, 0 1px 0 2px #0b0910; }
+  .hub-b .art { width: 78px; height: 78px; place-items: center; background: var(--color-inset); box-shadow: inset 3px 3px 0 #000, inset -2px -2px 0 var(--color-bevel-hi); overflow: hidden; }
+  .hub-b .art::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px); pointer-events: none; }
+  .hub-b .k { display: inline-block; background: var(--color-primary); color: #1d1a27; padding: 5px 6px 4px; font-size: 10px; box-shadow: 2px 2px 0 var(--color-bevel-lo); }
+  .hub-b .t { margin-top: 8px; }
+  .hub-b .badge { font-family: var(--font-pixel); font-size: 10px; padding: 6px 7px 5px; background: var(--color-inset); color: var(--color-text-soft); box-shadow: inset 1px 1px 0 #000; }
+  .hub-b .badge.done { color: var(--color-success); }
+  .hub-b .badge.new { background: var(--color-danger); color: #fff; box-shadow: 2px 2px 0 var(--color-bevel-lo); }
+  .hub-b .badge.lock { background: transparent; box-shadow: none; padding-left: 0; color: var(--color-text-muted); font-family: var(--font-sans); font-size: 14px; }
+  .hub-b .card.locked { background: color-mix(in srgb, var(--color-surface) 70%, var(--color-bg)); }
+  .hub-b .card.locked .k { background: var(--color-locked); color: var(--color-bg); }
+  .hub-b .card.locked .t, .hub-b .card.locked .d { opacity: .6; }
+  .hub-b .card.locked .art img.portrait { filter: grayscale(1) brightness(.35); }
+  .hub-b .card.locked .art::after { background: repeating-linear-gradient(180deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px); }
+  .hub-b .lockpin { position: absolute; z-index: 2; }
+
+  /* ── variant C: game colours ──────────────────────────────────────── */
+  .hub-c .strip { display: flex; align-items: center; gap: 12px; background: var(--color-surface); border-radius: 18px; padding: 10px 14px 10px 10px; min-height: 56px; }
+  .hub-c .strip.solo { padding-left: 14px; }
+  .hub-c .hero { display: flex; align-items: flex-end; gap: 2px; padding: 4px 10px 4px 6px; border-radius: 14px; background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2)); }
+  .hub-c .hero .n { font-family: var(--font-pixel); font-size: 16px; margin-bottom: 4px; }
+  .hub-c .strip-main { display: flex; flex-direction: column; gap: 6px; }
+  .hub-c .daily { font-size: 12px; }
+  .hub-c .check { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--color-text-soft); }
+  .hub-c .box { border-radius: 3px; border-color: color-mix(in srgb, var(--accent) 70%, var(--color-text-muted)); }
+  .hub-c .box.on { background: var(--accent); border-color: var(--accent); }
+  .hub-c .hint { background: var(--color-surface); border-radius: 18px; }
+  .hub-c .cards { gap: 12px; }
+  .hub-c .card { background: var(--color-surface); border-radius: 20px; padding: 10px 12px 10px 10px; border: 2px solid transparent; align-items: center; }
+  .hub-c .card.pressed { border-color: var(--accent); transform: scale(.985); }
+  .hub-c .art { width: 96px; height: 96px; border-radius: 14px; overflow: hidden; background: color-mix(in srgb, var(--accent) 28%, var(--color-surface-2)); }
+  .hub-c .art::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: color-mix(in srgb, var(--accent) 50%, var(--color-surface-2)); }
+  .hub-c .art img.portrait { position: relative; }
+  .hub-c .badge { border-radius: var(--radius-full); background: var(--color-surface-2); color: var(--color-text-soft); }
+  .hub-c .badge.done { background: var(--accent); color: #15121c; font-weight: 600; }
+  .hub-c .badge.new { background: var(--color-primary); color: #15121c; font-family: var(--font-pixel); font-size: 9px; padding: 5px 7px; }
+  .hub-c .badge.lock { background: transparent; padding-left: 0; color: var(--color-text-muted); }
+  .hub-c .card.locked { background: transparent; border: 2px dashed var(--color-border); --accent: var(--color-locked); }
+  .hub-c .card.locked .art img.portrait { filter: grayscale(1) brightness(.55); opacity: .7; }
+  .hub-c .card.locked .t, .hub-c .card.locked .d { opacity: .6; }
+  .hub-c .lockpin { position: absolute; top: 6px; right: 6px; z-index: 2; }
+
+  /* hover only where a real pointer hovers — phones keep a sticky :hover after a tap */
+  @media (hover: hover) {
+    .hub-a .card:hover { border-color: color-mix(in srgb, var(--color-primary) 35%, transparent); }
+    .hub-b .card:hover { background: color-mix(in srgb, var(--color-surface) 85%, var(--color-primary)); }
+    .hub-c .card:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+  }
+
+  /* ── bottom sheet (shared markup, styled per variant) ──────────────── */
+  .scrim { position: fixed; inset: 0; z-index: 50; background: var(--color-scrim); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 51; margin: 0 auto; max-width: 460px; transform: translateY(105%); visibility: hidden; transition: transform .26s cubic-bezier(.2,.8,.2,1), visibility 0s linear .26s; padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); touch-action: none; }
+  .sheet.show { transform: translateY(0); visibility: visible; transition: transform .26s cubic-bezier(.2,.8,.2,1); }
+  .sheet.dragging { transition: none; }
+  .sheet .grab { width: 44px; height: 5px; border-radius: 3px; background: var(--color-text-muted); opacity: .5; margin: 2px auto 12px; }
+  .sheet .top { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+  .sheet .top .art { width: 72px; height: 72px; }
+  .sheet .s-k { font-family: var(--font-pixel); font-size: 10px; color: var(--color-primary); line-height: 1.6; }
+  .sheet .s-t { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .sheet .s-msg { font-size: 16.5px; line-height: 1.4; color: var(--color-text-soft); margin: 0 0 16px; }
+  .sheet .s-msg b { color: var(--color-text); }
+  .btn { display: block; width: 100%; font-family: var(--font-pixel); font-size: 13px; padding: 14px 10px; border: 0; margin-top: 10px; transition: transform .1s ease, box-shadow .1s ease, background .15s ease; }
+  .btn.primary { background: var(--color-primary); color: #1d1a27; box-shadow: 0 4px 0 color-mix(in srgb, var(--color-primary) 55%, #000); }
+  .btn.primary:hover { background: var(--color-primary-hover); }
+  .btn.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 color-mix(in srgb, var(--color-primary) 55%, #000); }
+  .btn.ghost { background: transparent; color: var(--color-text-muted); }
+  .btn.ghost:hover { color: var(--color-text); }
+
+  body[data-variant="a"] .sheet { background: var(--color-surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow-lg); }
+  body[data-variant="a"] .btn.primary { border-radius: 10px; }
+  body[data-variant="b"] .sheet { background: linear-gradient(180deg, var(--color-surface-2), var(--color-inset)); border: 3px solid var(--color-text); border-bottom: 0; border-radius: 6px 6px 0 0; box-shadow: 0 0 0 2px #0b0910, inset 0 0 0 2px #0b0910; }
+  body[data-variant="b"] .sheet .grab { border-radius: 0; }
+  body[data-variant="b"] .sheet .top .art { background: var(--color-inset); box-shadow: inset 3px 3px 0 #000, inset -2px -2px 0 var(--color-bevel-hi); place-items: center; }
+  body[data-variant="c"] .sheet { background: var(--color-surface); border-radius: 24px 24px 0 0; box-shadow: var(--shadow-lg); overflow: hidden; }
+  body[data-variant="c"] .sheet::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: color-mix(in srgb, var(--accent) 22%, transparent); z-index: -1; }
+  body[data-variant="c"] .sheet .top .art { border-radius: 14px; background: color-mix(in srgb, var(--accent) 30%, var(--color-surface-2)); overflow: hidden; }
+  body[data-variant="c"] .btn.primary { border-radius: 14px; }
+
+  /* about overlay */
+  .overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--color-scrim); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .panel { max-width: 400px; width: 100%; background: var(--color-surface); padding: 20px 18px 14px; transform: translateY(10px) scale(.98); transition: transform .22s ease; }
+  .overlay.show .panel { transform: none; }
+  .panel h2 { font-family: var(--font-pixel); font-size: 13px; color: var(--color-primary); margin: 0 0 14px; line-height: 1.6; }
+  .panel p { font-size: 16px; line-height: 1.45; color: var(--color-text-soft); margin: 0 0 12px; }
+  .panel p a { color: var(--color-primary); }
+  .panel .cast-row { display: flex; justify-content: center; gap: 8px; margin: 2px 0 14px; }
+  .panel .legal { text-align: center; font-size: 14px; color: var(--color-text-muted); }
+  .panel .legal a { color: inherit; display: inline-block; padding: 10px 4px; cursor: pointer; }
+  body[data-variant="a"] .panel { border-radius: 16px; }
+  body[data-variant="b"] .panel { border: 3px solid var(--color-text); border-radius: 6px; box-shadow: 0 0 0 2px #0b0910, inset 0 0 0 2px #0b0910; background: linear-gradient(180deg, var(--color-surface-2), var(--color-inset)); }
+  body[data-variant="c"] .panel { border-radius: 22px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 80; transform: translate(-50%, 16px); opacity: 0; pointer-events: none; background: var(--color-text); color: var(--color-bg); font-size: 15px; padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-md); transition: all .2s ease; max-width: calc(100vw - 32px); text-align: center; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body data-variant="a">
+
+<div id="variant-nav">
+  <div class="row">
+    <button class="variant-tab active" data-v="a">A: Spike, polished</button>
+    <button class="variant-tab" data-v="b">B: Pixel cabinet</button>
+    <button class="variant-tab" data-v="c">C: Game colours ★ Selected</button>
+    <button class="nav-btn" id="nav-hide" title="Hide the sketch bar">▴</button>
+  </div>
+  <div class="row" id="state-row"></div>
+  <div id="state-note"></div>
+</div>
+<button id="nav-show">▾ sketch</button>
+
+<div id="stage">
+  <div id="variant-a" class="variant"></div>
+  <div id="variant-b" class="variant" style="display:none"></div>
+  <div id="variant-c" class="variant" style="display:none"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="grab"></div>
+  <div class="top">
+    <div class="art" id="sheet-art"></div>
+    <div><div class="s-k" id="sheet-k"></div><div class="s-t" id="sheet-title"></div></div>
+  </div>
+  <p class="s-msg">Coming soon. Follow <b class="handle"></b> on X to hear when it drops.</p>
+  <button class="btn primary" id="sheet-x">OPEN X</button>
+  <button class="btn ghost" id="sheet-close">CLOSE</button>
+</div>
+
+<div class="overlay" id="about" role="dialog" aria-modal="true">
+  <div class="panel">
+    <h2>ABOUT</h2>
+    <div class="cast-row" id="about-cast"></div>
+    <p>Barren Wuffett is a loving parody game about patience, compounding and a very moody Mr. Market. It is not affiliated with any real person or company, and nothing in it is investment advice.</p>
+    <p>Made by <span class="handle"></span>. More from the maker: <a href="#" data-toast="Would open compoundingknowledge.com (About is the only place it appears)">compoundingknowledge.com</a></p>
+    <div class="legal"><a data-toast="→ /impressum">Impressum</a> · <a data-toast="→ /datenschutz (German + English)">Privacy</a></div>
+    <button class="btn primary" id="about-close">CLOSE</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="sketch-tools">
+  <div id="tools-panel">
+    <label>Palette</label>
+    <select id="theme-switcher">
+      <option value="default">Spike plum (default)</option>
+      <option value="navy">Navy</option>
+      <option value="cozy-dusk">Cozy dusk ★ Selected</option>
+    </select>
+    <label>Viewport</label>
+    <div class="seg" id="vp-seg"><button data-vp="phone">Phone</button><button data-vp="tablet">Tablet</button><button data-vp="full" class="on">Full</button></div>
+    <label>Install hint platform</label>
+    <div class="seg" id="plat-seg"><button data-p="ios" class="on">iOS</button><button data-p="android">Android</button></div>
+    <label>Annotate (tap/hover shows styles)</label>
+    <div class="seg" id="anno-seg"><button data-a="off" class="on">Off</button><button data-a="on">On</button></div>
+  </div>
+  <button id="tools-toggle" title="Sketch tools">⚙</button>
+</div>
+<div id="anno-tip"></div>
+
+<script type="module">
+import { SPRITES, dataURL } from '../../spikes/002-old-barren-cast/cast.js';
+import { snowPlain, stepFor, padlock, check } from '../_lib/hubsprites.js';
+
+const HANDLE = '@Wolfhartvest';
+const MILESTONES = [3, 7, 30];
+
+// ── content (fixed release order, D-03) ───────────────────────────────
+const GAMES = [
+  { id: 'arcade', path: '/arcade/', kicker: 'ARCADE · 60 S', title: 'Barren vs. Mr. Market', sprite: 'marketGreed', accent: 'var(--game-arcade)', daily: true,
+    blurb: 'Catch the bargains when Mr. Market panics, dodge his greedy junk. Same market for everyone today.' },
+  { id: 'snowball', path: '/snowball/', kicker: 'IDLE · 5 MIN', title: "Barren's Snowball", sprite: 'barren', accent: 'var(--game-snowball)', daily: true,
+    blurb: 'Gum stand to empire by age 90. Buy businesses, reinvest, and keep your nerve when Mr. Market makes offers.' },
+  { id: 'ceo', path: '/ceo/', kicker: 'SWIPE · 2–4 MIN', title: 'Barren, CEO', sprite: 'charlie', accent: 'var(--game-ceo)', daily: true,
+    blurb: "Swipe yes or no on everyone's asks. Keep four meters out of the extremes. Nine endings to find." },
+  { id: 'adventure', path: '/adventure/', kicker: 'ADVENTURE · EARLY DEMO', title: 'The Value Investing Adventure', sprite: 'barrenIdle', accent: 'var(--game-adventure)', daily: false,
+    blurb: "Young Barren's paper route in a cozy town, with Mr. Market as the boss. Level 1 of a bigger story." },
+];
+
+// ── the hub's real states (D-08, D-09, D-10) ──────────────────────────
+const STATES = [
+  { label: '1 · P5 preview', daily: 1, live: [], done: [], streak: 0, best: {}, isNew: [],
+    note: 'Phase 5 preview: no daily is live yet, so the strip shows only "Daily #N". The adventure is the only live card.' },
+  { label: '2 · Launch day', daily: 1, live: ['arcade'], done: [], streak: 0, best: {}, isNew: ['arcade'],
+    note: 'Launch day, newcomer: the checklist appears (0/1). No streak yet, so the snowball is hidden, never "streak 0".' },
+  { label: '3 · Arcade done', daily: 1, live: ['arcade'], done: ['arcade'], streak: 1, best: { arcade: '14.2 %/yr' }, isNew: ['arcade'],
+    note: 'First finished daily: the snowball appears at size 1, the arcade card gets ✓ and its best.' },
+  { label: '4 · Day 3 + hint', daily: 3, live: ['arcade'], done: ['arcade'], streak: 3, best: { arcade: '16.8 %/yr' }, isNew: [], hint: true,
+    note: 'Streak day 3: the snowball grows a step, and the install hint shows (next hub visit after streak day 2). Try How? and ✕.' },
+  { label: '5 · Day 12, none yet', daily: 12, live: ['arcade', 'snowball'], done: [], streak: 11, best: { arcade: '17.9 %/yr' }, isNew: ['snowball'],
+    note: 'Snowball just went live, nothing played today. Does the 0/2 read as a nudge or a nag? The streak still shows 11 (yesterday).' },
+  { label: '6 · Day 41, all live', daily: 41, live: ['arcade', 'snowball', 'ceo'], done: ['arcade', 'snowball'], streak: 30, best: { arcade: '18.9 %/yr', snowball: '$84M at 90', ceo: '5/9 endings' }, isNew: [],
+    note: 'Every daily live, 2/3 done. Streak 30 on Daily #41: an earlier gap reset it silently, and nothing mentions the loss.' },
+];
+
+// ── sprite cache ──────────────────────────────────────────────────────
+const urlCache = new Map();
+function src(key, spr, scale) {
+  const k = key + '@' + scale;
+  if (!urlCache.has(k)) urlCache.set(k, dataURL(spr, scale));
+  return urlCache.get(k);
+}
+const imgTag = (key, spr, scale, cls = '') => `<img class="px ${cls}" alt="" width="${spr.w * scale}" height="${spr.h * scale}" src="${src(key, spr, scale)}">`;
+const portrait = (g, scale) => imgTag(g.sprite, SPRITES[g.sprite], scale, 'portrait');
+const LOCK = padlock(), CHECK = check();
+const lockImg = scale => imgTag('lock', LOCK, scale, 'lockpin');
+const checkImg = scale => imgTag('check', CHECK, scale);
+const snowImg = (days, scale) => { const s = stepFor(days, MILESTONES); return imgTag('snow' + s, snowPlain(s), scale); };
+
+// ── view state (kept in the hash so a reload or a link keeps your place) ──
+const view = { v: 'c', s: 6, theme: 'cozy-dusk', platform: 'ios', hintGone: false, hintOpen: false };
+(function readHash() {
+  const [v, s, theme] = location.hash.slice(1).split('/');
+  if (['a', 'b', 'c'].includes(v)) view.v = v;
+  if (+s >= 1 && +s <= STATES.length) view.s = +s;
+  if (['default', 'navy', 'cozy-dusk'].includes(theme)) view.theme = theme;
+})();
+const writeHash = () => history.replaceState(null, '', `#${view.v}/${view.s}/${view.theme}`);
+
+// ── render ────────────────────────────────────────────────────────────
+function stripHTML(v, st) {
+  const liveDailies = GAMES.filter(g => g.daily && st.live.includes(g.id));
+  const doneN = liveDailies.filter(g => st.done.includes(g.id)).length;
+  const hasCheck = liveDailies.length > 0;
+  const hasStreak = st.streak > 0;
+  const boxes = liveDailies.map(g => `<span class="box ${st.done.includes(g.id) ? 'on' : ''}" style="--accent:${g.accent}" title="${g.title}"></span>`).join('');
+  const streakTip = `${st.streak} day${st.streak === 1 ? '' : 's'} in a row with a finished daily`;
+
+  if (v === 'a') {
+    return `<section class="strip">
+      <span class="daily">DAILY #${st.daily}</span>
+      ${hasCheck ? `<span class="sep">·</span><span class="check fresh"><span class="boxes">${boxes}</span>${doneN}/${liveDailies.length} today</span>` : ''}
+      ${hasStreak ? `<span class="streak fresh" data-tip="${streakTip}">${snowImg(st.streak, 2)}${st.streak}</span>` : ''}
+    </section>`;
+  }
+  if (v === 'b') {
+    return `<section class="strip">
+      <div class="cell"><span class="lbl">Daily</span><span class="val daily">#${st.daily}</span></div>
+      ${hasCheck ? `<div class="cell grow fresh"><span class="lbl">Today</span><span class="val"><span class="boxes">${boxes}</span>${doneN}/${liveDailies.length}</span></div>` : ''}
+      ${hasStreak ? `<div class="cell fresh"><span class="lbl">Streak</span><span class="val streak" data-tip="${streakTip}">${snowImg(st.streak, 2)}${st.streak}</span></div>` : ''}
+    </section>`;
+  }
+  return `<section class="strip ${hasStreak ? '' : 'solo'}">
+    ${hasStreak ? `<div class="hero streak fresh" data-tip="${streakTip}">${snowImg(st.streak, 3)}<span class="n">${st.streak}</span></div>` : ''}
+    <div class="strip-main">
+      <span class="daily">DAILY #${st.daily}</span>
+      ${hasCheck ? `<span class="check fresh"><span class="boxes">${boxes}</span>${doneN}/${liveDailies.length} today</span>` : ''}
+    </div>
+  </section>`;
+}
+
+function hintHTML(st) {
+  if (!st.hint || view.hintGone) return '';
+  const ios = view.platform === 'ios';
+  return `<aside class="hint fresh ${view.hintOpen ? 'open' : ''}">
+    <span class="msg">Keep your bests and endings safe: <b>add Barren to your Home Screen</b></span>
+    <button class="how" data-act="hint-how">${ios ? 'HOW?' : 'ADD'}</button>
+    <button class="x" data-act="hint-x" aria-label="Dismiss">✕</button>
+    <ol class="steps">
+      <li>1. Tap <span class="ico">⬆</span> Share in Safari's toolbar</li>
+      <li>2. Choose <b>Add to Home Screen</b></li>
+    </ol>
+  </aside>`;
+}
+
+function cardHTML(v, g, st) {
+  const live = !g.daily || st.live.includes(g.id);
+  const done = st.done.includes(g.id);
+  const best = st.best[g.id];
+  const isNew = st.isNew.includes(g.id) && !done;
+  const scale = v === 'c' ? 3 : 2;
+  const lock = !live ? (v === 'b' ? lockImg(3) : lockImg(2)) : '';
+  let badges = '';
+  if (!live) {
+    badges = `<span class="badge lock">coming soon · follow ${HANDLE}</span>`;
+  } else {
+    if (isNew) badges += `<span class="badge new">NEW</span>`;
+    if (done) badges += `<span class="badge done">${v === 'c' ? '' : checkImg(2)}${v === 'b' ? 'DONE' : 'done today'}</span>`;
+    if (best) badges += `<span class="badge">${g.id === 'ceo' ? (v === 'b' ? best.toUpperCase() : best) : (v === 'b' ? 'BEST ' + best.toUpperCase() : 'best ' + best)}</span>`;
+  }
+  return `<a class="card ${live ? '' : 'locked'} ${done ? 'done' : ''}" data-id="${g.id}" style="--accent:${live ? g.accent : 'var(--color-locked)'}" role="button" tabindex="0">
+    <div class="art">${portrait(g, scale)}${lock}</div>
+    <div class="body">
+      <div class="k">${g.kicker}</div>
+      <div class="t">${g.title}</div>
+      <div class="d">${g.blurb}</div>
+      <div class="badges">${badges}</div>
+    </div>
+  </a>`;
+}
+
+function hubHTML(v, st) {
+  return `<main class="hub hub-${v}">
+    <h1 class="hub-title">BARREN WUFFETT</h1>
+    <p class="tagline">Daily games about patience, compounding and a very moody Mr. Market.</p>
+    ${stripHTML(v, st)}
+    ${hintHTML(st)}
+    <nav class="cards">${GAMES.map(g => cardHTML(v, g, st)).join('')}</nav>
+    <footer class="foot">
+      <div class="credit">made by <span class="handle"></span> · <a data-act="about">about</a></div>
+      <div class="legal"><a data-toast="→ /impressum">Impressum</a> · <a data-toast="→ /datenschutz (German + English)">Privacy</a></div>
+    </footer>
+  </main>`;
+}
+
+function render() {
+  const st = STATES[view.s - 1];
+  for (const v of ['a', 'b', 'c']) {
+    const el = document.getElementById('variant-' + v);
+    el.innerHTML = hubHTML(v, st);
+    el.style.display = v === view.v ? 'block' : 'none';
+  }
+  document.body.dataset.variant = view.v;
+  for (const el of document.querySelectorAll('.handle')) el.textContent = HANDLE;
+  for (const t of document.querySelectorAll('.variant-tab')) t.classList.toggle('active', t.dataset.v === view.v);
+  for (const c of document.querySelectorAll('.state-chip')) c.classList.toggle('active', +c.dataset.s === view.s);
+  document.getElementById('state-note').textContent = st.note;
+  writeHash();
+}
+
+// ── sketch nav ────────────────────────────────────────────────────────
+const stateRow = document.getElementById('state-row');
+stateRow.innerHTML = STATES.map((s, i) => `<button class="state-chip" data-s="${i + 1}">${s.label}</button>`).join('');
+stateRow.addEventListener('click', e => {
+  const b = e.target.closest('.state-chip'); if (!b) return;
+  view.s = +b.dataset.s; view.hintGone = false; view.hintOpen = false; render();
+  b.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+});
+document.querySelectorAll('.variant-tab').forEach(t => t.addEventListener('click', () => { view.v = t.dataset.v; render(); }));
+const nav = document.getElementById('variant-nav');
+const fitNav = () => { document.body.style.paddingTop = document.body.classList.contains('nav-hidden') ? '0px' : nav.offsetHeight + 'px'; };
+new ResizeObserver(fitNav).observe(nav);
+document.getElementById('nav-hide').onclick = () => { document.body.classList.add('nav-hidden'); fitNav(); };
+document.getElementById('nav-show').onclick = () => { document.body.classList.remove('nav-hidden'); fitNav(); };
+
+// ── toast ─────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── bottom sheet (D-04) ───────────────────────────────────────────────
+const sheet = document.getElementById('sheet'), scrim = document.getElementById('scrim');
+function openSheet(g) {
+  document.getElementById('sheet-art').innerHTML = portrait(g, view.v === 'c' ? 2 : 2);
+  document.getElementById('sheet-k').textContent = g.kicker;
+  document.getElementById('sheet-title').textContent = g.title;
+  sheet.style.setProperty('--accent', g.accent);
+  sheet.style.transform = '';
+  sheet.classList.add('show'); scrim.classList.add('show');
+}
+function closeSheet() { sheet.style.transform = ''; sheet.classList.remove('show'); scrim.classList.remove('show'); }
+scrim.onclick = closeSheet;
+document.getElementById('sheet-close').onclick = closeSheet;
+document.getElementById('sheet-x').onclick = () => { closeSheet(); toast(`Would open x.com/${HANDLE.slice(1)} in a new tab`); };
+// drag down to dismiss
+let dragY = null;
+sheet.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; dragY = e.clientY; sheet.classList.add('dragging'); sheet.setPointerCapture(e.pointerId); });
+sheet.addEventListener('pointermove', e => { if (dragY === null) return; const dy = Math.max(0, e.clientY - dragY); sheet.style.transform = `translateY(${dy}px)`; });
+const endDrag = e => { if (dragY === null) return; const dy = e.clientY - dragY; dragY = null; sheet.classList.remove('dragging'); if (dy > 70) closeSheet(); else sheet.style.transform = ''; };
+sheet.addEventListener('pointerup', endDrag); sheet.addEventListener('pointercancel', endDrag);
+
+// ── about overlay ─────────────────────────────────────────────────────
+const about = document.getElementById('about');
+document.getElementById('about-cast').innerHTML = ['charlie', 'barren', 'marketGreed'].map(k => imgTag(k, SPRITES[k], 2)).join('');
+document.getElementById('about-close').onclick = () => about.classList.remove('show');
+about.addEventListener('click', e => { if (e.target === about) about.classList.remove('show'); });
+addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); about.classList.remove('show'); } });
+
+// ── hub interactions (delegated) ──────────────────────────────────────
+document.getElementById('stage').addEventListener('click', e => {
+  if (annotate) return;
+  const actEl = e.target.closest('[data-act]');
+  if (actEl) {
+    const act = actEl.dataset.act;
+    if (act === 'about') about.classList.add('show');
+    if (act === 'hint-x') {
+      actEl.closest('.hint').classList.add('gone');
+      setTimeout(() => { view.hintGone = true; render(); toast('Hint dismissed. It never comes back.'); }, 260);
+    }
+    if (act === 'hint-how') {
+      if (view.platform === 'android') toast("Android: the browser's own install prompt opens here");
+      else { view.hintOpen = !view.hintOpen; actEl.closest('.hint').classList.toggle('open', view.hintOpen); }
+    }
+    return;
+  }
+  const tEl = e.target.closest('[data-toast]');
+  if (tEl) { e.preventDefault(); toast(tEl.dataset.toast); return; }
+  const streak = e.target.closest('[data-tip]');
+  if (streak) {
+    document.querySelectorAll('.bubble').forEach(b => b.remove());
+    const b = document.createElement('span'); b.className = 'bubble'; b.textContent = streak.dataset.tip;
+    if (view.v === 'c') { b.style.left = '0'; b.style.right = 'auto'; }
+    streak.appendChild(b); setTimeout(() => b.remove(), 2400);
+    return;
+  }
+  const card = e.target.closest('.card');
+  if (card) {
+    const g = GAMES.find(x => x.id === card.dataset.id);
+    card.classList.add('pressed');
+    setTimeout(() => card.classList.remove('pressed'), 140);
+    if (card.classList.contains('locked')) setTimeout(() => openSheet(g), 120);
+    else toast(`→ opens ${g.path}${g.id === 'adventure' ? ' (the existing Level 1 build)' : ''}`);
+  }
+});
+document.addEventListener('click', e => {
+  const tEl = e.target.closest('.panel [data-toast]');
+  if (tEl) { e.preventDefault(); toast(tEl.dataset.toast); }
+});
+
+// ── sketch tools ──────────────────────────────────────────────────────
+const tools = document.getElementById('sketch-tools');
+document.getElementById('tools-toggle').onclick = () => tools.classList.toggle('open');
+const themeSel = document.getElementById('theme-switcher');
+function applyTheme() { document.getElementById('theme-link').href = `../themes/${view.theme}.css`; themeSel.value = view.theme; writeHash(); }
+themeSel.onchange = () => { view.theme = themeSel.value; applyTheme(); };
+const seg = (id, attr, fn) => document.getElementById(id).addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  for (const x of document.querySelectorAll(`#${id} button`)) x.classList.toggle('on', x === b);
+  fn(b.dataset[attr]);
+});
+seg('vp-seg', 'vp', vp => { document.getElementById('stage').className = vp === 'full' ? '' : 'vp-' + vp; });
+seg('plat-seg', 'p', p => { view.platform = p; view.hintOpen = false; render(); });
+let annotate = false;
+const tip = document.getElementById('anno-tip');
+let annoEl = null;
+seg('anno-seg', 'a', a => { annotate = a === 'on'; if (!annotate) { tip.style.display = 'none'; annoEl?.classList.remove('anno-outline'); } });
+function showAnno(el, x, y) {
+  annoEl?.classList.remove('anno-outline'); annoEl = el; el.classList.add('anno-outline');
+  const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+  const fam = cs.fontFamily.split(',')[0].replace(/['"]/g, '');
+  tip.textContent = `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).filter(c => c !== 'anno-outline').join('.') : ''}\n` +
+    `${Math.round(r.width)}×${Math.round(r.height)}  pad ${cs.padding}\n` +
+    `font ${cs.fontWeight} ${cs.fontSize} ${fam}\ncolor ${cs.color}\nbg ${cs.backgroundColor}  radius ${cs.borderRadius}`;
+  tip.style.display = 'block';
+  tip.style.left = Math.min(x + 12, innerWidth - 290) + 'px';
+  tip.style.top = Math.min(y + 12, innerHeight - 110) + 'px';
+}
+document.getElementById('stage').addEventListener('pointerover', e => { if (annotate && e.pointerType === 'mouse') showAnno(e.target, e.clientX, e.clientY); });
+document.getElementById('stage').addEventListener('click', e => { if (annotate) { e.preventDefault(); e.stopPropagation(); showAnno(e.target, e.clientX, e.clientY); } }, true);
+
+// probe for headless screenshots
+window.__SKETCH__ = { view, render, applyTheme, STATES, ready: true };
+
+applyTheme();
+render();
+</script>
+</body>
+</html>

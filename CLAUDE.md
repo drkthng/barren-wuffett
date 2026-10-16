@@ -180,6 +180,7 @@ Architecture not yet mapped. Follow existing patterns found in the codebase.
 ## Project Skills
 
 - **Spike findings for barren-wuffett** (implementation patterns, constraints, gotchas) → `Skill("spike-findings-barren-wuffett")`
+- **Sketch findings for barren-wuffett** (design decisions, CSS patterns, visual direction) → `Skill("sketch-findings-barren-wuffett")`
 <!-- GSD:skills-end -->
 
 <!-- GSD:workflow-start source:GSD defaults -->
