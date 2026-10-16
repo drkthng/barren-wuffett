@@ -44,13 +44,20 @@ promoted to the real build in this phase) — all multiples of 4:
 |-------|-------|-------|
 | xs | 4px | Icon/sprite gaps, highlight offsets inside sprites |
 | sm | 8px | Checklist box gap, badge internal gap |
-| sm+ | 12px | Card-to-card gap, strip padding, gap between strip and cards — the project's most-used gap |
 | md | 16px | Hub column side padding, default element spacing |
 | lg | 24px | Section-level breaks (not yet exercised by Phase 5's flat layout) |
 | xl | 32px | Layout gaps (not yet exercised by Phase 5) |
 | 2xl | 48px | Major section breaks (not yet exercised by Phase 5) |
 
 Exceptions:
+- **12px gap** — card-to-card gap, the margin below the strip, and the margin below the install
+  hint (`hub-layout-cards.md` §CSS Patterns: `.card{gap:12px}`, `.strip{margin-bottom:12px}`,
+  `.hint{margin-bottom:12px}`). This is the project's single most-used gap in the phone-validated
+  sketch, a multiple of 4 but not a member of the standard scale set — recorded here as a justified
+  exception (the same treatment given to the ≥44px tap-target rows below) rather than promoted to a
+  scale rung, because the value is sketch-locked: the user judged this exact spacing on their phone
+  on 2026-10-08/2026-10-16, and snapping it to 8px or 16px would visibly tighten or loosen every
+  card/strip/hint gap already approved.
 - **≥ 44px tap targets** on every icon-only or short-label control: the install hint's `✕` and
   `HOW?`/`ADD`, the sheet's drag handle hit-area (the visible grab bar is 44×5px but its hit-area
   extends to 44px tall), and the adventure's new "← HUB" button (reusing the existing ≥44px Phaser
@@ -65,15 +72,32 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 15px (Pixelify Sans) | 400 | 1.5 — card blurbs, checklist label, About body copy |
-| Label | 11px (Press Start 2P) | 400 | 1.2 — kickers (`ARCADE · 60 S`), `DAILY #N`, badge `NEW` text |
+| Label | 11px (Press Start 2P) | 400 | 1.2 — kickers only (`ARCADE · 60 S`, `IDLE · 5 MIN`, etc.) |
 | Heading | 19px (Pixelify Sans) | 600 | 1.2 — card titles ("Barren vs. Mr. Market") |
 | Display | 16px (Press Start 2P) | 400 | 1.2 — hub title "BARREN WUFFETT" |
 
-Exactly 2 weights in use across the two font families: Pixelify Sans 400 (regular) and 600
-(semibold); Press Start 2P ships only one weight (it is a bitmap-style pixel font with no bold
-cut), so every pixel-font element is 400. Supporting sizes already fixed by the sketch and not
-listed above as a named role: tagline 16px, badges 13.5px, footer 14px, streak number 16px
-(Press Start 2P, same Display role).
+Exactly 4 sizes, exactly 2 weights across the two font families: Pixelify Sans 400 (regular) and
+600 (semibold); Press Start 2P ships only one weight (a bitmap-style pixel font with no bold cut),
+so every pixel-font element is 400.
+
+**Reuses of the Display size (not new sizes).** Two elements render at exactly 16px — the same
+numeric value as Display, just in the other font family — so they are the Display role at the same
+size, not an additional size: the tagline (16px Pixelify Sans 400, vs. the title's 16px Press Start
+2P) and the streak number (16px Press Start 2P 400 — identical font, weight and size to Display).
+
+**Fixed-size UI chrome — justified exceptions, not independent type roles.** These four elements
+carry sketch-locked pixel values that don't match any of the 4 named roles above. They are small,
+fixed-width chrome — not scalable reading content — so forcing them onto Body/Label/Heading/Display
+would visibly resize chips and pills the user already judged on their phone (sketch sessions
+2026-10-08, wrapped 2026-10-16). Recorded here verbatim, the same treatment already given to the
+12px gap and ≥44px tap-target rows under Spacing, rather than carried as a 5th–8th named role:
+
+| Element | Size | Family / weight | Why it's an exception |
+|---------|------|------------------|------------------------|
+| `DAILY #N` counter | 12px | Press Start 2P 400 | One pixel above Label's 11px kicker size so the daily chip reads as distinct from the kickers next to it — sketch-locked (`.daily`, `hub-layout-cards.md` §CSS Patterns) |
+| Badge pill text (best score, `done today`) | 13.5px | Pixelify Sans 400 | Sits between Body 15 and Label 11 by design, on the quiet `--color-surface-2` pill — sketch-locked (`.badge`, `hub-layout-cards.md` §CSS Patterns) |
+| `NEW` badge text | 9px | Press Start 2P 400 | Smallest pixel-font chip in the UI; keeps the gold `NEW` pill from widening the badge row — sketch-locked (`.badge.new`, `hub-layout-cards.md` §CSS Patterns) |
+| Footer links (`Impressum · Privacy`, `made by @Wolfhartvest · about`) | 14px | Pixelify Sans 400 | Quiet footer treatment carried from the spike, between Body 15 and the pixel-label scale — sketch-locked (`hub-layout-cards.md` §Typography and spacing) |
 
 ---
 
@@ -98,6 +122,13 @@ category colors), not part of the global 60/30/10 budget — it never appears on
 page chrome, or any shared control. A locked card substitutes `var(--color-locked) #7a6862` for
 its `--accent`.
 
+**Primary visual focal point.** The daily strip's streak chip (the ice-tinted `.hero` box: 3×
+snowball sprite + gold Press Start number) is the hub's first focal point below the title/tagline —
+it is the only gold-and-ice element above the fold, it animates on every finished daily (`grow` /
+`nudge` / `appear` + `numpop`, per `streak-snowball.md`), and it is what D-06/D-07/D-09 designate as
+the daily-return hook. Once the strip is `.solo` (no streak yet), the focal point shifts down to
+the first live card's gold kicker, the next gold element in view.
+
 ---
 
 ## Copywriting Contract
@@ -120,7 +151,10 @@ Pre-existing, already-approved copy this contract inherits verbatim (route all o
 - Locked sheet: kicker + title, *"Coming soon. Follow **@Wolfhartvest** on X to hear when it
   drops."*, `OPEN X` / `CLOSE`
 - Install hint: *"Keep your bests and endings safe: **add Barren to your Home Screen**"*, with
-  `HOW?` (iOS, expands two steps) or `ADD` (Android, fires the native prompt)
+  `HOW?` (iOS, expands two steps) or `ADD` (Android, fires the native prompt). Its icon-only `✕`
+  dismiss carries `aria-label="Dismiss"` — already present in the sketch's HTML
+  (`hub-layout-cards.md` §HTML Structures: `<button class="x" aria-label="Dismiss">✕</button>`),
+  not a new copy string, just an accessibility label on the existing icon button
 - Streak tooltip (tap the snowball box): *"N days in a row with a finished daily"*
 - Footer: *"made by @Wolfhartvest · about"*, then *"Impressum · Privacy"*
 - About: cast row (charlie, barren, marketGreed at 2×), parody + no-advice line, *"Made by
@@ -146,7 +180,7 @@ Applicable state considerations resolved: 4 covered, 2 backstop, 0 unresolved.
 | partial | Best-score badge (cards list) | ✅ covered | The best badge renders only once a score exists; before that it is omitted entirely from the card's badge row — no placeholder dash, no "best: --" |
 | overflow | Card blurb + title (cards list) | ✅ covered | `.body` is a flexible column with no fixed height and no truncation CSS in the sketch's pattern; blurb and title wrap naturally — confirmed against the longest approved blurb ("Catch the bargains when Mr. Market panics, dodge his greedy junk. Same market for everyone today.") without clipping |
 | long-text | Daily strip numbers (`DAILY #N`, streak count) | ✅ covered | `.hero`/`.strip-main` are flex rows with no fixed width in the sketch's CSS; 3-digit daily numbers (`DAILY #100`+) and streak counts simply widen the row, they never clip |
-| error | Daily strip / checklist / streak when on-device storage is fully unavailable (Safari Private Browsing's zero-quota throw, or iOS eviction — Pitfall 12) | 🧪 backstop | **Default used, no outstanding user decision:** render exactly like a brand-new player — solo strip, no checklist, no snowball, no visible error copy. The only user-facing difference is that nothing persists across reloads. Chosen to stay consistent with the already-locked no-guilt, no-interruption streak philosophy (D-07; FEATURES.md rule 4) rather than inventing new error copy for an edge case neither `05-CONTEXT.md` nor the sketch addressed. **Flag for confirmation during `/gsd-plan-phase 5` or with the user** if a visible "progress won't be saved this session" notice is preferred instead |
+| error | Daily strip / checklist / streak when on-device storage is fully unavailable (Safari Private Browsing's zero-quota throw, or iOS eviction — Pitfall 12) | 🧪 backstop | **User-confirmed 2026-10-16:** render exactly like a brand-new player — solo strip, no checklist, no snowball, no visible error copy. The only user-facing difference is that nothing persists across reloads. Chosen to stay consistent with the already-locked no-guilt, no-interruption streak philosophy (D-07; FEATURES.md rule 4) rather than inventing new error copy for an edge case neither `05-CONTEXT.md` nor the sketch addressed. (a visible "progress won't be saved" notice was considered and rejected) |
 | error | Locked-card sheet's `OPEN X` button when a popup blocker intercepts the navigation | 🧪 backstop | Implement as a real `<a href="https://x.com/{handle}" target="_blank" rel="noopener">` styled as the primary button, not a scripted `window.open()` inside a tap handler — anchor-tag navigation isn't subject to the popup-blocker heuristics that block scripted `window.open`, so no fallback error UI needs to exist |
 
 ---
