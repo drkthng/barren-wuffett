@@ -1,7 +1,7 @@
 ---
 phase: "5"
 slug: "consolidate-shared-shell-hub-checkpoint"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-16"
@@ -164,18 +164,59 @@ Pre-existing, already-approved copy this contract inherits verbatim (route all o
 
 ## UI Considerations
 
-Dismissed as not applicable (relevance-filtered, with reason): **empty/loading** for the card list
-and the bottom sheet (the card list is a fixed 4-item config array that is never empty, per D-03;
-portraits are code-drawn, synchronously-rendered data-URLs with no network fetch, so no skeleton
-or spinner state can exist); **zero-one-many** for the card list (the count is fixed at four and
-never varies by data); **long-text/overflow** for the About overlay and the sheet's fixed strings
-(both ship short, hand-authored copy with no dynamic length, per `format-shell.md` and
-`hub-layout-cards.md`).
+Probe run 2026-10-16 (`ui-consideration-probe`, 8-category taxonomy). Element kinds were authored
+explicitly (the prose classifier misread the bottom sheet as a list and left the daily strip
+unclassified): E1 hub cards = list-collection, media, interactive-control · E2 daily strip =
+list-collection, static-content, interactive-control · E3 locked-card sheet = interactive-control,
+static-content · E4 install hint = interactive-control, static-content · E5 About overlay =
+static-content, media, nav · E6 footer links = nav · E7 adventure "← HUB" + credit = nav,
+interactive-control. Resolutions user-approved 2026-10-16. Empty/error **copy** lives in the
+Copywriting Contract above; this section covers state coverage only.
 
-Applicable state considerations resolved: 4 covered, 2 backstop, 0 unresolved.
+Coverage: 38 applicable → 19 resolved explicit, 6 resolved backstop, 13 dismissed, 0 unresolved.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
+| Element | Category | Status | Resolution / Reason |
+|---------|----------|--------|---------------------|
+| E1 Hub cards | empty | dismissed | Card list is a fixed 4-entry config array (D-03); it can never be empty |
+| E1 Hub cards | loading | ✅ resolved (explicit) | Cards render complete on first paint — portraits are code-drawn data-URLs, no network fetch; no skeleton or spinner exists |
+| E1 Hub cards | error | 🧪 resolved (backstop) | `{ statement: "Every live card is a real <a href> to its game path; a headless run loads each live card's target directly with zero 404s and zero CSP violations", verification: backstop }` |
+| E1 Hub cards | populated | ✅ resolved (explicit) | The 6 hub-state fixtures in `hub-layout-cards.md` ("The hub's real states") are the implementation's test fixtures |
+| E1 Hub cards | partial | ✅ resolved (explicit) | Best-score badge is omitted from the badge row until a score exists — no placeholder dash, no "best: --" |
+| E1 Hub cards | overflow | ✅ resolved (explicit) | `.body` is a flexible column with no fixed height and no truncation CSS; blurb and title wrap |
+| E1 Hub cards | long-text | ✅ resolved (explicit) | Longest approved blurb ("Catch the bargains when Mr. Market panics, dodge his greedy junk. Same market for everyone today.") wraps without clipping at 320px width |
+| E1 Hub cards | zero-one-many | ✅ resolved (explicit) | Phase 5 ships 1 live (adventure) + 3 locked; later phases up to 4 live. Same single-column list for every mix; live/locked mixes covered by the 6 fixtures |
+| E2 Daily strip | empty | ✅ resolved (explicit) | Newcomer sees the solo strip — `DAILY #N` only; never "streak 0" or "0/0" (D-09) |
+| E2 Daily strip | loading | ✅ resolved (explicit) | Storage is read synchronously at render; the strip paints its final state first time — no solo→streak flash |
+| E2 Daily strip | error | ✅ resolved (explicit) | Storage fully unavailable (Safari Private Browsing zero-quota throw, iOS eviction) → render exactly like a brand-new player: solo strip, no checklist, no snowball, no visible error copy; nothing persists across reloads. User-confirmed 2026-10-16; a visible "progress won't be saved" notice was considered and rejected |
+| E2 Daily strip | populated | ✅ resolved (explicit) | `DAILY #N` + checklist + snowball streak chip with gold number; snowball size steps 3·7·14·30 per `streak-snowball.md` |
+| E2 Daily strip | partial | ✅ resolved (explicit) | One checklist box per live daily game; finished ones checked in the game's accent, unfinished ones empty |
+| E2 Daily strip | zero-one-many | ✅ resolved (explicit) | 0 live dailies (Phase 5) → checklist hidden, solo strip; 1 → single box; 3 → three boxes in one row, per the hub-state fixtures |
+| E2 Daily strip | overflow | ✅ resolved (explicit) | `.hero`/`.strip-main` are flex rows with no fixed width; 3-digit `DAILY #N` and streak counts widen the row and never clip |
+| E2 Daily strip | long-text | dismissed | Strip carries only fixed short strings and numbers; length growth is covered by the overflow row |
+| E3 Locked-card sheet | loading | dismissed | Static, hand-authored content; opens instantly with nothing fetched |
+| E3 Locked-card sheet | error | ✅ resolved (explicit) | `OPEN X` is a real `<a href="https://x.com/Wolfhartvest" target="_blank" rel="noopener">` styled as the primary button — not scripted `window.open()` — so popup blockers don't intercept it and no fallback error UI exists |
+| E3 Locked-card sheet | overflow | 🧪 resolved (backstop) | `{ statement: "Sheet has max-height: 90dvh with internal scroll; on a landscape phone viewport CLOSE stays reachable", verification: backstop }` |
+| E3 Locked-card sheet | long-text | dismissed | Fixed hand-authored strings; titles are the four known game titles |
+| E4 Install hint | loading | dismissed | Static banner; nothing loads |
+| E4 Install hint | error | ✅ resolved (explicit) | `ADD` shows only while a deferred `beforeinstallprompt` event is held; otherwise the hint shows `HOW?` with the steps. Declining the native prompt leaves the hint up until `✕`. Never shown when running installed (`display-mode: standalone`) |
+| E4 Install hint | overflow | 🧪 resolved (backstop) | `{ statement: "At 320px width the hint text wraps to two lines; HOW?/ADD and ✕ keep ≥44px tap targets and stay on their row", verification: backstop }` |
+| E4 Install hint | long-text | dismissed | Fixed copy; length is covered by the overflow row |
+| E5 About overlay | empty | dismissed | Static content, always present |
+| E5 About overlay | loading | ✅ resolved (explicit) | Cast sprites are drawn synchronously; no loading state |
+| E5 About overlay | error | dismissed | No fetch; the compoundingknowledge.com link is a plain anchor |
+| E5 About overlay | populated | ✅ resolved (explicit) | Layout per `format-shell.md`: cast row (charlie, barren, marketGreed at 2×), parody + no-advice line, "Made by @Wolfhartvest", compoundingknowledge.com link |
+| E5 About overlay | overflow | 🧪 resolved (backstop) | `{ statement: "On short viewports the About panel scrolls internally and its close control stays reachable", verification: backstop }` |
+| E5 About overlay | long-text | dismissed | Fixed short copy |
+| E6 Footer links | loading | dismissed | Static links |
+| E6 Footer links | error | 🧪 resolved (backstop) | `{ statement: "Impressum and Privacy load directly from a fresh URL with zero 404s and zero CSP violations", verification: backstop }` |
+| E6 Footer links | overflow | ✅ resolved (explicit) | At 320px the two footer lines wrap at the "·" separator rather than overflow; every link keeps 12px vertical padding |
+| E6 Footer links | long-text | dismissed | Fixed strings |
+| E7 Adventure ← HUB | loading | dismissed | Full page navigation to `/`; the hub paints complete on first render (see E1/E2 loading) |
+| E7 Adventure ← HUB | error | ✅ resolved (explicit) | Always navigates to `/`, never `history.back()` — works when the adventure was opened directly from a fresh URL |
+| E7 Adventure ← HUB | overflow | 🧪 resolved (backstop) | `{ statement: "At 360×640 the ← HUB button and credit line sit inside the scaled Phaser canvas and overlap none of the existing MainMenu/Settings buttons", verification: backstop }` |
+| E7 Adventure ← HUB | long-text | dismissed | Fixed label |
+
+----------|------------|--------|---------------------|
 | populated | Cards list (hub) | ✅ covered | The 6 documented hub-state fixtures in `hub-layout-cards.md` ("The hub's real states") cover every populated combination from the Phase 5 preview (`DAILY #1` only, one live card) through day 41 with all three games live — use these as the implementation's test fixtures |
 | partial | Best-score badge (cards list) | ✅ covered | The best badge renders only once a score exists; before that it is omitted entirely from the card's badge row — no placeholder dash, no "best: --" |
 | overflow | Card blurb + title (cards list) | ✅ covered | `.body` is a flexible column with no fixed height and no truncation CSS in the sketch's pattern; blurb and title wrap naturally — confirmed against the longest approved blurb ("Catch the bargains when Mr. Market panics, dodge his greedy junk. Same market for everyone today.") without clipping |
@@ -195,12 +236,12 @@ Applicable state considerations resolved: 4 covered, 2 backstop, 0 unresolved.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-16 (revision 1; gsd-ui-checker 7/7 PASS)
