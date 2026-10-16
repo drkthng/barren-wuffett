@@ -40,13 +40,20 @@ Four phases turn the existing single-page Level 1 adventure into a four-tile min
 **Plans**: 8 plans
 
 Plans:
+**Wave 1**
 - [ ] 05-01-PLAN.md — Consolidate `main` (merge `gsd/fix-menu-taps`, push), move the adventure to `/adventure/` in a multi-page build, one root-scope service worker
 - [ ] 05-02-PLAN.md — Shared shell modules (config, daily seed, progress store, release registry, share flow, test hooks, cast port), string table, self-hosted Pixelify Sans
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 05-03-PLAN.md — Hub page: cards in release order, daily strip with checklist and snowball streak, probe-only `window.__HUB__`
 - [ ] 05-04-PLAN.md — Adventure inside the hub: "← HUB" + credit line, headless regression (saves load, boss, level complete)
 - [ ] 05-05-PLAN.md — CSP + Cloudflare Web Analytics beacon, build entries from the release registry, privacy page (DE + EN), real 404
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 05-06-PLAN.md — Hub overlays: locked-card bottom sheet, Home-Screen install hint, shared About overlay
 - [ ] 05-07-PLAN.md — Per-page absolute OG cards (hub + adventure), Home-Screen icon of old Barren, hub manifest
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 05-08-PLAN.md — Deploy to the non-public preview alias, deployed checks, cached-client update proof, phone sign-off (D-13)
 
 **UI hint**: yes
