@@ -37,7 +37,18 @@ Four phases turn the existing single-page Level 1 adventure into a four-tile min
   4. A player sees today's checklist and a play streak that grows once per UTC day with at least one finished daily, silently resets to 1 after a missed day (no loss message, no freeze), survives reloads, and still works when storage is unavailable; after the 2nd streak day a dismissible Home-Screen-install hint appears once and never returns after dismissal
   5. Every page carries the credit line ("made by @Wolfhartvest"), the About overlay, the shared daily seed (reproducible via `?date=`), the code-drawn cast, and the strict CSP with self-hosted fonts and no third-party requests besides the analytics beacon; Cloudflare Web Analytics records page views per page with no cookies, legal links sit within two taps from every page, and the privacy page matches reality — all verified on a non-public Cloudflare preview URL only, since the public site does not change in this phase
 
-**Plans**: TBD
+**Plans**: 8 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Consolidate `main` (merge `gsd/fix-menu-taps`, push), move the adventure to `/adventure/` in a multi-page build, one root-scope service worker
+- [ ] 05-02-PLAN.md — Shared shell modules (config, daily seed, progress store, release registry, share flow, test hooks, cast port), string table, self-hosted Pixelify Sans
+- [ ] 05-03-PLAN.md — Hub page: cards in release order, daily strip with checklist and snowball streak, probe-only `window.__HUB__`
+- [ ] 05-04-PLAN.md — Adventure inside the hub: "← HUB" + credit line, headless regression (saves load, boss, level complete)
+- [ ] 05-05-PLAN.md — CSP + Cloudflare Web Analytics beacon, build entries from the release registry, privacy page (DE + EN), real 404
+- [ ] 05-06-PLAN.md — Hub overlays: locked-card bottom sheet, Home-Screen install hint, shared About overlay
+- [ ] 05-07-PLAN.md — Per-page absolute OG cards (hub + adventure), Home-Screen icon of old Barren, hub manifest
+- [ ] 05-08-PLAN.md — Deploy to the non-public preview alias, deployed checks, cached-client update proof, phone sign-off (D-13)
+
 **UI hint**: yes
 
 ### Phase 6: Release 1 — Mr. Market Arcade
