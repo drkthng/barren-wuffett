@@ -1,6 +1,15 @@
 import Phaser, { Scene } from 'phaser';
 import { t } from '../../services/i18n';
 
+/**
+ * Hit area of w × h centred on a Text's own bounds. Phaser hit areas live in the object's
+ * LOCAL top-left space (not origin-relative); the old (-width/2, -22) form shifted every zone
+ * up-left by half its size, so taps on the right half of a label — or just below it — missed.
+ */
+function paddedHitArea(t: Phaser.GameObjects.Text, w: number, h = 44): Phaser.Geom.Rectangle {
+    return new Phaser.Geom.Rectangle((t.width - w) / 2, (t.height - h) / 2, w, h);
+}
+
 export class MainMenu extends Scene {
     private blinkTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -57,12 +66,7 @@ export class MainMenu extends Scene {
         // Extend impressum hit area to 44px tall minimum (WCAG 2.5.5)
         // Math.max(..., 80) guards against zero-width before web font loads
         impressumText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -Math.max(impressumText.width, 80) / 2,
-                -22,
-                Math.max(impressumText.width, 80),
-                44
-            ),
+            paddedHitArea(impressumText, Math.max(impressumText.width, 80)),
             Phaser.Geom.Rectangle.Contains
         );
 
@@ -74,12 +78,7 @@ export class MainMenu extends Scene {
 
         // Math.max(..., 80) guards against zero-width before web font loads
         datenschutzText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -Math.max(datenschutzText.width, 80) / 2,
-                -22,
-                Math.max(datenschutzText.width, 80),
-                44
-            ),
+            paddedHitArea(datenschutzText, Math.max(datenschutzText.width, 80)),
             Phaser.Geom.Rectangle.Contains
         );
 
@@ -96,12 +95,7 @@ export class MainMenu extends Scene {
         // Bound to tapText object (not the global input manager) so legal-link
         // taps on IMPRESSUM / PRIVACY POLICY do not collide with this handler.
         tapText.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -tapText.width / 2 - 20,
-                -22,
-                tapText.width + 40,
-                44
-            ),
+            paddedHitArea(tapText, tapText.width + 40),
             Phaser.Geom.Rectangle.Contains
         );
         // 'on' + guard flag instead of 'once': a thrown error in a once-handler
@@ -123,12 +117,7 @@ export class MainMenu extends Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         settingsLink.setInteractive(
-            new Phaser.Geom.Rectangle(
-                -Math.max(settingsLink.width, 80) / 2,
-                -22,
-                Math.max(settingsLink.width, 80),
-                44
-            ),
+            paddedHitArea(settingsLink, Math.max(settingsLink.width, 80)),
             Phaser.Geom.Rectangle.Contains
         );
         settingsLink.on('pointerdown', () => {
